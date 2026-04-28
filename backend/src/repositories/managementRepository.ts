@@ -410,7 +410,7 @@ export class ManagementRepository {
   // ─── Customization Subsections ────────────────────────────────────────────
 
   async listCustomizationSubsections(where?: Partial<SubsectionRow>): Promise<SubsectionRow[]> {
-    let query = 'SELECT * FROM `customization_subsections`';
+    let query = 'SELECT * FROM `customization_subsection`';
     const params: any[] = [];
 
     if (where?.section_id) {
@@ -425,7 +425,7 @@ export class ManagementRepository {
 
   async findCustomizationSubsectionById(id: number): Promise<SubsectionRow | null> {
     const [rows] = await pool.execute<SubsectionRow[]>(
-      'SELECT * FROM `customization_subsections` WHERE `id` = ?',
+      'SELECT * FROM `customization_subsection` WHERE `id` = ?',
       [id]
     );
     return rows[0] ?? null;
@@ -433,44 +433,63 @@ export class ManagementRepository {
 
   async createCustomizationSubsection(data: Partial<SubsectionRow>): Promise<void> {
     await pool.execute<ResultSetHeader>(
-      'INSERT INTO `customization_subsections` (`name`, `section_id`) VALUES (?, ?)',
+      'INSERT INTO `customization_subsection` (`name`, `section_id`) VALUES (?, ?)',
       [data.name, data.section_id]
     );
   }
 
   async updateCustomizationSubsection(id: number, data: Partial<SubsectionRow>): Promise<void> {
     await pool.execute<ResultSetHeader>(
-      'UPDATE `customization_subsections` SET `name` = ?, `section_id` = ? WHERE `id` = ?',
+      'UPDATE `customization_subsection` SET `name` = ?, `section_id` = ? WHERE `id` = ?',
       [data.name, data.section_id, id]
     );
   }
 
   async deleteCustomizationSubsection(id: number): Promise<void> {
     await pool.execute<ResultSetHeader>(
-      'DELETE FROM `customization_subsections` WHERE `id` = ?',
+      'DELETE FROM `customization_subsection` WHERE `id` = ?',
       [id]
     );
   }
 
   // ─── Customizations ───────────────────────────────────────────────────────
 
-  async listCustomizations(where: Partial<CustomizationRow>): Promise<CustomizationRow[]> {
+  async listCustomizations(where: { company_id?: number; subsection_id?: number; search?: string }): Promise<CustomizationRow[]> {
     let query = `
       SELECT
         cu.id,
         cu.name,
-        cu.subsection_id,
-        cu.company_id,
-        c.name AS company_name
+        cu.description,
+        cu.created_at,
+        cu.subsection_id AS subsection_id,
+        cu.company_id AS company_id,
+        c.name AS company_name,
+        cs.name AS subsection_name,
+        cs.section_id AS section_id
       FROM \`customization\` cu
       LEFT JOIN \`companyList\` c ON c.id = cu.company_id
-      LEFT JOIN \`customization_subsections\` cs ON cs.id = cu.subsection_id
+      LEFT JOIN \`customization_subsection\` cs ON cs.id = cu.subsection_id
     `;
     const params: any[] = [];
+    const conditions: string[] = [];
 
     if (where?.company_id) {
-      query += ' WHERE cu.company_id = ?';
+      conditions.push('cu.company_id = ?');
       params.push(where.company_id);
+    }
+
+    if (where?.subsection_id) {
+      conditions.push('cu.subsection_id = ?');
+      params.push(where.subsection_id);
+    }
+
+    if (where?.search) {
+      conditions.push('(cu.name LIKE ? OR cu.description LIKE ?)');
+      params.push(`%${where.search}%`, `%${where.search}%`);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
     }
 
     query += ' ORDER BY cu.id DESC';

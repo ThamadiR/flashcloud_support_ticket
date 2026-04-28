@@ -107,6 +107,11 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
     setCompanyWizardStep(1);
   };
 
+  const updateCompanyForm = (field: keyof typeof companyForm, value: string) => {
+    setCompanyForm((prev) => ({ ...prev, [field]: value }));
+    setFormErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
   const openAddCompanyModal = () => {
     setEditingCompanyId(null);
     setCompanyForm({
@@ -1042,66 +1047,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     )}
                   </div>
                 </th>
-                <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={updatedAtSortMenuRef}>
-                    <span>updated_at</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsUpdatedAtSortMenuOpen(prev => !prev);
-                        setIsIdSortMenuOpen(false);
-                        setIsNameSortMenuOpen(false);
-                        setIsDescriptionSortMenuOpen(false);
-                        setIsTenantCountSortMenuOpen(false);
-                        setIsCreatedAtSortMenuOpen(false);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort updated at"
-                      title="Sort updated at"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
 
-                    {isUpdatedAtSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('updatedAt', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'updatedAt' && sortOrder === 'asc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('updatedAt', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'updatedAt' && sortOrder === 'desc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </th>
                 <th className={`px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase text-center ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                   Actions
                 </th>
@@ -1110,7 +1056,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
             <tbody>
               {loadingCompanies && (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-gray-500 text-sm">Loading companies...</td>
+                                  <td colSpan={7} className="text-center py-8 text-gray-500 text-sm">Loading companies...</td>
                 </tr>
               )}
 
@@ -1181,18 +1127,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     </span>
                   </td>
 
-                  <td
-                    className={`transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
-                  >
-                    <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
-                      {company.updatedAt}
-                    </span>
-                  </td>
+
 
                   <td
                     className={`rounded-r-xl transition-colors ${
@@ -1411,7 +1346,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     id="companyName"
                     type="text"
                     value={companyForm.name}
-                    onChange={(event) => setCompanyForm((prev) => ({ ...prev, name: event.target.value }))}
+                    onChange={(event) => updateCompanyForm('name', event.target.value)}
                     className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                       formErrors.name
                         ? isDark
@@ -1431,7 +1366,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     id="companyDescription"
                     rows={3}
                     value={companyForm.description}
-                    onChange={(event) => setCompanyForm((prev) => ({ ...prev, description: event.target.value }))}
+                    onChange={(event) => updateCompanyForm('description', event.target.value)}
                     className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${
                       formErrors.description
                         ? isDark
@@ -1451,7 +1386,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     id="companyEmail"
                     type="email"
                     value={companyForm.email}
-                    onChange={(event) => setCompanyForm((prev) => ({ ...prev, email: event.target.value }))}
+                    onChange={(event) => updateCompanyForm('email', event.target.value)}
                     className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                       formErrors.email
                         ? isDark
@@ -1471,7 +1406,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     id="tenantCount"
                     type="number"
                     value={companyForm.tenantCount}
-                    onChange={(event) => setCompanyForm((prev) => ({ ...prev, tenantCount: event.target.value }))}
+                    onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
                     className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                       formErrors.tenantCount
                         ? isDark
@@ -1497,7 +1432,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                           type="text"
                           autoFocus
                           value={companyForm.name}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, name: event.target.value }))}
+                          onChange={(event) => updateCompanyForm('name', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                             formErrors.name
                               ? isDark
@@ -1518,7 +1453,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                           id="companyTenantCount"
                           type="number"
                           value={companyForm.tenantCount}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, tenantCount: event.target.value }))}
+                          onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                             formErrors.tenantCount
                               ? isDark
@@ -1540,7 +1475,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         id="companyDescription"
                         rows={4}
                         value={companyForm.description}
-                        onChange={(event) => setCompanyForm((prev) => ({ ...prev, description: event.target.value }))}
+                        onChange={(event) => updateCompanyForm('description', event.target.value)}
                         className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${
                           formErrors.description
                             ? isDark
@@ -1561,7 +1496,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         id="companyEmail"
                         type="email"
                         value={companyForm.email}
-                        onChange={(event) => setCompanyForm((prev) => ({ ...prev, email: event.target.value }))}
+                        onChange={(event) => updateCompanyForm('email', event.target.value)}
                         className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                           formErrors.email
                             ? isDark
@@ -1586,7 +1521,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                       type="text"
                       autoFocus
                       value={companyForm.serverIpAddress}
-                      onChange={(event) => setCompanyForm((prev) => ({ ...prev, serverIpAddress: event.target.value }))}
+                      onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
                       className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                         formErrors.serverIpAddress
                           ? isDark
@@ -1626,7 +1561,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                       type="text"
                       autoFocus
                       value={companyForm.tenantName}
-                      onChange={(event) => setCompanyForm((prev) => ({ ...prev, tenantName: event.target.value }))}
+                      onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
                       className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                         formErrors.tenantName
                           ? isDark
@@ -1667,7 +1602,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         type="text"
                         autoFocus
                         value={companyForm.sipProvider}
-                        onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipProvider: event.target.value }))}
+                        onChange={(event) => updateCompanyForm('sipProvider', event.target.value)}
                         className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
                           formErrors.sipProvider
                             ? isDark

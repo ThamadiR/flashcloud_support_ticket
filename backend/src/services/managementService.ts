@@ -14,7 +14,7 @@ const normalizeCompanyPayload = (company: any) => ({
 
 const normalizeCustomizationSubsectionPayload = (subsection: any) => ({
   id: subsection.id,
-  sectionId: subsection.sectionId ?? null,
+  sectionId: subsection.sectionId ?? subsection.section_id ?? null,
   name: subsection.name,
 });
 
@@ -23,23 +23,36 @@ const normalizeCustomizationSectionPayload = (section: any) => ({
   name: section.name,
 });
 
-const normalizeCustomizationPayload = (customization: any) => ({
-  id: customization.id,
-  subsectionId: customization.subsectionId ?? null,
-  companyId: customization.companyId ?? null,
-  name: customization.name,
-  description: customization.description || '',
-  createdAt: customization.createdAt,
-  company: customization.company
-    ? {
-        id: customization.company.id,
-        name: customization.company.name,
-      }
-    : null,
-  subsection: customization.subsection
-    ? normalizeCustomizationSubsectionPayload(customization.subsection)
-    : null,
-});
+const normalizeCustomizationPayload = (customization: any) => {
+  const companyId = customization.companyId ?? customization.company_id ?? null;
+  const subsectionId = customization.subsectionId ?? customization.subsection_id ?? null;
+  const companyName = customization.company_name ?? (customization.company ? customization.company.name : '');
+  const subsectionName = customization.subsection_name ?? (customization.subsection ? customization.subsection.name : '');
+  // Use raw DB value (snake_case created_at) exactly as stored
+  const createdAt = customization.created_at ?? customization.createdAt ?? null;
+
+  return {
+    id: customization.id,
+    subsectionId,
+    companyId,
+    name: customization.name,
+    description: customization.description || '',
+    createdAt,
+    company: companyId
+      ? {
+          id: companyId,
+          name: companyName,
+        }
+      : null,
+    subsection: subsectionId
+      ? {
+          id: subsectionId,
+          name: subsectionName,
+          sectionId: customization.section_id ?? (customization.subsection ? customization.subsection.sectionId : null)
+        }
+      : null,
+  };
+};
 
 const normalizeSipConfigRow = (row: any) => ({
   id: Number(row.id),
@@ -238,7 +251,7 @@ export class ManagementService {
     const hasCompanyFilter = Number.isFinite(companyId);
 
     const queryResult = await this.repository.listServersByCompany(hasCompanyFilter ? companyId : undefined);
-    return { servers: queryResult.rows.map(normalizeServerRow) };
+    return { servers: queryResult.map(normalizeServerRow) };
   }
 
   async createServer(requesterIdRaw: unknown, payload: any) {
@@ -259,7 +272,7 @@ export class ManagementService {
       const queryResult = await this.repository.createServer(companyId, ipAddress, label);
       return {
         message: 'Server created successfully',
-        server: normalizeServerRow(queryResult.rows[0]),
+        server: normalizeServerRow(queryResult),
       };
     } catch (error: any) {
       if (error?.code === '22P02') throw new ApiError(400, 'Invalid IP address format');
@@ -285,13 +298,13 @@ export class ManagementService {
 
     try {
       const queryResult = await this.repository.updateServer(serverId, ipAddress, label);
-      if (queryResult.rowCount === 0) {
+      if (!queryResult) {
         throw new ApiError(404, 'Server not found');
       }
 
       return {
         message: 'Server updated successfully',
-        server: normalizeServerRow(queryResult.rows[0]),
+        server: normalizeServerRow(queryResult),
       };
     } catch (error: any) {
       if (error instanceof ApiError) throw error;
@@ -308,7 +321,7 @@ export class ManagementService {
     const hasCompanyFilter = Number.isFinite(companyId);
 
     const queryResult = await this.repository.listTenantsByCompany(hasCompanyFilter ? companyId : undefined);
-    return { tenants: queryResult.rows.map(normalizeTenantRow) };
+    return { tenants: queryResult.map(normalizeTenantRow) };
   }
 
   async createTenant(requesterIdRaw: unknown, payload: any) {
@@ -330,7 +343,7 @@ export class ManagementService {
       const queryResult = await this.repository.createTenant(companyId, name, description);
       return {
         message: 'Tenant created successfully',
-        tenant: normalizeTenantRow(queryResult.rows[0]),
+        tenant: normalizeTenantRow(queryResult),
       };
     } catch (error: any) {
       if (error?.code === '23503') {
@@ -356,13 +369,13 @@ export class ManagementService {
     }
 
     const queryResult = await this.repository.updateTenant(tenantId, name, description);
-    if (queryResult.rowCount === 0) {
+    if (!queryResult) {
       throw new ApiError(404, 'Tenant not found');
     }
 
     return {
       message: 'Tenant updated successfully',
-      tenant: normalizeTenantRow(queryResult.rows[0]),
+      tenant: normalizeTenantRow(queryResult),
     };
   }
 
@@ -377,7 +390,7 @@ export class ManagementService {
     }
 
     const queryResult = await this.repository.listSipConfigsByTenant(tenantId);
-    return { sipConfigs: queryResult.rows.map(normalizeSipConfigRow) };
+    return { sipConfigs: queryResult.map(normalizeSipConfigRow) };
   }
 
   async createSipConfig(requesterIdRaw: unknown, payload: any) {
@@ -400,7 +413,7 @@ export class ManagementService {
     if (licenseCount !== null && (!Number.isFinite(licenseCount) || licenseCount < 0)) throw new ApiError(400, 'Invalid license count');
 
     const tenant = await this.repository.findTenantById(tenantId);
-    if (tenant.rowCount === 0) {
+    if (!tenant) {
       throw new ApiError(404, 'Tenant not found');
     }
 
@@ -413,7 +426,7 @@ export class ManagementService {
       licenseCount,
     });
 
-    return { sipConfig: normalizeSipConfigRow(queryResult.rows[0]) };
+    return { sipConfig: normalizeSipConfigRow(queryResult) };
   }
 
   async updateSipConfig(requesterIdRaw: unknown, sipConfigIdRaw: unknown, payload: any) {
@@ -449,11 +462,11 @@ export class ManagementService {
       licenseCount,
     });
 
-    if (queryResult.rowCount === 0) {
+    if (!queryResult) {
       throw new ApiError(404, 'Sip config not found');
     }
 
-    return { sipConfig: normalizeSipConfigRow(queryResult.rows[0]) };
+    return { sipConfig: normalizeSipConfigRow(queryResult) };
   }
 
   async listCustomizationSubsections(requesterIdRaw: unknown, query: any) {
@@ -467,7 +480,7 @@ export class ManagementService {
       throw new ApiError(400, 'Invalid section id filter');
     }
 
-    const where = hasSectionFilter ? { sectionId: sectionId as number } : undefined;
+    const where = hasSectionFilter ? { section_id: sectionId as number } : undefined;
     const subsectionsRaw = await this.repository.listCustomizationSubsections(where);
 
     return {
@@ -606,7 +619,11 @@ if (hasSectionId) {
       filters.push({ subsectionId });
     }
 
-    const customizationsRaw = await this.repository.listCustomizations({ AND: filters });
+    const customizationsRaw = await this.repository.listCustomizations({
+      company_id: companyId,
+      subsection_id: Number.isFinite(subsectionId) && subsectionId > 0 ? subsectionId : undefined,
+      search: search || undefined,
+    });
     return { customizations: customizationsRaw.map(normalizeCustomizationPayload) };
   }
 

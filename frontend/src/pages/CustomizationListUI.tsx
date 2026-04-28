@@ -304,39 +304,18 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
   const filteredCustomizations = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
-    if (!keyword) {
-      return [...customizations].sort((a, b) => {
-        const direction = sortOrder === 'asc' ? 1 : -1;
 
-        if (sortBy === 'createdAt') {
-          return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction;
-        }
+    // Parse MySQL timestamp ("YYYY-MM-DD HH:MM:SS.mmm") safely by replacing space with T
+    const parseTs = (ts: string | null | undefined) => {
+      if (!ts) return '';
+      return String(ts).replace(' ', 'T');
+    };
 
-        if (sortBy === 'subsection') {
-          const leftSubsection = String(a.subsection?.name || 'Unassigned').toLowerCase();
-          const rightSubsection = String(b.subsection?.name || 'Unassigned').toLowerCase();
-          return leftSubsection.localeCompare(rightSubsection) * direction;
-        }
-
-        const left = String(a[sortBy] || '').toLowerCase();
-        const right = String(b[sortBy] || '').toLowerCase();
-        return left.localeCompare(right) * direction;
-      });
-    }
-
-    const filtered = customizations.filter((item) => {
-      return (
-        item.name.toLowerCase().includes(keyword) ||
-        item.description.toLowerCase().includes(keyword) ||
-        item.subsection?.name.toLowerCase().includes(keyword)
-      );
-    });
-
-    return filtered.sort((a, b) => {
+    const sortFn = (a: CustomizationRecord, b: CustomizationRecord) => {
       const direction = sortOrder === 'asc' ? 1 : -1;
 
       if (sortBy === 'createdAt') {
-        return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction;
+        return parseTs(a.createdAt).localeCompare(parseTs(b.createdAt)) * direction;
       }
 
       if (sortBy === 'subsection') {
@@ -348,7 +327,19 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
       const left = String(a[sortBy] || '').toLowerCase();
       const right = String(b[sortBy] || '').toLowerCase();
       return left.localeCompare(right) * direction;
-    });
+    };
+
+    if (!keyword) {
+      return [...customizations].sort(sortFn);
+    }
+
+    return customizations
+      .filter((item) =>
+        item.name.toLowerCase().includes(keyword) ||
+        item.description.toLowerCase().includes(keyword) ||
+        (item.subsection?.name?.toLowerCase().includes(keyword) ?? false)
+      )
+      .sort(sortFn);
   }, [customizations, searchTerm, sortBy, sortOrder]);
 
   return (
@@ -617,7 +608,9 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                     <td className="px-5 py-4 text-sm text-slate-300">
                       {item.description || 'No description provided'}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-400">{item.createdAt}</td>
+                    <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
+                      {item.createdAt ?? '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
