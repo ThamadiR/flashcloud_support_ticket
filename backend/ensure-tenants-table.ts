@@ -1,7 +1,14 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import { Client } from 'pg';
+import dotenv from 'dotenv';
 
-async function main() {
+dotenv.config();
+
+interface TableRow {
+  table_schema: string;
+  table_name: string;
+}
+
+async function main(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
 
@@ -16,7 +23,7 @@ async function main() {
       );
     `);
 
-    const tables = await client.query(`
+    const tables = await client.query<TableRow>(`
       SELECT table_schema, table_name
       FROM information_schema.tables
       WHERE table_schema = 'public'
@@ -28,12 +35,13 @@ async function main() {
     console.log('DATABASE_URL target is connected successfully.');
     console.log('public.tenants exists:', hasTenants);
     console.log('public tables:', tables.rows.map((r) => r.table_name).join(', '));
+
   } finally {
     await client.end();
   }
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error('Error ensuring tenants table:', error);
   process.exit(1);
 });

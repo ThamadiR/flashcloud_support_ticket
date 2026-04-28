@@ -1,12 +1,18 @@
 import 'dotenv/config';
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import pool from './src/config/db';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+interface UserRow extends RowDataPacket {
+  id: number;
+}
+
+interface UserSeed {
+  username:  string;
+  email:     string;
+  password:  string;
+  contactNo: string;
+}
 
 const FIRST_NAMES = [
   'Liam', 'Noah', 'Oliver', 'Elijah', 'James', 'William', 'Benjamin', 'Lucas', 'Henry', 'Alexander',
@@ -31,8 +37,8 @@ function randomPhone(): string {
 }
 
 function randomUsername(index: number): string {
-  const first = FIRST_NAMES[randInt(0, FIRST_NAMES.length - 1)].toLowerCase();
-  const last = LAST_NAMES[randInt(0, LAST_NAMES.length - 1)].toLowerCase();
+  const first = FIRST_NAMES[randInt(0, FIRST_NAMES.length - 1)]!.toLowerCase();
+  const last  = LAST_NAMES[randInt(0, LAST_NAMES.length - 1)]!.toLowerCase();
   return `${first}_${last}_${index}`;
 }
 
@@ -40,35 +46,47 @@ async function main(): Promise<void> {
   const requestedCount = Number.parseInt(process.argv[2] || '50', 10);
   const count = Number.isNaN(requestedCount) || requestedCount <= 0 ? 50 : requestedCount;
 
-  const lastUser = await prisma.user.findFirst({ orderBy: { id: 'desc' } });
-  const startId = lastUser ? lastUser.id + 1 : 1;
+  // Get last user id
+  const [lastUserRows] = await pool.execute<UserRow[]>(
+    'SELECT `id` FROM `User` ORDER BY `id` DESC LIMIT 1'
+  );
+  const lastUser = lastUserRows[0] ?? null;
+  const startId  = lastUser ? lastUser.id + 1 : 1;
 
   const hashedPassword = await bcrypt.hash('password123', 10);
-  const batchTime = Date.now();
+  const batchTime      = Date.now();
 
-  const users = Array.from({ length: count }, (_, i) => {
-    const id = startId + i;
+  const users: UserSeed[] = Array.from({ length: count }, (_, i) => {
     const username = randomUsername(i + 1);
-
     return {
-      id,
       username,
-      email: `${username}_${batchTime}_${i + 1}@gmail.com`,
-      password: hashedPassword,
+      email:     `${username}_${batchTime}_${i + 1}@gmail.com`,
+      password:  hashedPassword,
       contactNo: randomPhone(),
     };
   });
 
-  await prisma.user.createMany({ data: users });
-  console.log(`Inserted ${count} users successfully. IDs: ${startId} to ${startId + count - 1}`);
+  // Insert users one by one (MySQL doesn't support createMany like Prisma)
+  let insertedCount = 0;
+  for (const user of users) {
+    await pool.execute<ResultSetHeader>(
+      `INSERT INTO \`User\` (\`username\`, \`email\`, \`password\`, \`contactNo\`)
+       VALUES (?, ?, ?, ?)`,
+      [user.username, user.email, user.password, user.contactNo]
+    );
+    insertedCount++;
+  }
+
+  console.log(
+    `Inserted ${insertedCount} users successfully. IDs: ${startId} to ${startId + count - 1}`
+  );
 }
 
 main()
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error('Failed to seed users:', error);
     process.exitCode = 1;
   })
-  .finally(async () => {
-    await prisma.$disconnect();
+  .finally(async (): Promise<void> => {
     await pool.end();
   });

@@ -1,7 +1,21 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import { Client } from 'pg';
+import dotenv from 'dotenv';
+interface TableExistsResult {
+  exists: boolean;
+}
 
-async function main() {
+interface ColumnInfo {
+  column_name: string;
+  data_type: string;
+}
+
+dotenv.config();
+
+interface OldTableExistsRow {
+  exists: boolean;
+}
+
+async function main(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
 
@@ -39,11 +53,11 @@ async function main() {
       FOREIGN KEY (section_id) REFERENCES customization_sections(id) ON DELETE CASCADE;
     `);
 
-    const oldTableExists = await client.query(`
+    const oldTableExists = await client.query<OldTableExistsRow>(`
       SELECT to_regclass('public.customization_subsectionss') IS NOT NULL AS exists
     `);
 
-    if (oldTableExists.rows[0].exists) {
+    if (oldTableExists.rows[0]?.exists) {
       await client.query(`
         INSERT INTO customization_subsections (id, section_id, name)
         SELECT id, NULL, name
@@ -79,13 +93,13 @@ async function main() {
       ON DELETE SET NULL ON UPDATE CASCADE;
     `);
 
-    if (oldTableExists.rows[0].exists) {
+    if (oldTableExists.rows[0]?.exists) {
       await client.query(`DROP TABLE IF EXISTS customization_subsectionss;`);
     }
 
     await client.query('COMMIT');
 
-    const exists = await client.query(`
+    const exists = await client.query<TableExistsResult>(`
       SELECT EXISTS (
         SELECT 1
         FROM information_schema.tables
@@ -94,9 +108,9 @@ async function main() {
       ) AS exists
     `);
 
-    console.log('customization_subsections table exists:', exists.rows[0].exists);
+    console.log('customization_subsections table exists:', exists.rows[0]?.exists);
 
-    const cols = await client.query(`
+    const cols = await client.query<ColumnInfo>(`
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_schema = 'public'
@@ -105,7 +119,8 @@ async function main() {
     `);
 
     console.log('Columns:', JSON.stringify(cols.rows, null, 2));
-  } catch (error) {
+
+  } catch (error: unknown) {
     await client.query('ROLLBACK');
     throw error;
   } finally {
@@ -113,7 +128,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error(error);
   process.exit(1);
 });

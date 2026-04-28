@@ -13,15 +13,14 @@ import { buildAuthenticateMiddleware } from '../middleware/authenticate';
 
 export const registerRoutes = (
   app: Express,
-  prisma: any,
   pool: any,
   cloudinary: any,
   jwtSecret: string,
 ) => {
   const authenticate = buildAuthenticateMiddleware(jwtSecret);
 
-  const userRepository = new UserRepository(prisma);
-  const managementRepository = new ManagementRepository(prisma, pool);
+  const userRepository = new UserRepository();
+  const managementRepository = new ManagementRepository();
 
   const authService = new AuthService(userRepository, jwtSecret);
   const usersService = new UsersService(userRepository, cloudinary);

@@ -1,7 +1,17 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import { Client } from 'pg';
+import dotenv from 'dotenv';
+interface TableExistsResult {
+  exists: boolean;
+}
 
-async function main() {
+interface ColumnInfo {
+  column_name: string;
+  data_type: string;
+}
+
+dotenv.config();
+
+async function main(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
 
@@ -21,7 +31,7 @@ async function main() {
       );
     `);
 
-    const exists = await client.query(`
+    const exists = await client.query<TableExistsResult>(`
       SELECT EXISTS (
         SELECT 1
         FROM information_schema.tables
@@ -29,9 +39,9 @@ async function main() {
       ) AS exists
     `);
 
-    console.log('sip_configs table exists:', exists.rows[0].exists);
+    console.log('sip_configs table exists:', exists.rows[0]?.exists);
 
-    const columns = await client.query(`
+    const columns = await client.query<ColumnInfo>(`
       SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_schema = 'public' AND table_name = 'sip_configs'
@@ -39,12 +49,13 @@ async function main() {
     `);
 
     console.log('Columns:', JSON.stringify(columns.rows, null, 2));
+
   } finally {
     await client.end();
   }
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error(error);
   process.exit(1);
 });

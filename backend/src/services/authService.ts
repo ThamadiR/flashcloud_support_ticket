@@ -4,6 +4,7 @@ import { UserRepository } from '../repositories/userRepository';
 import { ApiError } from './apiError';
 import { normalizeImageUrl, resolveStoredRole, USER_ROLES } from './userHelpers';
 
+
 export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
@@ -41,13 +42,13 @@ export class AuthService {
     }
 
     const lastUser = await this.userRepository.findLastByIdDesc();
-    const nextId = lastUser ? lastUser.id + 1 : 1;
+    const nextId = lastUser ? lastUser.userId + 1 : 1;
 
     const hashedPassword = await bcrypt.hash(String(password), 10);
     const newUser: any = await this.userRepository.createUser({
-      id: nextId,
-      username: String(username),
-      email: String(email),
+      userId: nextId,
+      userName: String(username),
+      Email: String(email),
       password: hashedPassword,
       contactNo: String(contactNo).trim(),
       role: USER_ROLES.NON_ADMIN,
@@ -56,11 +57,11 @@ export class AuthService {
 
     return {
       message: 'User registered successfully',
-      userId: newUser.id,
+      userId: newUser.userId,
       user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
+        id: newUser.userId,
+        username: newUser.userName,
+        email: newUser.Email,
         contactNo: newUser.contactNo,
         role: resolveStoredRole(newUser),
         img: newUser.img,
@@ -70,6 +71,8 @@ export class AuthService {
   }
 
   async login(payload: any) {
+
+    console.log("LOGIN PAYLOAD:", payload);
     const { email, password } = payload || {};
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
@@ -82,6 +85,10 @@ export class AuthService {
     }
 
     const user: any = await this.userRepository.findByEmail(String(email));
+    
+    console.log("EMAIL:", email);
+    console.log("USER:", user);
+
     if (!user) {
       throw new ApiError(401, 'Invalid email or password');
     }
@@ -91,16 +98,16 @@ export class AuthService {
       throw new ApiError(401, 'Invalid email or password');
     }
 
-    const token = jwt.sign({ id: user.id }, this.jwtSecret, { expiresIn: '1d' });
+    const token = jwt.sign({ id: user.userId }, this.jwtSecret, { expiresIn: '1d' });
     const safeImg = normalizeImageUrl(user.img) || null;
 
     return {
       message: 'Login successful',
       token,
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
+        id: user.userId,
+        username: user.userName,
+        email: user.Email,
         role: resolveStoredRole(user),
         img: safeImg,
         avatarUrl: safeImg,

@@ -681,19 +681,20 @@ export default function Dashboard({ token, user, onLogout, onUserUpdate }: { tok
               <button
                 type="button"
                 onClick={() => switchListView(isCompanyListView ? 'users' : 'companies')}
-                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold border transition-all ${
+                className={`flex h-8 w-8 items-center justify-center rounded-md border transition-all ${
                   isDark
                     ? 'text-emerald-200 bg-emerald-500/10 border-emerald-400/35 hover:bg-emerald-500/20'
                     : 'text-emerald-700 bg-emerald-50 border-emerald-300 hover:bg-emerald-100'
                 }`}
+                title={isCompanyListView ? 'User list' : 'Company list'}
+                aria-label={isCompanyListView ? 'User list' : 'Company list'}
               >
-                {isCompanyListView ? <Users size={12} /> : <Building2 size={12} />}
-                {isCompanyListView ? 'User list' : 'Company list'}
+                {isCompanyListView ? <Users size={16} /> : <Building2 size={16} />}
               </button>
               <button
                 type="button"
                 onClick={toggleTheme}
-                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold border transition-all ${
+                className={`flex h-8 w-8 items-center justify-center rounded-md border transition-all ${
                   isDark
                     ? 'text-yellow-300 bg-yellow-500/10 border-yellow-400/35 hover:bg-yellow-500/20'
                     : 'text-slate-700 bg-slate-100 border-slate-300 hover:bg-slate-200'
@@ -701,8 +702,7 @@ export default function Dashboard({ token, user, onLogout, onUserUpdate }: { tok
                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
-                {isDark ? <Sun size={12} /> : <Moon size={12} />}
-                {isDark ? 'Light mode' : 'Dark mode'}
+                {isDark ? <Sun size={16} /> : <Moon size={16} />}
               </button>
             </div>
             </div>
@@ -851,21 +851,7 @@ export default function Dashboard({ token, user, onLogout, onUserUpdate }: { tok
                 <span className="text-sm font-semibold">User List</span>
               </button>
 
-              <div className="pt-1 flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all ${
-                    isDark
-                      ? 'bg-[#1A1A1E] hover:bg-[#25252D] border-white/10 text-yellow-300'
-                      : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
-                  }`}
-                  title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                  aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                >
-                  {isDark ? <Sun size={16} /> : <Moon size={16} />}
-                </button>
-              </div>
+
             </div>
 
             {/* User Profile Section */}
@@ -967,19 +953,7 @@ export default function Dashboard({ token, user, onLogout, onUserUpdate }: { tok
               <Users size={16} />
             </button>
 
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-all ${
-                isDark
-                  ? 'bg-[#1A1A1E] hover:bg-[#25252D] border-white/10 text-yellow-300'
-                  : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-700'
-              }`}
-              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
+
           </div>
         )}
 

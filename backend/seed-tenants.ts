@@ -1,25 +1,41 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import { Client } from 'pg';
+import dotenv from 'dotenv';
 
-async function main() {
+dotenv.config();
+
+interface CompanyRow {
+  id: number;
+  name: string;
+}
+
+interface TenantSeed {
+  name: string;
+  description: string;
+}
+
+interface CountRow {
+  total: number;
+}
+
+async function main(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
 
   try {
-    const companiesResult = await client.query(
+    const companiesResult = await client.query<CompanyRow>(
       'SELECT id, name FROM "companyList" ORDER BY id ASC LIMIT 8'
     );
 
-    const companies = companiesResult.rows;
+    const companies: CompanyRow[] = companiesResult.rows;
     if (companies.length === 0) {
       console.log('No companies found. Add companies first, then run this script again.');
       return;
     }
 
-    let inserted = 0;
+    let inserted: number = 0;
 
     for (const company of companies) {
-      const tenants = [
+      const tenants: TenantSeed[] = [
         {
           name: `${company.name} Tenant Alpha`,
           description: `Primary tenant for ${company.name}`,
@@ -39,17 +55,20 @@ async function main() {
       }
     }
 
-    const countResult = await client.query('SELECT COUNT(*)::int AS total FROM "tenants"');
-    const total = countResult.rows[0]?.total || 0;
+    const countResult = await client.query<CountRow>(
+      'SELECT COUNT(*)::int AS total FROM "tenants"'
+    );
+    const total: number = countResult.rows[0]?.total ?? 0;
 
     console.log(`Inserted ${inserted} tenant rows.`);
     console.log(`Total tenants in table: ${total}`);
+
   } finally {
     await client.end();
   }
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error('Error seeding tenants:', error);
   process.exit(1);
 });

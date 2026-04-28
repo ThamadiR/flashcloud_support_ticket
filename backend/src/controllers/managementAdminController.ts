@@ -2,7 +2,7 @@ import { ApiError } from '../services/apiError';
 import { ManagementService } from '../services/managementService';
 
 export class ManagementAdminController {
-  constructor(private readonly managementService: ManagementService) {}
+  constructor(private readonly managementService: ManagementService) { }
 
   createCompany = async (req: any, res: any) => {
     try {

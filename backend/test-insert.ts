@@ -1,27 +1,24 @@
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import pool from './src/config/db';
 
 async function main() {
   console.log("Attempting to insert a test record...");
   try {
-    const user = await prisma.user.create({
-      data: {
-        username: 'testuser2',
-        email: 'test2' + Date.now() + '@example.com',
-        password: 'abc'
-      }
-    });
-    console.log('SUCCESS! Record inserted successfully:', user);
+    const username = 'testuser2';
+    const email = 'test2' + Date.now() + '@example.com';
+    const password = 'abc';
+
+    const [result] = await pool.execute(
+      'INSERT INTO user (username, email, password) VALUES (?, ?, ?)',
+      [username, email, password]
+    );
+    
+    console.log('SUCCESS! Record inserted successfully:', result);
   } catch(e: any) {
     console.error('ERROR OCCURRED DURING INSERTION:');
     console.error(e.message);
   } finally {
-    await prisma.$disconnect();
+    await pool.end();
   }
 }
 

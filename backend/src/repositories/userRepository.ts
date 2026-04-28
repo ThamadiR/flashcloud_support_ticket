@@ -1,69 +1,108 @@
- export class UserRepository {
-  constructor(private readonly prisma: any) {}
+import pool from '../config/db';
+import { RowDataPacket } from 'mysql2';
 
-  findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+interface ManagementRow extends RowDataPacket {
+  userId:   number;
+  userName: string;
+  Email:    string;
+  role:     string;
+}
+
+export class UserRepository {
+
+  async findByEmail(email: string): Promise<ManagementRow | null> {
+    const [rows] = await pool.execute<ManagementRow[]>(
+      'SELECT * FROM `Management` WHERE `Email` = ?',
+      [email]
+    );
+    return rows[0] ?? null;
   }
 
-  findById(id: number) {
-    return this.prisma.user.findUnique({ where: { id } });
+  async findById(id: number) {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT `userId` AS id, `userName` AS username, `Email` AS email, `contactNo`, `role`, `img`, `password` FROM `Management` WHERE `userId` = ?',
+      [id]
+    );
+    return rows[0] ?? null;
   }
 
-  findByIdWithBasicFields(id: number) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        role: true,
-      },
-    });
+  async findByIdWithBasicFields(id: number) {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT \`userId\` AS id, \`userName\` AS username, \`Email\` AS email, \`role\`
+       FROM \`Management\`
+       WHERE \`userId\` = ?`,
+      [id]
+    );
+    return rows[0] ?? null;
+  }
+  async findByIdWithProfileFields(id: number) {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT \`userId\` AS id, \`userName\` AS username, \`Email\` AS email, \`contactNo\`, \`role\`, \`img\`
+       FROM \`Management\`
+       WHERE \`userId\` = ?`,
+      [id]
+    );
+    return rows[0] ?? null;
   }
 
-  findByIdWithProfileFields(id: number) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        contactNo: true,
-        role: true,
-        img: true,
-      },
-    });
+  async findLastByIdDesc() {
+    const [rows] = await pool.execute<ManagementRow[]>(
+      'SELECT * FROM `Management` ORDER BY `userId` DESC LIMIT 1'
+    );
+    return rows[0] ?? null;
   }
 
-  findLastByIdDesc() {
-    return this.prisma.user.findFirst({ orderBy: { id: 'desc' } });
+  async createUser(data: any) {
+    const keys = Object.keys(data);
+    const columns = keys.map(k => `\`${k}\``).join(', ');
+    const placeholders = keys.map(() => '?').join(', ');
+    const values = Object.values(data);
+    
+    await pool.execute(
+      `INSERT INTO \`Management\` (${columns}) VALUES (${placeholders})`,
+      values
+    );
+    
+    return data;
   }
 
-  createUser(data: any) {
-    return this.prisma.user.create({ data });
+  async updateUser(id: number, data: any) {
+    const keys = Object.keys(data);
+    if (keys.length === 0) return this.findById(id);
+    
+    const setClause = keys.map(k => `\`${k}\` = ?`).join(', ');
+    const values = Object.values(data);
+    values.push(id);
+    
+    await pool.execute(
+      `UPDATE \`Management\` SET ${setClause} WHERE \`userId\` = ?`,
+      values
+    );
+    
+    return this.findById(id);
   }
 
-  updateUser(id: number, data: any, select?: any) {
-    return this.prisma.user.update({ where: { id }, data, ...(select ? { select } : {}) });
+  async deleteUser(id: number) {
+    await pool.execute('DELETE FROM `Management` WHERE `userId` = ?', [id]);
   }
 
-  deleteUser(id: number) {
-    return this.prisma.user.delete({ where: { id } });
-  }
-
-  countUsers(where?: any) {
-    if (where) {
-      return this.prisma.user.count({ where });
+  async countUsers(where?: any) {
+    if (where && where.role) {
+      const [rows] = await pool.execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM `Management` WHERE `role` = ?', [where.role]);
+      return rows[0]?.count || 0;
     }
-
-    return this.prisma.user.count();
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM `Management`');
+    return rows[0]?.count || 0;
   }
 
-  findManyUsers(args: any) {
-    return this.prisma.user.findMany(args);
+  async findManyUsers(args: any) {
+    // Basic catch-all to return all users if dynamic args are passed
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT `userId` AS id, `userName` AS username, `Email` AS email, `contactNo`, `role`, `img` FROM `Management`');
+    return rows;
   }
 
-  countAdmins() {
-    return this.prisma.user.count({ where: { role: 'ADMIN' } as any });
+  async countAdmins() {
+    const [rows] = await pool.execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM `Management` WHERE `role` = "ADMIN"');
+    return rows[0]?.count || 0;
   }
 }

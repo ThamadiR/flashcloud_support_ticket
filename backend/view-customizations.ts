@@ -1,18 +1,41 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import pool from './src/config/db';
+import { RowDataPacket } from 'mysql2';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+interface CustomizationRow extends RowDataPacket {
+  id:              number;
+  name:            string;
+  description:     string;
+  subsection_id:   number;
+  company_id:      number;
+  subsection_name: string;
+  section_id:      number;
+}
 
-async function viewCustomizations() {
-  const customizations = await prisma.customization.findMany({
-    include: { subsection: true },
-  });
-  console.log(JSON.stringify(customizations, null, 2));
-  await prisma.$disconnect();
+async function viewCustomizations(): Promise<void> {
+  try {
+    const [customizations] = await pool.execute<CustomizationRow[]>(
+      `SELECT
+        c.id,
+        c.name,
+        c.description,
+        c.subsection_id,
+        c.company_id,
+        cs.name       AS subsection_name,
+        cs.section_id AS section_id
+       FROM \`customization\` c
+       LEFT JOIN \`customization_subsections\` cs ON cs.id = c.subsection_id
+       ORDER BY c.id ASC`
+    );
+
+    console.log(JSON.stringify(customizations, null, 2));
+
+  } catch (error: unknown) {
+    console.error('Error fetching customizations:', error);
+    process.exit(1);
+  } finally {
+    await pool.end();
+  }
 }
 
 viewCustomizations();
