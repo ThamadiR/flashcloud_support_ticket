@@ -37,6 +37,7 @@ const normalizeCustomizationPayload = (customization: any) => {
     companyId,
     name: customization.name,
     description: customization.description || '',
+    tenantCount: Number(customization.tenant_count || 0),
     createdAt,
     company: companyId
       ? {

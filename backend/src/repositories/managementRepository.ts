@@ -455,7 +455,6 @@ export class ManagementRepository {
   // ─── Customizations ───────────────────────────────────────────────────────
 
   async listCustomizations(where: { company_id?: number; subsection_id?: number; search?: string }): Promise<CustomizationRow[]> {
-    let query = `
       SELECT
         cu.id,
         cu.name,
@@ -465,10 +464,12 @@ export class ManagementRepository {
         cu.company_id AS company_id,
         c.name AS company_name,
         cs.name AS subsection_name,
-        cs.section_id AS section_id
+        cs.section_id AS section_id,
+        COUNT(ct.id) AS tenant_count
       FROM \`customization\` cu
       LEFT JOIN \`companyList\` c ON c.id = cu.company_id
       LEFT JOIN \`customization_subsection\` cs ON cs.id = cu.subsection_id
+      LEFT JOIN \`customization_tenants\` ct ON ct.customization_id = cu.id
     `;
     const params: any[] = [];
     const conditions: string[] = [];
@@ -491,6 +492,8 @@ export class ManagementRepository {
     if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
+
+    query += ' GROUP BY cu.id';
 
     query += ' ORDER BY cu.id DESC';
     const [rows] = await pool.execute<CustomizationRow[]>(query, params);
