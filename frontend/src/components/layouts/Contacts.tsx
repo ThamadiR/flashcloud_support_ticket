@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaPlus, FaTimes, FaUserCircle, FaTrash } from "react-icons/fa";
+import { Search, Edit2, Trash2, X, Plus, User, Phone, Mail, Building2, ChevronRight, Check } from 'lucide-react';
 import { useDrawer } from "../../context/DrawerContext";
 import { useTheme } from "../../context/ThemeContext";
 import { API_BASE_URL as API_BASE } from "../../config/api";
+import toast from 'react-hot-toast';
 
 type Contact = {
   id: number;
@@ -11,7 +13,7 @@ type Contact = {
   phone: string;
   email: string;
   company: string;
-  profileImage: string | null; // server returns '/uploads/xxx.jpg' or null
+  profileImage: string | null;
   createdAt: string;
 };
 
@@ -21,12 +23,12 @@ function Contacts() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
 
-  // Form state (kept as you had)
   const [formData, setFormData] = useState<{
     firstName: string;
     lastName: string;
@@ -46,43 +48,30 @@ function Contacts() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Static companies list (you can swap this to a backend call later)
-  const companies = [
-    { id: 1, name: "Acme Corporation" },
-    { id: 2, name: "iphonik" },
-    { id: 3, name: "Umbrella Corp" },
-    { id: 4, name: "ABC Solution" },
-    { id: 5, name: "SSP Solution" },
-    { id: 6, name: "UDC Coporation" },
-  ];
+  // Filtered contacts
+  const filteredContacts = contacts.filter(c => 
+    `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
-  // ----- Helpers -----
   const imgSrc = (p: string | null) => {
     if (!p) return null;
-    // If backend returns '/uploads/xxx', prepend API base
     return p.startsWith("http") ? p : `${API_BASE}${p}`;
   };
 
-  // ----- Load contacts -----
   const fetchContacts = async () => {
     setLoading(true);
     setError(null);
     try {
-      // If your backend supports pagination, add ?page=1&pageSize=50
       const res = await fetch(`${API_BASE}/api/contacts`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-
-      // If your backend returns { items, total, ... }:
-      const items: Contact[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data.items)
-        ? data.items
-        : [];
-
+      const items: Contact[] = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
       setContacts(items);
     } catch (e: any) {
       setError(e?.message ?? "Failed to fetch contacts");
+      toast.error("Failed to load contacts");
     } finally {
       setLoading(false);
     }
@@ -92,26 +81,15 @@ function Contacts() {
     fetchContacts();
   }, []);
 
-  // ----- Form handlers -----
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        profileImage: file,
-      }));
-
-      // Preview image locally
+      setFormData(prev => ({ ...prev, profileImage: file }));
       const reader = new FileReader();
       reader.onloadend = () => setPreviewImage(reader.result as string);
       reader.readAsDataURL(file);
@@ -119,424 +97,360 @@ function Contacts() {
   };
 
   const removeImage = () => {
-    setFormData((prev) => ({ ...prev, profileImage: null }));
+    setFormData(prev => ({ ...prev, profileImage: null }));
     setPreviewImage(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      phone: "",
-      email: "",
-      company: "",
-      profileImage: null,
-    });
+    setFormData({ firstName: "", lastName: "", phone: "", email: "", company: "", profileImage: null });
     setPreviewImage(null);
     setEditingContact(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  //-------save or Update Contact -----
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      setError(null);
       const body = new FormData();
       body.append("firstName", formData.firstName);
       body.append("lastName", formData.lastName);
       body.append("email", formData.email);
       if (formData.phone) body.append("phone", formData.phone);
       if (formData.company) body.append("company", formData.company);
-      if (formData.profileImage) {
-        body.append("profileImage", formData.profileImage);
-      }
+      if (formData.profileImage) body.append("profileImage", formData.profileImage);
 
-      const url = editingContact
-        ? `${API_BASE}/api/contacts/${editingContact.id}`
-        : `${API_BASE}/api/contacts`;
+      const url = editingContact ? `${API_BASE}/api/contacts/${editingContact.id}` : `${API_BASE}/api/contacts`;
       const method = editingContact ? "PUT" : "POST";
 
-      const res = await fetch(url, {
-        method,
-        body,
-      });
+      const res = await fetch(url, { method, body });
       if (!res.ok) {
         const msg = await res.text();
         throw new Error(msg || `HTTP ${res.status}`);
       }
 
+      toast.success(editingContact ? "Contact updated" : "Contact added");
       await fetchContacts();
       resetForm();
       setIsModalOpen(false);
     } catch (e: any) {
-      setError(e?.message ?? "Failed to save contact");
+      toast.error(e?.message ?? "Failed to save contact");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ----- Handle Edit -----
   const handleEdit = (contact: Contact) => {
     setEditingContact(contact);
     setFormData({
       firstName: contact.firstName,
       lastName: contact.lastName,
-      phone: contact.phone,
+      phone: contact.phone || "",
       email: contact.email,
-      company: contact.company,
+      company: contact.company || "",
       profileImage: null,
     });
     setPreviewImage(imgSrc(contact.profileImage));
     setIsModalOpen(true);
   };
 
-  // ----- Handle Delete -----
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this contact?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this contact?")) return;
     try {
-      const res = await fetch(`${API_BASE}/api/contacts/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/api/contacts/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`Failed to delete contact`);
+      toast.success("Contact deleted");
       await fetchContacts();
     } catch (e: any) {
-      setError(e?.message ?? "Failed to delete contact");
+      toast.error(e?.message ?? "Failed to delete contact");
     }
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-100"}`}>
-      <main
-        className={`p-4 ${mainMarginClass} h-auto pt-20 space-y-4 transition-all duration-300`}
-      >
-        {/* Header with Add Contact button */}
-        <div className={`${isDark ? "bg-gray-800 border-gray-700 shadow-[0_0_20px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-md"} rounded-lg p-3 border flex justify-between items-center transition-colors`}>
-          <h1 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-            {editingContact ? "Edit Contact" : "Add New Contact"}
-          </h1>
-          <button
-            type="button"
-            className={`inline-flex items-center px-5 py-2.5 text-sm font-medium rounded-lg border focus:outline-none transition-all ${
-              isDark 
-                ? "bg-gray-800 text-white border-gray-600 hover:bg-gray-700 hover:border-gray-500" 
-                : "bg-white text-gray-900 border-gray-300 hover:bg-gray-100"
-            }`}
-            onClick={() => setIsModalOpen(true)}
-          >
-            <FaPlus className="w-4 h-4 me-2" />
-            Add Contact
-          </button>
-        </div>
-
-        {/* Alerts */}
-        {loading && (
-          <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Loading…
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0B1120] text-slate-300' : 'bg-gray-50 text-gray-700'}`}>
+      <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Contacts Management
+            </h1>
+            <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              Manage your address book and contact details
+            </p>
           </div>
-        )}
-        {error && (
-          <div className={`text-sm ${isDark ? "text-red-400" : "text-red-600"}`}>{error}</div>
-        )}
-
-        {/* Contact table */}
-        <div className={`overflow-x-auto overflow-y-auto h-[438px] rounded-xl border px-4 md:px-6 py-4 transition-colors ${
-          isDark 
-            ? "border-gray-700 bg-gray-900 shadow-[inset_0_0_20px_rgba(0,0,0,0.2)]" 
-            : "border-gray-200 bg-white shadow-sm"
-        }`}>
-          <table className={`w-full text-sm text-left ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-            <thead className={`rounded-t-xl transition-colors ${isDark ? "bg-gray-800" : "bg-[#eeeeee]"}`}>
-              <tr>
-                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                  Profile
-                </th>
-                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                  Name
-                </th>
-                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                  Phone
-                </th>
-                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                  Email
-                </th>
-                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                  Company
-                </th>
-                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className={`divide-y transition-colors ${isDark ? "divide-gray-700" : "divide-gray-200"}`}>
-              {!loading && contacts.length === 0 && (
-                <tr>
-                  <td
-                    className={`px-6 py-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                    colSpan={6}
-                  >
-                    No contacts found.
-                  </td>
-                </tr>
-              )}
-
-              {contacts.map((contact) => (
-                <tr
-                  key={contact.id}
-                  className={`transition-colors ${isDark ? "hover:bg-gray-800/50" : "hover:bg-gray-50"}`}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {contact.profileImage ? (
-                      <img
-                        src={imgSrc(contact.profileImage) || ""}
-                        alt="Profile"
-                        className="w-10 h-10 rounded-full object-cover border border-gray-700"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <FaUserCircle className="w-10 h-10 text-gray-400" />
-                    )}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
-                    {`${contact.firstName} ${contact.lastName}`}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {contact.phone || "—"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {contact.email}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {contact.company || "—"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      className={`hover:underline mr-3 font-medium transition-colors ${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600"}`}
-                      onClick={() => handleEdit(contact)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={`hover:underline font-medium transition-colors ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600"}`}
-                      onClick={() => handleDelete(contact.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isDark ? 'text-slate-500 group-focus-within:text-cyan-400' : 'text-gray-400 group-focus-within:text-cyan-600'}`} />
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`pl-10 pr-4 py-2 rounded-xl text-sm border transition-all outline-none w-full md:w-64 ${
+                  isDark 
+                    ? 'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50' 
+                    : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'
+                }`}
+              />
+            </div>
+            
+            <button
+              onClick={() => { resetForm(); setIsModalOpen(true); }}
+              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                isDark 
+                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 shadow-lg shadow-cyan-500/10' 
+                  : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              Add Contact
+            </button>
+          </div>
         </div>
 
-        {/* Add Contact Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm transition-all">
-            <div className={`rounded-2xl shadow-2xl w-full max-w-2xl border transition-all ${
-              isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-            }`}>
-              <div className={`flex justify-between items-center border-b p-4 ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                  {editingContact ? "Edit Contact" : "Add New Contact"}
-                </h2>
-                <button
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                  className={`p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`}
-                >
-                  <FaTimes className="w-5 h-5" />
-                </button>
-              </div>
+        {/* Contacts Table Card */}
+        <div className={`relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all ${
+          isDark ? 'bg-white/5 border-white/10 shadow-2xl' : 'bg-white border-gray-200 shadow-xl'
+        }`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className={`${isDark ? 'bg-white/5' : 'bg-gray-50'} border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Profile</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Full Name</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Phone</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Email</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Company</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDark ? 'divide-white/5' : 'divide-gray-100'}`}>
+                {loading && contacts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm font-medium animate-pulse">Loading contacts...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredContacts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3 opacity-50">
+                        <FaUserCircle className="w-12 h-12" />
+                        <p className="text-sm font-medium">No contacts found</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredContacts.map((contact) => (
+                    <tr key={contact.id} className={`group transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'}`}>
+                      <td className="px-6 py-4">
+                        <div className="relative">
+                          {contact.profileImage ? (
+                            <img
+                              src={imgSrc(contact.profileImage) || ""}
+                              alt=""
+                              className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-cyan-500/50 transition-all"
+                            />
+                          ) : (
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-white/10 group-hover:ring-cyan-500/50 transition-all ${isDark ? 'bg-white/5 text-slate-500' : 'bg-gray-100 text-gray-400'}`}>
+                              <User className="w-5 h-5" />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {contact.firstName} {contact.lastName}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="w-3.5 h-3.5 opacity-50" />
+                          {contact.phone || "—"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 opacity-50" />
+                          {contact.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                          isDark 
+                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+                            : 'bg-blue-50 text-blue-600 border-blue-100'
+                        }`}>
+                          <Building2 className="w-3 h-3" />
+                          {contact.company || "Personal"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleEdit(contact)}
+                            className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-cyan-50 text-cyan-600'}`}
+                            title="Edit Contact"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(contact.id)}
+                            className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-red-500/20 text-red-400' : 'hover:bg-red-50 text-red-600'}`}
+                            title="Delete Contact"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-              <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                {/* Profile Image Upload */}
-                <div className="flex flex-col items-center">
-                  <div className="relative mb-4">
-                    {previewImage ? (
-                      <>
-                        <img
-                          src={previewImage}
-                          alt="Profile preview"
-                          className="w-24 h-24 rounded-full object-cover border-2 border-blue-500/50 shadow-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeImage}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-md transition-all"
-                        >
-                          <FaTrash className="w-2.5 h-2.5" />
-                        </button>
-                      </>
-                    ) : (
-                      <FaUserCircle className="w-24 h-24 text-gray-400 dark:text-gray-600" />
-                    )}
-                  </div>
-                  <label className="cursor-pointer group">
-                    <span className={`text-sm font-medium px-5 py-2 rounded-xl transition-all ${
-                      isDark 
-                        ? "bg-gray-700 text-white hover:bg-gray-600" 
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}>
-                      {previewImage ? "Change Image" : "Upload Image"}
-                    </span>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                  </label>
+        {/* Add/Edit Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-[#0B1120]/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+            
+            <div className={`relative w-full max-w-lg overflow-hidden rounded-3xl border shadow-2xl animate-in fade-in zoom-in duration-200 ${
+              isDark ? 'bg-[#151B2B] border-white/10' : 'bg-white border-gray-200'
+            }`}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {editingContact ? 'Edit Contact' : 'New Contact'}
+                  </h3>
+                  <button 
+                    onClick={() => setIsModalOpen(false)}
+                    className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4">
-                  {/* Name Row */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Image Upload Area */}
+                  <div className="flex flex-col items-center gap-3 py-2">
+                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      {previewImage ? (
+                        <img src={previewImage} alt="Preview" className="w-24 h-24 rounded-2xl object-cover ring-2 ring-cyan-500/50 shadow-xl" />
+                      ) : (
+                        <div className={`w-24 h-24 rounded-2xl flex items-center justify-center border-2 border-dashed transition-all ${isDark ? 'bg-white/5 border-white/10 hover:border-cyan-500/50 text-slate-500' : 'bg-gray-50 border-gray-200 hover:border-cyan-500 text-gray-400'}`}>
+                          <Plus className="w-8 h-8" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                        <p className="text-[10px] text-white font-bold uppercase tracking-wider">Change</p>
+                      </div>
+                    </div>
+                    <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                    <p className="text-xs text-slate-500 font-medium">Upload profile photo</p>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="firstName"
-                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                      >
-                        First Name *
-                      </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">First Name</label>
                       <input
-                        type="text"
-                        id="firstName"
+                        required
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        required
-                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
-                          isDark 
-                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
-                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
                         }`}
                       />
                     </div>
-                    <div>
-                      <label
-                        htmlFor="lastName"
-                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                      >
-                        Last Name *
-                      </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Last Name</label>
                       <input
-                        type="text"
-                        id="lastName"
+                        required
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        required
-                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
-                          isDark 
-                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
-                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
                         }`}
                       />
                     </div>
                   </div>
 
-                  {/* Contact Info Row */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Email Address</label>
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                        isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
+                      }`}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                      >
-                        Phone
-                      </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Phone Number</label>
                       <input
-                        type="tel"
-                        id="phone"
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
-                          isDark 
-                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
-                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
                         }`}
                       />
                     </div>
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                      >
-                        Email *
-                      </label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Company</label>
                       <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
+                        name="company"
+                        value={formData.company}
                         onChange={handleInputChange}
-                        required
-                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
-                          isDark 
-                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
-                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
                         }`}
                       />
                     </div>
                   </div>
 
-                  {/* Company Dropdown */}
-                  <div>
-                    <label
-                      htmlFor="company"
-                      className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
-                    >
-                      Company
-                    </label>
-                    <select
-                      id="company"
-                      name="company"
-                      value={formData.company}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
-                        isDark 
-                          ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50" 
-                          : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500"
+                  <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        isDark ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
-                      <option value="">Select a company</option>
-                      {companies.map((company) => (
-                        <option key={company.id} value={company.name}>
-                          {company.name}
-                        </option>
-                      ))}
-                    </select>
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${
+                        isDark 
+                          ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30' 
+                          : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20'
+                      }`}
+                    >
+                      {loading ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : <Check className="w-4 h-4" />}
+                      {editingContact ? 'Update Contact' : 'Save Contact'}
+                    </button>
                   </div>
-                </div>
-
-                <div className={`flex justify-end space-x-3 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      resetForm();
-                    }}
-                    className={`px-5 py-2.5 text-sm font-medium rounded-xl transition-all ${
-                      isDark 
-                        ? "bg-gray-700 text-white hover:bg-gray-600" 
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
-                  >
-                    {editingContact ? "Update Contact" : "Save Contact"}
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
           </div>
         )}

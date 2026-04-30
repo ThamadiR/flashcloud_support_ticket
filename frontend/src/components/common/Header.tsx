@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import FlashLogo from "../../assets/assets/logo.png";
 import { Link } from "react-router-dom";
 import React from "react";
-import { useSearch } from "../../context/SearchContext";
 import { useDrawer } from "../../context/DrawerContext";
 import { useTheme } from "../../context/ThemeContext";
 import "flowbite";
@@ -29,7 +28,7 @@ const Bars3Icon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 const Header: React.FC = () => {
-  const { searchTerm, setSearchTerm } = useSearch();
+
 
   const { isDark, toggleTheme } = useTheme();
 
@@ -124,59 +123,11 @@ const Header: React.FC = () => {
                 alt="Flowbite Logo"
               />
             </a>
-            <form action="#" method="GET" className="hidden md:block md:pl-2">
-              <label htmlFor="topbar-search" className="sr-only">
-                Search
-              </label>
-              <div className="relative md:w-64 md:w-96">
-                <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                  <svg
-                    className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
-                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                    ></path>
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  id="topbar-search"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
-            </form>
+
           </div>
 
           <div className="flex items-center lg:order-2">
-            <button
-              type="button"
-              data-drawer-toggle="drawer-navigation"
-              aria-controls="drawer-navigation"
-              className="p-2 mr-1 text-gray-500 rounded-lg md:hidden hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-            >
-              <span className="sr-only">Toggle search</span>
-              <svg
-                aria-hidden="true"
-                className="w-6 h-6"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  clip-rule="evenodd"
-                  fill-rule="evenodd"
-                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                ></path>
-              </svg>
-            </button>
+
 
             <button
               type="button"
@@ -337,7 +288,7 @@ const Header: React.FC = () => {
       </nav>
 
       <aside
-        className={`fixed top-10 left-0 z-40 h-[calc(100vh-56px)]
+        className={`fixed top-14 left-0 z-40 h-[calc(100vh-56px)]
               transition-all duration-300 bg-white dark:bg-gray-800 
               border-r border-gray-200 dark:border-gray-700
               ${isDrawerOpen ? "w-64" : "w-20"}
@@ -345,34 +296,7 @@ const Header: React.FC = () => {
         id="drawer-navigation"
       >
         <div className="overflow-y-auto pt-12 pb-6 px-4 h-full">
-          <form action="#" method="GET" className="md:hidden mb-2">
-            <label htmlFor="sidebar-search" className="sr-only">
-              Search
-            </label>
-            <div className="relative">
-              <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                <svg
-                  className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                  ></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                name="search"
-                id="sidebar-search"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                placeholder="Search"
-              />
-            </div>
-          </form>
+
           <ul className="space-y-2">
             <li>
               <Link
@@ -495,7 +419,101 @@ const Header: React.FC = () => {
                 </span>
               </Link>
             </li>
+            <li>
+              <Link
+                to="/tenants"
+                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+                <span
+                  className={`ml-3 whitespace-nowrap transition-all duration-300 
+                              ${
+                                !isDrawerOpen
+                                  ? "opacity-0 hidden"
+                                  : "opacity-100 block"
+                              }
+                            `}
+                >
+                  Tenants
+                </span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/servers"
+                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 1h10v3H5V6zm0 5h10v3H5v-3z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+                <span
+                  className={`ml-3 whitespace-nowrap transition-all duration-300 
+                              ${
+                                !isDrawerOpen
+                                  ? "opacity-0 hidden"
+                                  : "opacity-100 block"
+                              }
+                            `}
+                >
+                  Servers
+                </span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/customizations"
+                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+              >
+                <svg
+                  aria-hidden="true"
+                  className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm3 2v2h8V5H6zm0 4v2h8V9H6zm0 4v2h8v-2H6z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+                <span
+                  className={`ml-3 whitespace-nowrap transition-all duration-300 
+                              ${
+                                !isDrawerOpen
+                                  ? "opacity-0 hidden"
+                                  : "opacity-100 block"
+                              }
+                            `}
+                >
+                  Customizations
+                </span>
+              </Link>
+            </li>
           </ul>
+
           {/* Removed Reports Dropdown */}
 
           <ul className="pt-5 mt-5 space-y-2 border-t border-gray-200 dark:border-gray-700">

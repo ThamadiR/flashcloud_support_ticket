@@ -408,90 +408,88 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
   };
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${isDark ? 'bg-[#030712] text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="flex">
-        <main className={`flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 ${mainMarginClass}`}>
-          <div className="mx-auto max-w-7xl">
+    <div className={`min-h-screen flex flex-col transition-all duration-300 ${isDark ? 'bg-[#030712] text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="flex-grow">
+        <main className={`p-4 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-24 transition-all duration-300`}>
+          <div className={`w-full rounded-3xl border p-4 backdrop-blur-xl sm:p-6 transition-all duration-300 ${
+            isDark 
+              ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]' 
+              : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
+          }`}>
             {/* Header section */}
-            <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className={`mb-6 flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-center lg:justify-between ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
               <div>
                 <button
                   type="button"
                   onClick={() => navigate('/companies')}
-                  className={`mb-4 flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-all ${
-                    isDark 
-                      ? 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20' 
-                      : 'border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-300'
-                  }`}
+                  className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-all duration-300 ${isDark
+                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                      : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300'
+                    }`}
                 >
                   <ArrowLeft size={14} />
                   Back to Company List
                 </button>
-                <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border transition-all ${
-                    isDark 
-                      ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.15)]' 
-                      : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-[0_0_15px_rgba(34,211,238,0.1)]'
-                  }`}>
-                    <ServerCog size={24} />
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 ${isDark
+                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
+                      : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-sm'
+                    }`}>
+                    <ServerCog size={20} />
                   </div>
                   <div>
-                    <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Server List</h1>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {companyName ? `Showing server records for ${companyName}.` : 'Showing all server records in the database.'}
+                    <h1 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      {companyName ? `${companyName} Servers` : 'Server List'}
+                    </h1>
+                    <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                      {companyName
+                        ? `Showing server records for ${companyName}.`
+                        : 'Open servers from a company row to view company-specific records.'}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className={`relative flex items-center gap-3 rounded-2xl border px-4 py-2.5 transition-all focus-within:ring-2 ${
-                  isDark 
-                    ? 'border-white/10 bg-white/5 focus-within:border-cyan-400/40 focus-within:ring-cyan-400/20' 
-                    : 'border-gray-200 bg-white focus-within:border-cyan-500/40 focus-within:ring-cyan-500/10 shadow-sm'
-                }`}>
-                  <Search size={18} className={isDark ? 'text-cyan-400/60' : 'text-cyan-600/60'} />
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <label className={`flex w-full max-w-md items-center gap-3 rounded-2xl border px-4 py-3 shadow-inner transition-all duration-300 focus-within:ring-2 ${isDark
+                    ? 'border-white/10 bg-black/20 text-slate-300 shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30'
+                    : 'border-gray-200 bg-gray-50 text-gray-700 shadow-gray-100 focus-within:border-cyan-500/40 focus-within:bg-white'
+                  }`}>
+                  <Search size={16} className={`shrink-0 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} />
                   <input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search servers..."
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500 min-w-[240px]"
+                    placeholder="Search name, IP address, or label"
+                    className={`w-full bg-transparent text-sm outline-none placeholder:text-slate-500 ${isDark ? 'text-white' : 'text-gray-900'}`}
                   />
-                </div>
+                </label>
+
                 <button
                   type="button"
                   onClick={openAddServerModal}
-                  className={`flex h-[46px] items-center gap-2 rounded-2xl border px-6 text-sm font-semibold transition-all shadow-lg active:scale-95 ${
-                    isDark 
-                      ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
-                      : 'border-cyan-600 bg-cyan-600 text-white hover:bg-cyan-700 hover:shadow-cyan-500/20'
-                  }`}
+                  className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
+                      ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                      : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
+                    }`}
                 >
-                  <Plus size={18} />
-                  Add Server
+                  <Plus size={15} /> Add
                 </button>
               </div>
             </div>
 
             {error ? (
-              <div className="mb-6 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-300 flex items-center gap-3">
-                <div className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+              <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
                 {error}
               </div>
             ) : null}
 
             {loading ? (
-              <div className={`flex flex-col items-center justify-center rounded-3xl border border-dashed py-24 text-center ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-cyan-500/20 border-t-cyan-500" />
-                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Loading server records...</p>
+              <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-slate-300">
+                Loading servers...
               </div>
             ) : filteredServers.length === 0 ? (
-              <div className={`flex flex-col items-center justify-center rounded-3xl border border-dashed py-24 text-center ${isDark ? 'border-white/10 bg-white/5 text-slate-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
-                <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isDark ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
-                  <ServerCog size={32} className="opacity-20" />
-                </div>
-                <p className="font-medium">No server records found.</p>
-                <p className="mt-1 text-sm opacity-60">Try adjusting your search criteria.</p>
+              <div className={`rounded-3xl border border-dashed px-6 py-16 text-center text-sm ${isDark ? 'border-white/10 bg-white/5 text-slate-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                No server records found.
               </div>
             ) : (
               <div className={`overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 ${isDark ? 'border-white/10 bg-white/5 shadow-black/40' : 'border-gray-200 bg-white shadow-gray-200/20'}`}>
@@ -765,6 +763,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
             )}
           </div>
 
+
           {/* Add Server Modal */}
           {isAddServerModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
@@ -889,10 +888,10 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                     type="button"
                     onClick={addServerStep === addServerWizardSteps.length ? handleCreateServer : handleAddServerNext}
                     disabled={isCreatingServer}
-                    className={`h-[42px] rounded-xl px-6 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                    className={`h-[42px] rounded-xl border px-6 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                       isDark 
                         ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
-                        : 'border-cyan-600 bg-cyan-600 text-white hover:bg-cyan-700'
+                        : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm'
                     }`}
                   >
                     {isCreatingServer ? 'Saving...' : addServerStep === addServerWizardSteps.length ? 'Create Server' : 'Next'}
@@ -904,36 +903,39 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
           {/* Edit Server Modal */}
           {isEditServerModalOpen && editingServer && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-slate-950/60" onClick={closeEditServerModal} />
-              <div className={`relative w-full max-w-lg rounded-3xl border p-6 shadow-2xl ${isDark ? 'border-white/10 bg-[#0b1729]' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-6 flex items-center justify-between">
-                  <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Server</h3>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+              <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Server</h2>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                      Update server record for {editingServer.company?.name || 'N/A'}.
+                    </p>
+                  </div>
                   <button
+                    type="button"
                     onClick={closeEditServerModal}
-                    className={`rounded-full p-2 transition-all ${
+                    className={`rounded-full border p-2 transition-all ${
                       isDark 
-                        ? 'text-slate-400 hover:bg-white/5 hover:text-white' 
-                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <X size={20} />
+                    <X size={16} />
                   </button>
                 </div>
 
-                <form onSubmit={handleUpdateServer} className="space-y-5">
+                <form onSubmit={handleUpdateServer} className="space-y-4">
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      IP Address
-                    </label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
                     <input
                       type="text"
                       value={editForm.ipAddress}
                       onChange={(e) => setEditForm({ ...editForm, ipAddress: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
                         isDark 
-                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50' 
-                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
                       }`}
                       placeholder="e.g. 192.168.1.1"
                       required
@@ -941,30 +943,28 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Label
-                    </label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
                     <input
                       type="text"
                       value={editForm.label}
                       onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
                         isDark 
-                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50' 
-                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
                       }`}
                       placeholder="e.g. Main Server"
                     />
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4">
+                  <div className="flex justify-end gap-3 pt-2">
                     <button
                       type="button"
                       onClick={closeEditServerModal}
-                      className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${
+                      className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${
                         isDark 
-                          ? 'text-slate-400 hover:bg-white/5 hover:text-white' 
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
+                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                     >
                       Cancel
@@ -972,9 +972,13 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                     <button
                       type="submit"
                       disabled={isUpdatingServer}
-                      className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-500 disabled:opacity-50"
+                      className={`h-[42px] rounded-xl border px-4 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                        isDark 
+                          ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                          : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm'
+                      }`}
                     >
-                      {isUpdatingServer ? 'Updating...' : 'Update Server'}
+                      {isUpdatingServer ? 'Saving...' : 'Update Server'}
                     </button>
                   </div>
                 </form>

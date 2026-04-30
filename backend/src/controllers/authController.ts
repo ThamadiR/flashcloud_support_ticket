@@ -89,20 +89,8 @@ export class AuthController {
 
   register = async (req: Request, res: Response) => {
     try {
-      const { fname, lname, email, password, roleId, status } = req.body;
-
-      // Validate fields
-      if (!fname || !lname || !email || !password || !roleId || !status) {
-        return res.status(400).json({ message: 'All fields are required' });
-      }
-
-      // Check if email already exists
-      const existingUser = await getUserByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ message: 'Email already exists' });
-      }
-
-      // Try authService first
+      // The frontend sends { username, email, password, confirmPassword, contactNo }
+      // We try the authService first as it contains the correct logic for the current frontend.
       try {
         const result = await this.authService.register(req.body);
         return res.status(201).json(result);
@@ -110,29 +98,8 @@ export class AuthController {
         if (serviceError instanceof ApiError) {
           return res.status(serviceError.statusCode).json({ error: serviceError.message });
         }
+        throw serviceError; // Rethrow to be caught by the outer catch
       }
-
-      // Fallback — manual register
-      const newUser = await createUser({
-        fname,
-        lname,
-        email,
-        password,
-        roleId: Number(roleId),
-        status,
-      });
-
-      return res.status(201).json({
-        message: 'User created successfully',
-        user: {
-          id:     newUser.id,
-          fname:  newUser.fname,
-          lname:  newUser.lname,
-          email:  newUser.email,
-          roleId: newUser.roleId,
-          status: newUser.status,
-        },
-      });
 
     } catch (error: unknown) {
       if (error instanceof ApiError) {
