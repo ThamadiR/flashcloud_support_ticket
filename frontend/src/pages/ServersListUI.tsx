@@ -35,13 +35,7 @@ type ServersListUIProps = {
   onUnauthorized: () => void;
 };
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleString();
-}
+
 
 export default function ServersListUI({ token, onUnauthorized }: ServersListUIProps) {
   const navigate = useNavigate();
@@ -676,7 +670,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                   </th>
                   <th className="px-5 py-4 font-semibold">
                     <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
-                      <span>Created</span>
+                      <span>CREATED_AT</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -752,7 +746,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         server.label || '-'
                       )}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-400">{formatDate(server.createdAt)}</td>
+                    <td className="px-5 py-4 text-sm text-slate-400">{server.createdAt ?? '—'}</td>
                     <td className="px-5 py-4 text-sm text-slate-300">
                       {editingServerId === server.id ? (
                         <div className="flex items-center gap-2">

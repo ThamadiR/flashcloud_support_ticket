@@ -35,13 +35,6 @@ type TenantsListUIProps = {
   onUnauthorized: () => void;
 };
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleString();
-}
 
 export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIProps) {
   const navigate = useNavigate();
@@ -368,7 +361,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                   <th className="px-5 py-4 font-semibold">Company ID</th>
                   <th className="px-5 py-4 font-semibold">Name</th>
                   <th className="px-5 py-4 font-semibold">Description</th>
-                  <th className="px-5 py-4 font-semibold">Created</th>
+                  <th className="px-5 py-4 font-semibold">CREATED_AT</th>
                   <th className="px-5 py-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -400,7 +393,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                         item.description || 'No description provided'
                       )}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-400">{formatDate(item.createdAt)}</td>
+                    <td className="px-5 py-4 text-sm text-slate-400">{item.createdAt ?? '—'}</td>
                     <td className="px-5 py-4 text-sm text-slate-300">
                       {editingTenantId === item.id ? (
                         <div className="flex items-center gap-2">

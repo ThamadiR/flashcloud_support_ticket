@@ -5,10 +5,12 @@ import { ArrowUpDown, ChevronLeft, ChevronRight, Download, Edit2, Plus, Search, 
 import * as XLSX from 'xlsx';
 import { Label } from 'flowbite-react';
 import { API_BASE_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
+import { useDrawer } from '../context/DrawerContext';
 
 type CompanyListUIProps = {
-  isDark: boolean;
-  isSidebarMinimized: boolean;
+  isDark?: boolean;
+  isSidebarMinimized?: boolean;
   token: string;
   onUnauthorized: () => void;
 };
@@ -23,7 +25,11 @@ type CompanyRecord = {
   updatedAt: string;
 };
 
-export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUnauthorized }: CompanyListUIProps) {
+export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIProps) {
+  const { isDark } = useTheme();
+  const { isDrawerOpen } = useDrawer();
+  const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
+  const isSidebarMinimized = !isDrawerOpen;
   const navigate = useNavigate();
   const idSortMenuRef = useRef<HTMLDivElement>(null);
   const nameSortMenuRef = useRef<HTMLDivElement>(null);
@@ -42,12 +48,22 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
   const [isDescriptionSortMenuOpen, setIsDescriptionSortMenuOpen] = useState(false);
   const [isTenantCountSortMenuOpen, setIsTenantCountSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
-  const [isUpdatedAtSortMenuOpen, setIsUpdatedAtSortMenuOpen] = useState(false);
   const [companies, setCompanies] = useState<CompanyRecord[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [activeCustomizationCompanyId, setActiveCustomizationCompanyId] = useState<number | null>(null);
+  const [customizationRecords, setCustomizationRecords] = useState<any[]>([]);
+  const [loadingCustomizations, setLoadingCustomizations] = useState(false);
+  const [activeServerCompanyId, setActiveServerCompanyId] = useState<number | null>(null);
+  const [serverRecords, setServerRecords] = useState<any[]>([]);
+  const [loadingServers, setLoadingServers] = useState(false);
+
+  const [activeTenantCompanyId, setActiveTenantCompanyId] = useState<number | null>(null);
+  const [tenantRecords, setTenantRecords] = useState<any[]>([]);
+  const [loadingTenants, setLoadingTenants] = useState(false);
+
   const [companyForm, setCompanyForm] = useState({
     name: '',
     description: '',
@@ -162,15 +178,24 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
     { step: 4, title: 'Step 4: SIP configs form' },
   ];
 
-  const mapApiCompany = (company: any): CompanyRecord => ({
-    id: Number(company.id),
-    name: String(company.name || ''),
-    description: String(company.description || ''),
-    email: String(company.email || ''),
-    tenantCount: Number(company.tenantCount || 0),
-    createdAt: formatDateTime(new Date(company.createdAt)),
-    updatedAt: formatDateTime(new Date(company.updatedAt)),
-  });
+  const mapApiCompany = (company: any): CompanyRecord => {
+    const parseDate = (d: any) => {
+      if (!d) return 'N/A';
+      const dateObj = new Date(d);
+      if (isNaN(dateObj.getTime())) return 'N/A';
+      return formatDateTime(dateObj);
+    };
+
+    return {
+      id: Number(company.id),
+      name: String(company.name || ''),
+      description: String(company.description || ''),
+      email: String(company.email || ''),
+      tenantCount: Number(company.tenantCount || 0),
+      createdAt: parseDate(company.createdAt),
+      updatedAt: parseDate(company.updatedAt),
+    };
+  };
 
   const getApiErrorMessage = async (response: Response, fallback: string) => {
     const rawBody = await response.text().catch(() => '');
@@ -210,13 +235,69 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
       }
 
       const data = await response.json();
-      const rows = Array.isArray(data.companies) ? data.companies.map(mapApiCompany) : [];
+      const rows = Array.isArray(data) ? data.map(mapApiCompany) : [];
       setCompanies(rows);
     } catch (error) {
       console.error('Fetch companies error:', error);
       toast.error('Unable to load companies');
     } finally {
       setLoadingCompanies(false);
+    }
+  };
+
+  const fetchCompanyCustomizations = async (companyId: number) => {
+    try {
+      setLoadingCustomizations(true);
+      const response = await fetch(`${API_BASE_URL}/api/customizations?companyId=${companyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch customizations');
+      }
+      const data = await response.json();
+      setCustomizationRecords(data.customizations || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not load customizations');
+      setCustomizationRecords([]);
+    } finally {
+      setLoadingCustomizations(false);
+    }
+  };
+
+  const fetchCompanyServers = async (companyId: number) => {
+    try {
+      setLoadingServers(true);
+      const response = await fetch(`${API_BASE_URL}/api/servers?companyId=${companyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch servers');
+      const data = await response.json();
+      setServerRecords(data.servers || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not load servers');
+      setServerRecords([]);
+    } finally {
+      setLoadingServers(false);
+    }
+  };
+
+  const fetchCompanyTenants = async (companyId: number) => {
+    try {
+      setLoadingTenants(true);
+      const response = await fetch(`${API_BASE_URL}/api/tenants?companyId=${companyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch tenants');
+      const data = await response.json();
+      setTenantRecords(data.tenants || []);
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not load tenants');
+      setTenantRecords([]);
+    } finally {
+      setLoadingTenants(false);
     }
   };
 
@@ -575,10 +656,10 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
     : companies.find((company) => company.id === editingCompanyId) || null;
   const isEditingCompany = editingCompanyId !== null;
 
-  const actionTooltipClass = `action-tooltip pointer-events-none absolute -top-9 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-semibold text-sky-50 shadow-lg opacity-0 transition-opacity duration-75 ease-out peer-hover:opacity-100 peer-focus-visible:opacity-100 ${
+  const actionTooltipClass = `action-tooltip pointer-events-none absolute -top-9 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-bold shadow-xl opacity-0 transition-all duration-150 ease-out peer-hover:opacity-100 peer-focus-visible:opacity-100 ${
     isDark
-      ? 'bg-[#0B1220] border border-white/10'
-      : 'bg-slate-900 border border-slate-700'
+      ? 'bg-slate-950 text-sky-200 border border-sky-500/30 shadow-sky-500/10'
+      : 'bg-slate-900 text-slate-100 border border-slate-800'
   }`;
 
   useEffect(() => {
@@ -593,7 +674,6 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
     setIsDescriptionSortMenuOpen(false);
     setIsTenantCountSortMenuOpen(false);
     setIsCreatedAtSortMenuOpen(false);
-    setIsUpdatedAtSortMenuOpen(false);
   };
 
   const applyColumnSort = (field: 'id' | 'name' | 'description' | 'tenantCount' | 'createdAt' | 'updatedAt', nextSortOrder: 'asc' | 'desc') => {
@@ -683,8 +763,11 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
   };
 
   return (
-    <>
-    <div className="mt-4 w-full">
+    <div className="min-h-screen flex flex-col">
+      {/* Main content area that will grow to push footer down */}
+      <div className="flex-grow">
+        <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
+          <div className="mt-4 w-full">
       <div className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5 pl-2 border-b pb-3 ${isDark ? 'border-white/5' : 'border-gray-200'}`}>
         <h3 className={`text-[1.1rem] font-medium tracking-wide ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
           Company List
@@ -738,7 +821,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
         </div>
       </div>
 
-      <div className={`rounded-2xl px-3 pb-3 pt-2 table-animated-surface ${isDark ? 'table-animated-surface--dark' : 'table-animated-surface--light'} ${
+      <div className={`w-full max-w-full rounded-2xl px-3 pb-3 pt-2 table-animated-surface ${isDark ? 'table-animated-surface--dark' : 'table-animated-surface--light'} ${
         isDark
           ? 'bg-gradient-to-b from-[#10131D]/95 to-[#0D1018]/95 shadow-[0_22px_50px_rgba(0,0,0,0.45)]'
           : 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)]'
@@ -758,7 +841,6 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         setIsDescriptionSortMenuOpen(false);
                         setIsTenantCountSortMenuOpen(false);
                         setIsCreatedAtSortMenuOpen(false);
-                        setIsUpdatedAtSortMenuOpen(false);
                       }}
                       className={`rounded-md p-1 transition-colors ${
                         isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
@@ -808,245 +890,27 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                   </div>
                 </th>
                 <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
+                  <div className="relative inline-flex items-center gap-2">
                     <span>name</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsNameSortMenuOpen(prev => !prev);
-                        setIsIdSortMenuOpen(false);
-                        setIsDescriptionSortMenuOpen(false);
-                        setIsTenantCountSortMenuOpen(false);
-                        setIsCreatedAtSortMenuOpen(false);
-                        setIsUpdatedAtSortMenuOpen(false);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort name"
-                      title="Sort name"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isNameSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('name', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'name' && sortOrder === 'asc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('name', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'name' && sortOrder === 'desc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </th>
                 <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={descriptionSortMenuRef}>
-                    <span>description</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsDescriptionSortMenuOpen(prev => !prev);
-                        setIsIdSortMenuOpen(false);
-                        setIsNameSortMenuOpen(false);
-                        setIsTenantCountSortMenuOpen(false);
-                        setIsCreatedAtSortMenuOpen(false);
-                        setIsUpdatedAtSortMenuOpen(false);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort description"
-                      title="Sort description"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isDescriptionSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('description', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'description' && sortOrder === 'asc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('description', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'description' && sortOrder === 'desc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
+                  <div className="relative inline-flex items-center gap-2">
+                    <span>email</span>
                   </div>
                 </th>
                 <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
+                  <div className="relative inline-flex items-center gap-2">
                     <span>tenant_count</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsTenantCountSortMenuOpen(prev => !prev);
-                        setIsIdSortMenuOpen(false);
-                        setIsNameSortMenuOpen(false);
-                        setIsDescriptionSortMenuOpen(false);
-                        setIsCreatedAtSortMenuOpen(false);
-                        setIsUpdatedAtSortMenuOpen(false);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort tenant count"
-                      title="Sort tenant count"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isTenantCountSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('tenantCount', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'tenantCount' && sortOrder === 'asc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('tenantCount', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'tenantCount' && sortOrder === 'desc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </th>
                 <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
+                  <div className="relative inline-flex items-center gap-2">
                     <span>created_at</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsCreatedAtSortMenuOpen(prev => !prev);
-                        setIsIdSortMenuOpen(false);
-                        setIsNameSortMenuOpen(false);
-                        setIsDescriptionSortMenuOpen(false);
-                        setIsTenantCountSortMenuOpen(false);
-                        setIsUpdatedAtSortMenuOpen(false);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort created at"
-                      title="Sort created at"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isCreatedAtSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('createdAt', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'createdAt' && sortOrder === 'asc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('createdAt', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'createdAt' && sortOrder === 'desc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </th>
+
+
 
                 <th className={`px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase text-center ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                   Actions
@@ -1097,7 +961,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
                   >
                     <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
-                      {company.description}
+                      {company.email}
                     </span>
                   </td>
 
@@ -1129,6 +993,8 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
 
 
 
+
+
                   <td
                     className={`rounded-r-xl transition-colors ${
                       isDark
@@ -1138,10 +1004,13 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                     style={{ padding: isSidebarMinimized ? '12px 20px' : '12px 16px' }}
                   >
                     <div className="flex items-center justify-center gap-1.5">
-                      <div className="relative">
+                      <div className="relative group">
                         <button
                           type="button"
-                          onClick={() => navigate(`/customizations?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
+                          onClick={() => {
+                            setActiveCustomizationCompanyId(company.id);
+                            fetchCompanyCustomizations(company.id);
+                          }}
                           className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
                             isDark
                               ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.22)] hover:bg-cyan-500/20 hover:shadow-[0_0_18px_rgba(34,211,238,0.38)]'
@@ -1155,10 +1024,13 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         <span className={actionTooltipClass}>Customization</span>
                       </div>
 
-                      <div className="relative">
+                      <div className="relative group">
                         <button
                           type="button"
-                          onClick={() => navigate(`/servers?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
+                          onClick={() => {
+                            setActiveServerCompanyId(company.id);
+                            fetchCompanyServers(company.id);
+                          }}
                           className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
                             isDark
                               ? 'border-violet-400/40 bg-violet-500/10 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.22)] hover:bg-violet-500/20 hover:shadow-[0_0_18px_rgba(139,92,246,0.38)]'
@@ -1172,10 +1044,13 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         <span className={actionTooltipClass}>Servers</span>
                       </div>
 
-                      <div className="relative">
+                      <div className="relative group">
                         <button
                           type="button"
-                          onClick={() => navigate(`/tenants?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
+                          onClick={() => {
+                            setActiveTenantCompanyId(company.id);
+                            fetchCompanyTenants(company.id);
+                          }}
                           className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
                             isDark
                               ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 shadow-[0_0_12px_rgba(34,197,94,0.22)] hover:bg-emerald-500/20 hover:shadow-[0_0_18px_rgba(34,197,94,0.38)]'
@@ -1189,7 +1064,7 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
                         <span className={actionTooltipClass}>Tenants</span>
                       </div>
 
-                      <div className="relative">
+                      <div className="relative group">
                         <button
                           type="button"
                           onClick={() => openEditCompanyModal(company)}
@@ -1279,6 +1154,338 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
         )}
       </div>
     </div>
+
+    {activeCustomizationCompanyId !== null && (
+      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`w-full max-w-4xl rounded-2xl border p-6 ${
+          isDark
+            ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(6,182,212,0.25)]'
+            : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(6,182,212,0.15)]'
+        }`}>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <h4 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Company Customizations
+            </h4>
+            <button
+              type="button"
+              onClick={() => setActiveCustomizationCompanyId(null)}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${
+                isDark
+                  ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+              aria-label="Close customization modal"
+              title="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {loadingCustomizations ? (
+            <div className="text-center py-12 text-gray-500 text-sm">Loading customizations...</div>
+          ) : customizationRecords.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 text-sm">No customizations found for this company.</div>
+          ) : (
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-separate [border-spacing:0_8px]">
+                <thead>
+                  <tr className={`text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-cyan-200/70' : 'text-cyan-600'}`}>
+                    <th className="px-5 py-3">Name</th>
+                    <th className="px-5 py-3">Subsection</th>
+                    <th className="px-5 py-3">Description</th>
+                    <th className="px-5 py-3">Tenant Count</th>
+                    <th className="px-5 py-3">Created At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customizationRecords.map((item, idx) => (
+                    <tr key={item.id || idx} className="group transition-transform duration-200 hover:-translate-y-[1px]">
+                      <td
+                        className={`rounded-l-xl transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-semibold tracking-wide ${isDark ? 'text-cyan-200/90' : 'text-cyan-700'}`} style={{ fontSize: '12px' }}>
+                          {item.name}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} style={{ fontSize: '12px' }}>
+                          {item.subsection?.name || 'Unassigned'}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
+                          {item.description || 'No description'}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
+                          {item.tenantCount || 0}
+                        </span>
+                      </td>
+                      <td
+                        className={`rounded-r-xl transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-mono ${isDark ? 'text-gray-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
+    {activeServerCompanyId !== null && (
+      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`w-full max-w-4xl rounded-2xl border p-6 ${
+          isDark
+            ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(139,92,246,0.25)]'
+            : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(139,92,246,0.15)]'
+        }`}>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <h4 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Company Servers
+            </h4>
+            <button
+              type="button"
+              onClick={() => setActiveServerCompanyId(null)}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${
+                isDark
+                  ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+              aria-label="Close servers modal"
+              title="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {loadingServers ? (
+            <div className="text-center py-12 text-gray-500 text-sm">Loading servers...</div>
+          ) : serverRecords.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 text-sm">No servers found for this company.</div>
+          ) : (
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-separate [border-spacing:0_8px]">
+                <thead>
+                  <tr className={`text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-violet-200/70' : 'text-violet-600'}`}>
+                    <th className="px-5 py-3">IP Address</th>
+                    <th className="px-5 py-3">Label</th>
+                    <th className="px-5 py-3">Tenant Count</th>
+                    <th className="px-5 py-3">Created At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {serverRecords.map((item, idx) => (
+                    <tr key={item.id || idx} className="group transition-transform duration-200 hover:-translate-y-[1px]">
+                      <td
+                        className={`rounded-l-xl transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-violet-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-semibold tracking-wide ${isDark ? 'text-violet-200/90' : 'text-violet-700'}`} style={{ fontSize: '12px' }}>
+                          {item.ipAddress || 'N/A'}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-violet-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium ${isDark ? 'text-violet-300' : 'text-violet-600'}`} style={{ fontSize: '12px' }}>
+                          {item.label || 'N/A'}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-violet-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
+                          {item.tenantCount || 0}
+                        </span>
+                      </td>
+                      <td
+                        className={`rounded-r-xl transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-violet-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-mono ${isDark ? 'text-gray-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
+    {activeTenantCompanyId !== null && (
+      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`w-full max-w-4xl rounded-2xl border p-6 ${
+          isDark
+            ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.25)]'
+            : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(34,197,94,0.15)]'
+        }`}>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <h4 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Company Tenants
+            </h4>
+            <button
+              type="button"
+              onClick={() => setActiveTenantCompanyId(null)}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${
+                isDark
+                  ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                  : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+              aria-label="Close tenants modal"
+              title="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {loadingTenants ? (
+            <div className="text-center py-12 text-gray-500 text-sm">Loading tenants...</div>
+          ) : tenantRecords.length === 0 ? (
+            <div className="text-center py-12 text-gray-500 text-sm">No tenants found for this company.</div>
+          ) : (
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left border-separate [border-spacing:0_8px]">
+                <thead>
+                  <tr className={`text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-emerald-200/70' : 'text-emerald-600'}`}>
+                    <th className="px-5 py-3">Name</th>
+                    <th className="px-5 py-3">Description</th>
+                    <th className="px-5 py-3">SIP Count</th>
+                    <th className="px-5 py-3">License Count</th>
+                    <th className="px-5 py-3">Created At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tenantRecords.map((item, idx) => (
+                    <tr key={item.id || idx} className="group transition-transform duration-200 hover:-translate-y-[1px]">
+                      <td
+                        className={`rounded-l-xl transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-emerald-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-semibold tracking-wide ${isDark ? 'text-emerald-200/90' : 'text-emerald-700'}`} style={{ fontSize: '12px' }}>
+                          {item.name || 'N/A'}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-emerald-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
+                          {item.description || 'No description'}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-emerald-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium font-mono ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`} style={{ fontSize: '12px' }}>
+                          {item.sipConfigsCount || 0}
+                        </span>
+                      </td>
+                      <td
+                        className={`transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-emerald-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
+                          {item.licenseCount || 0}
+                        </span>
+                      </td>
+                      <td
+                        className={`rounded-r-xl transition-colors ${
+                          isDark
+                            ? `${idx % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                            : `${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-emerald-50/50`
+                        }`}
+                        style={{ padding: '16px 20px' }}
+                      >
+                        <span className={`font-mono ${isDark ? 'text-gray-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>
+                          {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
 
     {isCompanyModalOpen && (
       <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
@@ -1817,6 +2024,8 @@ export default function CompanyListUI({ isDark, isSidebarMinimized, token, onUna
         </div>
       </div>
     )}
-    </>
+        </main>
+      </div>
+    </div>
   );
 }

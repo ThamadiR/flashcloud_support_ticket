@@ -24,7 +24,7 @@ export class UsersService {
       throw new ApiError(401, 'Unauthorized: Invalid token payload');
     }
 
-    const requester = await this.userRepository.findByIdWithBasicFields(requesterId);
+    const requester = await this.userRepository.findByIdWithBasicFields(requesterId) as any;
     if (!requester) {
       throw new ApiError(401, 'Unauthorized: User not found');
     }
@@ -45,7 +45,7 @@ export class UsersService {
     const { search, countryCode, roleFilter, sortBy, normalizedSortOrder, where, orderBy } = buildUsersListQueryOptions(query);
 
     if (!requesterIsAdmin) {
-      const selfUserRaw = await this.userRepository.findByIdWithProfileFields(requester.id);
+      const selfUserRaw = await this.userRepository.findByIdWithProfileFields(requester.id) as any;
       const users = selfUserRaw
         ? [{
             ...selfUserRaw,
@@ -189,14 +189,11 @@ export class UsersService {
       }
     }
 
-    const updatedUser = await this.userRepository.updateUser(targetUserId, { role: requestedRole }, {
-      id: true,
-      username: true,
-      email: true,
-      contactNo: true,
-      role: true,
-      img: true,
-    });
+    const updatedUser = await this.userRepository.updateUser(targetUserId, { role: requestedRole });
+
+    if (!updatedUser) {
+      throw new ApiError(404, 'User not found');
+    }
 
     return {
       message: 'User role updated successfully',

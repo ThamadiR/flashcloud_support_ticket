@@ -8,7 +8,10 @@ import CustomizationListUI from './pages/CustomizationListUI';
 import SipConfigsListUI from './pages/SipConfigsListUI';
 import ServersListUI from './pages/ServersListUI';
 import TenantsListUI from './pages/TenantsListUI';
+import CompanyListUI from './pages/CompanyListUI';
+import AuthenticatedLayout from './components/layouts/AuthenticatedLayout';
 import { ThemeProvider } from './context/ThemeContext';
+import { DrawerProvider } from './context/DrawerContext';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -52,8 +55,9 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <Toaster position="top-right" reverseOrder={false} />
+      <DrawerProvider>
+        <BrowserRouter>
+          <Toaster position="top-right" reverseOrder={false} />
         <Routes>
           <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
           
@@ -65,27 +69,31 @@ export default function App() {
             !token ? <Register /> : <Navigate to="/dashboard" />
           } />
           
-          <Route path="/dashboard" element={
-            token ? <Dashboard token={token} user={user} onLogout={handleLogout} onUserUpdate={setUser} /> : <Navigate to="/login" />
-          } />
+          {/* Authenticated Routes with Header and Footer */}
+          <Route element={<AuthenticatedLayout token={token} />}>
+            <Route path="/dashboard" element={<Dashboard />} />
 
-          <Route path="/customizations" element={
-            token ? <CustomizationListUI token={token} onUnauthorized={handleLogout} /> : <Navigate to="/login" />
-          } />
+            <Route path="/companies" element={<CompanyListUI token={token!} onUnauthorized={handleLogout} />} />
 
-          <Route path="/sip-configs" element={
-            token ? <SipConfigsListUI token={token} onUnauthorized={handleLogout} /> : <Navigate to="/login" />
-          } />
+            <Route path="/customizations" element={
+              <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
+            } />
 
-          <Route path="/servers" element={
-            token ? <ServersListUI token={token} onUnauthorized={handleLogout} /> : <Navigate to="/login" />
-          } />
+            <Route path="/sip-configs" element={
+              <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
+            } />
 
-          <Route path="/tenants" element={
-            token ? <TenantsListUI token={token} onUnauthorized={handleLogout} /> : <Navigate to="/login" />
-          } />
+            <Route path="/servers" element={
+              <ServersListUI token={token!} onUnauthorized={handleLogout} />
+            } />
+
+            <Route path="/tenants" element={
+              <TenantsListUI token={token!} onUnauthorized={handleLogout} />
+            } />
+          </Route>
         </Routes>
       </BrowserRouter>
+      </DrawerProvider>
     </ThemeProvider>
   );
 }

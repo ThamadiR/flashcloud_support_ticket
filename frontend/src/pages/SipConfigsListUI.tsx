@@ -41,15 +41,6 @@ type SipConfigsListUIProps = {
   onUnauthorized: () => void;
 };
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString();
-}
-
 export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsListUIProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -393,7 +384,7 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                   <th className="px-5 py-4 font-semibold">Channel Count</th>
                   <th className="px-5 py-4 font-semibold">Description</th>
                   <th className="px-5 py-4 font-semibold">License Count</th>
-                  <th className="px-5 py-4 font-semibold">Created</th>
+                  <th className="px-5 py-4 font-semibold">CREATED_AT</th>
                   <th className="px-5 py-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -468,7 +459,7 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                         item.licenseCount ?? 'N/A'
                       )}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-400">{formatDate(item.createdAt)}</td>
+                    <td className="px-5 py-4 text-sm text-slate-400">{item.createdAt ?? '—'}</td>
                     <td className="px-5 py-4 text-sm text-slate-300">
                       {editingSipConfigId === item.id ? (
                         <div className="flex items-center gap-2">

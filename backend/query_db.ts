@@ -13,9 +13,9 @@ async function main() {
   });
 
   console.log('--- companyList ---');
-  const [companyCountRows] = await connection.execute<mysql.RowDataPacket[]>('SELECT COUNT(*) as count FROM company');
+  const [companyCountRows] = await connection.execute<mysql.RowDataPacket[]>('SELECT COUNT(*) as count FROM companyList');
   const companyCount = companyCountRows[0]?.count;
-  const [companies] = await connection.execute('SELECT * FROM company LIMIT 5');
+  const [companies] = await connection.execute('SELECT * FROM companyList LIMIT 5');
   console.log(`Count: ${companyCount}`);
   console.log(JSON.stringify(companies, null, 2));
 

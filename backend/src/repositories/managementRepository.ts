@@ -96,18 +96,28 @@ export class ManagementRepository {
     return rows;
   }
 
-  async createCompany(data: Partial<CompanyRow>): Promise<void> {
-    await pool.execute<ResultSetHeader>(
-      'INSERT INTO `companyList` (`name`, `description`, `email`) VALUES (?, ?, ?)',
-      [data.name, data.description, data.email]
+  async createCompany(data: Partial<CompanyRow>): Promise<CompanyRow | null> {
+    const [result] = await pool.execute<ResultSetHeader>(
+      'INSERT INTO `companyList` (`name`, `description`, `email`, `tenantCount`) VALUES (?, ?, ?, ?)',
+      [data.name, data.description, data.email, data.tenantCount || 0]
     );
+    const [rows] = await pool.execute<CompanyRow[]>(
+      'SELECT * FROM `companyList` WHERE `id` = ?',
+      [result.insertId]
+    );
+    return rows[0] ?? null;
   }
 
-  async updateCompany(id: number, data: Partial<CompanyRow>): Promise<void> {
+  async updateCompany(id: number, data: Partial<CompanyRow>): Promise<CompanyRow | null> {
     await pool.execute<ResultSetHeader>(
-      'UPDATE `companyList` SET `name` = ?, `description` = ?, `email` = ? WHERE `id` = ?',
-      [data.name, data.description, data.email, id]
+      'UPDATE `companyList` SET `name` = ?, `description` = ?, `email` = ?, `tenantCount` = ? WHERE `id` = ?',
+      [data.name, data.description, data.email, data.tenantCount, id]
     );
+    const [rows] = await pool.execute<CompanyRow[]>(
+      'SELECT * FROM `companyList` WHERE `id` = ?',
+      [id]
+    );
+    return rows[0] ?? null;
   }
 
   async deleteCompany(id: number): Promise<void> {
@@ -455,6 +465,7 @@ export class ManagementRepository {
   // ─── Customizations ───────────────────────────────────────────────────────
 
   async listCustomizations(where: { company_id?: number; subsection_id?: number; search?: string }): Promise<CustomizationRow[]> {
+    let query = `
       SELECT
         cu.id,
         cu.name,
@@ -522,20 +533,61 @@ export class ManagementRepository {
   }
 
   async updateCustomization(id: number, data: Partial<CustomizationRow>): Promise<CustomizationRow | null> {
-    await pool.execute<ResultSetHeader>(
-      'UPDATE `customization` SET `name` = ?, `subsection_id` = ?, `company_id` = ? WHERE `id` = ?',
-      [data.name, data.subsection_id, data.company_id, id]
-    );
+    const fields: string[] = [];
+    const values: any[] = [];
+    
+    if (data.name !== undefined) {
+      fields.push('`name` = ?');
+      values.push(data.name);
+    }
+    if (data.description !== undefined) {
+      fields.push('`description` = ?');
+      values.push(data.description);
+    }
+    if (data.subsection_id !== undefined) {
+      fields.push('`subsection_id` = ?');
+      values.push(data.subsection_id);
+    }
+    if (data.company_id !== undefined) {
+      fields.push('`company_id` = ?');
+      values.push(data.company_id);
+    }
+
+    if (fields.length > 0) {
+      values.push(id);
+      await pool.execute<ResultSetHeader>(
+        `UPDATE \`customization\` SET ${fields.join(', ')} WHERE \`id\` = ?`,
+        values
+      );
+    }
+
     const [rows] = await pool.execute<CustomizationRow[]>(
       `SELECT
         cu.id,
         cu.name,
-        cu.subsection_id,
-        cu.company_id,
-        c.name AS company_name
+        cu.description,
+        cu.created_at,
+        cu.subsection_id AS subsection_id,
+        cu.company_id AS company_id,
+        c.name AS company_name,
+        cs.name AS subsection_name,
+        cs.section_id AS section_id,
+        COUNT(ct.id) AS tenant_count
        FROM \`customization\` cu
        LEFT JOIN \`companyList\` c ON c.id = cu.company_id
-       WHERE cu.id = ?`,
+       LEFT JOIN \`customization_subsection\` cs ON cs.id = cu.subsection_id
+       LEFT JOIN \`customization_tenants\` ct ON ct.customization_id = cu.id
+       WHERE cu.id = ?
+       GROUP BY
+        cu.id,
+        cu.name,
+        cu.description,
+        cu.created_at,
+        cu.subsection_id,
+        cu.company_id,
+        c.name,
+        cs.name,
+        cs.section_id`,
       [id]
     );
     return rows[0] ?? null;

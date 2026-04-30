@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowUpDown, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Edit2, Plus, Save, Search, SlidersHorizontal, X } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 type CustomizationRecord = {
@@ -10,6 +10,7 @@ type CustomizationRecord = {
   companyId: number | null;
   name: string;
   description: string;
+  tenantCount: number;
   createdAt: string;
   company: null | {
     id: number;
@@ -49,6 +50,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
   const nameSortMenuRef = useRef<HTMLDivElement>(null);
   const subsectionSortMenuRef = useRef<HTMLDivElement>(null);
   const descriptionSortMenuRef = useRef<HTMLDivElement>(null);
+  const tenantCountSortMenuRef = useRef<HTMLDivElement>(null);
   const createdAtSortMenuRef = useRef<HTMLDivElement>(null);
 
   const companyIdParam = searchParams.get('companyId')?.trim() || '';
@@ -59,16 +61,19 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [customizations, setCustomizations] = useState<CustomizationRecord[]>([]);
-  const [sortBy, setSortBy] = useState<'name' | 'subsection' | 'description' | 'createdAt'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'subsection' | 'description' | 'tenantCount' | 'createdAt'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isNameSortMenuOpen, setIsNameSortMenuOpen] = useState(false);
   const [isSubsectionSortMenuOpen, setIsSubsectionSortMenuOpen] = useState(false);
   const [isDescriptionSortMenuOpen, setIsDescriptionSortMenuOpen] = useState(false);
+  const [isTenantCountSortMenuOpen, setIsTenantCountSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
   const [isAddCustomizationOpen, setIsAddCustomizationOpen] = useState(false);
   const [isSavingCustomization, setIsSavingCustomization] = useState(false);
   const [sections, setSections] = useState<CustomizationSectionOption[]>([]);
   const [subsections, setSubsections] = useState<CustomizationSubsectionOption[]>([]);
+  const [editingCustomizationId, setEditingCustomizationId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', description: '' });
   const [createForm, setCreateForm] = useState({
     name: '',
     description: '',
@@ -187,10 +192,11 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
     setIsNameSortMenuOpen(false);
     setIsSubsectionSortMenuOpen(false);
     setIsDescriptionSortMenuOpen(false);
+    setIsTenantCountSortMenuOpen(false);
     setIsCreatedAtSortMenuOpen(false);
   };
 
-  const applyColumnSort = (field: 'name' | 'subsection' | 'description' | 'createdAt', nextSortOrder: 'asc' | 'desc') => {
+  const applyColumnSort = (field: 'name' | 'subsection' | 'description' | 'tenantCount' | 'createdAt', nextSortOrder: 'asc' | 'desc') => {
     setSortBy(field);
     setSortOrder(nextSortOrder);
     closeAllSortMenus();
@@ -275,11 +281,71 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
       toast.success('Customization added');
       closeAddCustomizationModal();
-    } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : 'Failed to create customization';
+    } catch (createError) {
+      const message = createError instanceof Error ? createError.message : 'Failed to create customization';
       toast.error(message);
     } finally {
       setIsSavingCustomization(false);
+    }
+  };
+
+  const startEditCustomization = (customization: CustomizationRecord) => {
+    setEditingCustomizationId(customization.id);
+    setEditForm({
+      name: customization.name,
+      description: customization.description || '',
+    });
+  };
+
+  const cancelEditCustomization = () => {
+    setEditingCustomizationId(null);
+    setEditForm({ name: '', description: '' });
+  };
+
+  const saveCustomizationEdit = async (id: number) => {
+    try {
+      const trimmedName = editForm.name.trim();
+      const trimmedDescription = editForm.description.trim();
+
+      if (!trimmedName) {
+        toast.error('Name is required');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/customizations/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          description: trimmedDescription,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Session expired. Please log in again.');
+          onUnauthorized();
+          return;
+        }
+
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to update customization');
+      }
+
+      const payload = await response.json();
+      if (!payload.customization) {
+        throw new Error('Updated customization payload missing');
+      }
+
+      setCustomizations((prev) => prev.map((row) => (row.id === id ? payload.customization as CustomizationRecord : row)));
+      cancelEditCustomization();
+      toast.success('Customization updated');
+    } catch (saveError) {
+      const message = saveError instanceof Error ? saveError.message : 'Failed to update customization';
+      toast.error(message);
     }
   };
 
@@ -290,6 +356,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
         nameSortMenuRef.current?.contains(target)
         || subsectionSortMenuRef.current?.contains(target)
         || descriptionSortMenuRef.current?.contains(target)
+        || tenantCountSortMenuRef.current?.contains(target)
         || createdAtSortMenuRef.current?.contains(target)
       ) {
         return;
@@ -313,6 +380,10 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
     const sortFn = (a: CustomizationRecord, b: CustomizationRecord) => {
       const direction = sortOrder === 'asc' ? 1 : -1;
+
+      if (sortBy === 'tenantCount') {
+        return ((a.tenantCount || 0) - (b.tenantCount || 0)) * direction;
+      }
 
       if (sortBy === 'createdAt') {
         return parseTs(a.createdAt).localeCompare(parseTs(b.createdAt)) * direction;
@@ -421,6 +492,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                           setIsNameSortMenuOpen((prev) => !prev);
                           setIsSubsectionSortMenuOpen(false);
                           setIsDescriptionSortMenuOpen(false);
+                          setIsTenantCountSortMenuOpen(false);
                           setIsCreatedAtSortMenuOpen(false);
                         }}
                         className="rounded-md p-1 transition-colors hover:bg-white/10"
@@ -467,6 +539,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                           setIsSubsectionSortMenuOpen((prev) => !prev);
                           setIsNameSortMenuOpen(false);
                           setIsDescriptionSortMenuOpen(false);
+                          setIsTenantCountSortMenuOpen(false);
                           setIsCreatedAtSortMenuOpen(false);
                         }}
                         className="rounded-md p-1 transition-colors hover:bg-white/10"
@@ -513,6 +586,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                           setIsDescriptionSortMenuOpen((prev) => !prev);
                           setIsNameSortMenuOpen(false);
                           setIsSubsectionSortMenuOpen(false);
+                          setIsTenantCountSortMenuOpen(false);
                           setIsCreatedAtSortMenuOpen(false);
                         }}
                         className="rounded-md p-1 transition-colors hover:bg-white/10"
@@ -551,8 +625,55 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                     </div>
                   </th>
                   <th className="px-5 py-4 font-semibold">
+                    <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
+                      <span>TENANT_COUNT</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsTenantCountSortMenuOpen((prev) => !prev);
+                          setIsNameSortMenuOpen(false);
+                          setIsSubsectionSortMenuOpen(false);
+                          setIsDescriptionSortMenuOpen(false);
+                          setIsCreatedAtSortMenuOpen(false);
+                        }}
+                        className="rounded-md p-1 transition-colors hover:bg-white/10"
+                        aria-label="Sort customization tenant count"
+                        title="Sort customization tenant count"
+                      >
+                        <ArrowUpDown size={13} />
+                      </button>
+
+                      {isTenantCountSortMenuOpen && (
+                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                          <button
+                            type="button"
+                            onClick={() => applyColumnSort('tenantCount', 'asc')}
+                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                              sortBy === 'tenantCount' && sortOrder === 'asc'
+                                ? 'bg-blue-500/20 text-blue-300'
+                                : 'text-gray-300 hover:bg-white/5'
+                            }`}
+                          >
+                            asc
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => applyColumnSort('tenantCount', 'desc')}
+                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                              sortBy === 'tenantCount' && sortOrder === 'desc'
+                                ? 'bg-blue-500/20 text-blue-300'
+                                : 'text-gray-300 hover:bg-white/5'
+                            }`}
+                          >
+                            dsc
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-5 py-4 font-semibold">
                     <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
-                      <span>Created</span>
+                      <span>CREATED_AT</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -560,6 +681,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                           setIsNameSortMenuOpen(false);
                           setIsSubsectionSortMenuOpen(false);
                           setIsDescriptionSortMenuOpen(false);
+                          setIsTenantCountSortMenuOpen(false);
                         }}
                         className="rounded-md p-1 transition-colors hover:bg-white/10"
                         aria-label="Sort customization created date"
@@ -596,20 +718,70 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                       )}
                     </div>
                   </th>
+                  <th className="px-5 py-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/8">
                 {filteredCustomizations.map((item) => (
                   <tr key={item.id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-sm font-medium text-white">{item.name}</td>
+                    <td className="px-5 py-4 text-sm font-medium text-white">
+                      {editingCustomizationId === item.id ? (
+                        <input
+                          value={editForm.name}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                          className="w-full rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-sm text-white outline-none"
+                        />
+                      ) : (
+                        item.name
+                      )}
+                    </td>
                     <td className="px-5 py-4 text-sm text-cyan-200">
                       {item.subsection?.name || 'Unassigned'}
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-300">
-                      {item.description || 'No description provided'}
+                      {editingCustomizationId === item.id ? (
+                        <input
+                          value={editForm.description}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                          className="w-full rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-sm text-white outline-none"
+                        />
+                      ) : (
+                        item.description || 'No description provided'
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
+                      {item.tenantCount}
                     </td>
                     <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
                       {item.createdAt ?? '—'}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-300">
+                      {editingCustomizationId === item.id ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => saveCustomizationEdit(item.id)}
+                            className="inline-flex items-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2.5 py-1 text-xs font-medium text-emerald-200 transition hover:bg-emerald-500/20"
+                          >
+                            <Save size={13} /> Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEditCustomization}
+                            className="inline-flex items-center gap-1 rounded-md border border-rose-400/35 bg-rose-500/12 px-2.5 py-1 text-xs font-medium text-rose-200 transition hover:bg-rose-500/20"
+                          >
+                            <X size={13} /> Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => startEditCustomization(item)}
+                          className="inline-flex items-center gap-1 rounded-md border border-cyan-400/35 bg-cyan-500/12 px-2.5 py-1 text-xs font-medium text-cyan-200 transition hover:bg-cyan-500/20"
+                        >
+                          <Edit2 size={13} /> Edit
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

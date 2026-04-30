@@ -7,9 +7,9 @@ const normalizeCompanyPayload = (company: any) => ({
   name: company.name,
   description: company.description || '',
   email: company.email || '',
-  tenantCount: Number(company.tenantCount || 0),
-  createdAt: company.createdAt,
-  updatedAt: company.updatedAt,
+  tenantCount: Number(company.tenant_count || company.tenantCount || 0),
+  createdAt: company.createdAt || company.created_at,
+  updatedAt: company.updatedAt || company.updated_at,
 });
 
 const normalizeCustomizationSubsectionPayload = (subsection: any) => ({
@@ -170,7 +170,7 @@ export class ManagementService {
       throw new ApiError(400, 'Tenant count must be a positive number');
     }
 
-    const companyRaw = await this.repository.createCompany({ name, description, email, tenantCount });
+    const companyRaw = await this.repository.createCompany({ name, description, email, tenantCount } as any);
     return {
       message: 'Company created successfully',
       company: normalizeCompanyPayload(companyRaw),
@@ -211,7 +211,7 @@ export class ManagementService {
         email,
         tenantCount,
         updatedAt: new Date(),
-      });
+      } as any);
 
       return {
         message: 'Company updated successfully',
@@ -481,7 +481,7 @@ export class ManagementService {
       throw new ApiError(400, 'Invalid section id filter');
     }
 
-    const where = hasSectionFilter ? { section_id: sectionId as number } : undefined;
+    const where = hasSectionFilter ? { section_id: sectionId as number } as any : undefined;
     const subsectionsRaw = await this.repository.listCustomizationSubsections(where);
 
     return {
@@ -532,7 +532,7 @@ if (hasSectionId) {
   if (!section) throw new ApiError(404, 'Customization section not found');
 }
 
-    const subsectionRaw = await this.repository.createCustomizationSubsection({ name, sectionId });
+    const subsectionRaw = await this.repository.createCustomizationSubsection({ name, sectionId } as any);
     return {
       message: 'Customization subsection created successfully',
       subsection: normalizeCustomizationSubsectionPayload(subsectionRaw),
@@ -564,7 +564,7 @@ if (hasSectionId) {
 }
 
     try {
-      const subsectionRaw = await this.repository.updateCustomizationSubsection(subsectionId, { name, sectionId });
+      const subsectionRaw = await this.repository.updateCustomizationSubsection(subsectionId, { name, sectionId } as any);
       return {
         message: 'Customization subsection updated successfully',
         subsection: normalizeCustomizationSubsectionPayload(subsectionRaw),
@@ -624,7 +624,7 @@ if (hasSectionId) {
       company_id: companyId,
       subsection_id: Number.isFinite(subsectionId) && subsectionId > 0 ? subsectionId : undefined,
       search: search || undefined,
-    });
+    } as any);
     return { customizations: customizationsRaw.map(normalizeCustomizationPayload) };
   }
 
@@ -661,12 +661,14 @@ if (hasSectionId) {
     const company = await this.repository.findCompanyById(companyId);
     if (!company) throw new ApiError(404, 'Company not found');
 
-    const customizationRaw = await this.repository.createCustomization({
-      companyId,
+    const createPayload: any = {
+      company_id: companyId,
       name,
       description: description || null,
-      subsectionId: hasSubsectionId ? (subsectionId as number) : null,
-    });
+    };
+    if (hasSubsectionId) createPayload.subsection_id = subsectionId;
+
+    const customizationRaw = await this.repository.createCustomization(createPayload);
 
     return {
       message: 'Customization created successfully',
@@ -707,11 +709,13 @@ if (hasSectionId) {
     }
 
     try {
-      const customizationRaw = await this.repository.updateCustomization(customizationId, {
+      const updatePayload: any = {
         name,
         description: description || null,
-        subsectionId: hasSubsectionId ? (subsectionId as number) : null,
-      });
+      };
+      if (hasSubsectionId) updatePayload.subsection_id = subsectionId;
+
+      const customizationRaw = await this.repository.updateCustomization(customizationId, updatePayload);
 
       return {
         message: 'Customization updated successfully',
