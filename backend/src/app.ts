@@ -33,13 +33,15 @@ app.use('/uploads', express.static(path.resolve('uploads'), {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
+// Routes are now partially managed centrally in src/routes/routes.ts
 app.use('/api/tickets',   ticketsRoutes);
 app.use('/api/contacts',  contactRoutes);
-app.use('/api/companies', companiesRoutes);
-app.use('/api/auth',      authRoutes);
+// Companies, Auth, Users are registered via registerRoutes in server.ts
+// app.use('/api/companies', companiesRoutes);
+// app.use('/api/auth',      authRoutes);
 app.use('/api/roles',     roleRoutes);
 app.use('/api/emails',    emailRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/users',     userRoutes);
+// app.use('/api/users',     userRoutes);
 
 export default app;

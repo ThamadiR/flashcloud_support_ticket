@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Building2, Edit2, Plus, Save, Search, ServerCog, X } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
 
 type TenantRecord = {
   id: number;
@@ -37,6 +38,7 @@ type TenantsListUIProps = {
 
 
 export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIProps) {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -297,11 +299,11 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
           <div>
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/companies')}
               className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
             >
               <ArrowLeft size={14} />
-              Back to dashboard
+              Back to Company List
             </button>
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-500/10 text-emerald-200 shadow-[0_0_18px_rgba(34,197,94,0.22)]">
@@ -446,14 +448,22 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
       </div>
 
       {isAddTenantModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#111318] p-6 shadow-[0_0_35px_rgba(34,197,94,0.25)]">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+          <div className={`w-full max-w-2xl rounded-2xl border p-6 ${
+            isDark 
+              ? 'border-white/10 bg-[#111318] shadow-[0_0_35px_rgba(34,197,94,0.25)]' 
+              : 'border-gray-200 bg-white shadow-[0_0_25px_rgba(34,197,94,0.15)]'
+          }`}>
             <div className="mb-5 flex items-center justify-between gap-3">
-              <h4 className="text-lg font-semibold text-white">Add a new tenant</h4>
+              <h4 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add a new tenant</h4>
               <button
                 type="button"
                 onClick={closeAddTenantModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-md border transition-all ${
+                  isDark 
+                    ? 'border-white/10 text-gray-300 hover:bg-white/5 hover:text-white' 
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                }`}
                 aria-label="Close add tenant modal"
                 title="Close"
               >
@@ -461,17 +471,19 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
               </button>
             </div>
 
-            <div className="mb-5 rounded-xl border border-white/10 bg-white/5 px-4 py-4">
+            <div className={`mb-5 rounded-xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
               <div className="flex items-center justify-between gap-2 text-[12px] font-semibold uppercase tracking-[0.2em]">
-                <span className="text-gray-400">Step {addTenantStep} of {addTenantWizardSteps.length}</span>
-                <span className="text-emerald-200">{addTenantWizardSteps[addTenantStep - 1]?.title}</span>
+                <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Step {addTenantStep} of {addTenantWizardSteps.length}</span>
+                <span className={isDark ? 'text-emerald-200' : 'text-emerald-600'}>{addTenantWizardSteps[addTenantStep - 1]?.title}</span>
               </div>
               <div className="mt-4 flex gap-2">
                 {addTenantWizardSteps.map((step) => (
                   <div
                     key={step.step}
                     className={`h-2.5 flex-1 rounded-full transition-colors ${
-                      addTenantStep >= step.step ? 'bg-emerald-500/80' : 'bg-white/10'
+                      addTenantStep >= step.step 
+                        ? isDark ? 'bg-emerald-500/80' : 'bg-emerald-500' 
+                        : isDark ? 'bg-white/10' : 'bg-gray-200'
                     }`}
                   />
                 ))}
@@ -537,7 +549,11 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
               <button
                 type="button"
                 onClick={closeAddTenantModal}
-                className="rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-gray-300 transition hover:bg-white/5"
+                className={`rounded-xl border px-4 py-3 text-sm transition-all ${
+                  isDark 
+                    ? 'border-white/10 text-gray-300 hover:bg-white/5 hover:text-white' 
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
               >
                 Cancel
               </button>
@@ -546,7 +562,11 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                 <button
                   type="button"
                   onClick={handleAddTenantBack}
-                  className="rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-gray-300 transition hover:bg-white/5"
+                  className={`rounded-xl border px-4 py-3 text-sm transition-all ${
+                    isDark 
+                      ? 'border-white/10 text-gray-300 hover:bg-white/5 hover:text-white' 
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
                 >
                   Back
                 </button>
@@ -556,7 +576,11 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                 <button
                   type="button"
                   onClick={handleAddTenantNext}
-                  className="rounded-xl border border-emerald-400/35 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25"
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
+                    isDark 
+                      ? 'border-emerald-400/35 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25' 
+                      : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  }`}
                 >
                   Next
                 </button>
@@ -565,7 +589,11 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                   type="button"
                   onClick={handleCreateTenant}
                   disabled={isCreatingTenant}
-                  className="rounded-xl border border-emerald-400/35 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-500/25 disabled:opacity-60"
+                  className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
+                    isDark 
+                      ? 'border-emerald-400/35 bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25' 
+                      : 'border-emerald-300 bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  } disabled:opacity-60`}
                 >
                   {isCreatingTenant ? 'Saving...' : 'Save'}
                 </button>

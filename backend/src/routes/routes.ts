@@ -49,6 +49,7 @@ export const registerRoutes = (
   app.get('/api/servers', authenticate, managementQueryController.listServers);
   app.post('/api/servers', authenticate, managementAdminController.createServer);
   app.put('/api/servers/:id', authenticate, managementAdminController.updateServer);
+  app.delete('/api/servers/:id', authenticate, managementAdminController.deleteServer);
 
   app.get('/api/tenants', authenticate, managementQueryController.listTenants);
   app.post('/api/tenants', authenticate, managementAdminController.createTenant);

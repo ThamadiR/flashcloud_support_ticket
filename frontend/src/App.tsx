@@ -10,6 +10,7 @@ import ServersListUI from './pages/ServersListUI';
 import TenantsListUI from './pages/TenantsListUI';
 import CompanyListUI from './pages/CompanyListUI';
 import AuthenticatedLayout from './components/layouts/AuthenticatedLayout';
+import Contacts from './components/layouts/Contacts';
 import { ThemeProvider } from './context/ThemeContext';
 import { DrawerProvider } from './context/DrawerContext';
 
@@ -89,6 +90,10 @@ export default function App() {
 
             <Route path="/tenants" element={
               <TenantsListUI token={token!} onUnauthorized={handleLogout} />
+            } />
+
+            <Route path="/contacts" element={
+              <Contacts />
             } />
           </Route>
         </Routes>

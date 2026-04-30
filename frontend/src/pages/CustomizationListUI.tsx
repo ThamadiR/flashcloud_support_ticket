@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowUpDown, Edit2, Plus, Save, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Edit2, Plus, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
+import { useDrawer } from '../context/DrawerContext';
 
 type CustomizationRecord = {
   id: number;
@@ -47,6 +49,18 @@ type CustomizationListUIProps = {
 export default function CustomizationListUI({ token, onUnauthorized }: CustomizationListUIProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isDark } = useTheme();
+  const { isDrawerOpen } = useDrawer();
+  const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
+  const [isEditCustomizationOpen, setIsEditCustomizationOpen] = useState(false);
+  const [editingCustomization, setEditingCustomization] = useState<CustomizationRecord | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    sectionId: '',
+    subsectionId: '',
+  });
+  const [isUpdatingCustomization, setIsUpdatingCustomization] = useState(false);
   const nameSortMenuRef = useRef<HTMLDivElement>(null);
   const subsectionSortMenuRef = useRef<HTMLDivElement>(null);
   const descriptionSortMenuRef = useRef<HTMLDivElement>(null);
@@ -71,9 +85,8 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
   const [isAddCustomizationOpen, setIsAddCustomizationOpen] = useState(false);
   const [isSavingCustomization, setIsSavingCustomization] = useState(false);
   const [sections, setSections] = useState<CustomizationSectionOption[]>([]);
-  const [subsections, setSubsections] = useState<CustomizationSubsectionOption[]>([]);
-  const [editingCustomizationId, setEditingCustomizationId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', description: '' });
+  const [createSubsections, setCreateSubsections] = useState<CustomizationSubsectionOption[]>([]);
+  const [editSubsections, setEditSubsections] = useState<CustomizationSubsectionOption[]>([]);
   const [createForm, setCreateForm] = useState({
     name: '',
     description: '',
@@ -158,7 +171,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
       try {
         const sectionId = createForm.sectionId.trim() ? Number(createForm.sectionId) : NaN;
         if (!Number.isFinite(sectionId) || sectionId <= 0) {
-          setSubsections([]);
+          setCreateSubsections([]);
           return;
         }
 
@@ -175,7 +188,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
         }
 
         const payload = await response.json();
-        setSubsections((payload.subsections || []).map((subsection: any) => ({
+        setCreateSubsections((payload.subsections || []).map((subsection: any) => ({
           id: Number(subsection.id),
           sectionId: subsection.sectionId === null || subsection.sectionId === undefined ? null : Number(subsection.sectionId),
           name: String(subsection.name || ''),
@@ -187,6 +200,41 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
     loadSubsections();
   }, [createForm.sectionId, onUnauthorized, token]);
+
+  useEffect(() => {
+    const loadSubsections = async () => {
+      try {
+        const sectionId = editForm.sectionId ? Number(editForm.sectionId) : NaN;
+        if (!Number.isFinite(sectionId) || sectionId <= 0) {
+          setEditSubsections([]);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/customization-subsections?sectionId=${sectionId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            toast.error('Session expired. Please log in again.');
+            onUnauthorized();
+          }
+          return;
+        }
+
+        const payload = await response.json();
+        setEditSubsections((payload.subsections || []).map((subsection: any) => ({
+          id: Number(subsection.id),
+          sectionId: subsection.sectionId === null || subsection.sectionId === undefined ? null : Number(subsection.sectionId),
+          name: String(subsection.name || ''),
+        })));
+      } catch (loadError) {
+        console.error('Load customization subsections error:', loadError);
+      }
+    };
+
+    loadSubsections();
+  }, [editForm.sectionId, onUnauthorized, token]);
 
   const closeAllSortMenus = () => {
     setIsNameSortMenuOpen(false);
@@ -281,46 +329,58 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
       toast.success('Customization added');
       closeAddCustomizationModal();
-    } catch (createError) {
-      const message = createError instanceof Error ? createError.message : 'Failed to create customization';
+    } catch (saveError) {
+      const message = saveError instanceof Error ? saveError.message : 'Failed to create customization';
       toast.error(message);
     } finally {
       setIsSavingCustomization(false);
     }
   };
 
-  const startEditCustomization = (customization: CustomizationRecord) => {
-    setEditingCustomizationId(customization.id);
+  const openEditCustomizationModal = (customization: CustomizationRecord) => {
+    setEditingCustomization(customization);
     setEditForm({
-      name: customization.name,
+      name: customization.name || '',
       description: customization.description || '',
+      sectionId: customization.subsection?.sectionId?.toString() || '',
+      subsectionId: customization.subsectionId?.toString() || '',
     });
+    setIsEditCustomizationOpen(true);
   };
 
-  const cancelEditCustomization = () => {
-    setEditingCustomizationId(null);
-    setEditForm({ name: '', description: '' });
+  const closeEditCustomizationModal = () => {
+    setIsEditCustomizationOpen(false);
+    setEditingCustomization(null);
+    setEditForm({ name: '', description: '', sectionId: '', subsectionId: '' });
   };
 
-  const saveCustomizationEdit = async (id: number) => {
+  const handleUpdateCustomization = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingCustomization) return;
+
+    const name = editForm.name.trim();
+    const description = editForm.description.trim();
+    const sectionId = editForm.sectionId.trim() ? Number(editForm.sectionId) : null;
+    const subsectionId = editForm.subsectionId.trim() ? Number(editForm.subsectionId) : null;
+
+    if (!name) {
+      toast.error('Customization name is required');
+      return;
+    }
+
     try {
-      const trimmedName = editForm.name.trim();
-      const trimmedDescription = editForm.description.trim();
-
-      if (!trimmedName) {
-        toast.error('Name is required');
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/customizations/${id}`, {
+      setIsUpdatingCustomization(true);
+      const response = await fetch(`${API_BASE_URL}/api/customizations/${editingCustomization.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: trimmedName,
-          description: trimmedDescription,
+          name,
+          description,
+          sectionId,
+          subsectionId,
         }),
       });
 
@@ -330,21 +390,50 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
           onUnauthorized();
           return;
         }
-
         const payload = await response.json().catch(() => ({}));
         throw new Error(payload.error || 'Failed to update customization');
       }
 
       const payload = await response.json();
-      if (!payload.customization) {
-        throw new Error('Updated customization payload missing');
+      if (payload.customization) {
+        setCustomizations((prev) =>
+          prev.map((c) => (c.id === editingCustomization.id ? payload.customization : c))
+        );
       }
 
-      setCustomizations((prev) => prev.map((row) => (row.id === id ? payload.customization as CustomizationRecord : row)));
-      cancelEditCustomization();
       toast.success('Customization updated');
-    } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : 'Failed to update customization';
+      closeEditCustomizationModal();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update customization';
+      toast.error(message);
+    } finally {
+      setIsUpdatingCustomization(false);
+    }
+  };
+
+  const handleDeleteCustomization = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this customization?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/customizations/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Session expired. Please log in again.');
+          onUnauthorized();
+          return;
+        }
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete customization');
+      }
+
+      setCustomizations((prev) => prev.filter((c) => c.id !== id));
+      toast.success('Customization deleted');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete customization';
       toast.error(message);
     }
   };
@@ -414,27 +503,41 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
   }, [customizations, searchTerm, sortBy, sortOrder]);
 
   return (
-    <div className="theme-page min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_28%),linear-gradient(180deg,_#07111f_0%,_#0b1729_100%)] px-4 py-6 text-slate-100 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-6">
-        <div className="mb-6 flex flex-col gap-4 border-b border-white/10 pb-5 lg:flex-row lg:items-center lg:justify-between">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-grow">
+        <main className={`p-4 ${mainMarginClass} h-auto pt-24 transition-all duration-300`}>
+          <div className={`mx-auto max-w-7xl rounded-3xl border p-4 backdrop-blur-xl sm:p-6 transition-all duration-300 ${
+            isDark 
+              ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]' 
+              : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
+          }`}>
+        <div className={`mb-6 flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-center lg:justify-between ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
           <div>
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
-              className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20"
+              onClick={() => navigate('/companies')}
+              className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-all duration-300 ${
+                isDark 
+                  ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                  : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300'
+              }`}
             >
               <ArrowLeft size={14} />
-              Back to dashboard
+              Back to Company List
             </button>
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 ${
+                isDark 
+                  ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]' 
+                  : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-sm'
+              }`}>
                 <SlidersHorizontal size={20} />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                <h1 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   {companyName ? `${companyName} Customizations` : 'Customization List'}
                 </h1>
-                <p className="text-sm text-slate-300">
+                <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
                   {companyName
                     ? `Showing customization records for ${companyName}.`
                     : 'Open customizations from a company row to view company-specific records.'}
@@ -444,20 +547,28 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
           </div>
 
           <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <label className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-slate-300 shadow-inner shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30">
-              <Search size={16} className="shrink-0 text-cyan-300" />
+            <label className={`flex w-full max-w-md items-center gap-3 rounded-2xl border px-4 py-3 shadow-inner transition-all duration-300 focus-within:ring-2 ${
+              isDark 
+                ? 'border-white/10 bg-black/20 text-slate-300 shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30' 
+                : 'border-gray-200 bg-gray-50 text-gray-700 shadow-gray-100 focus-within:border-cyan-500/40 focus-within:bg-white'
+            }`}>
+              <Search size={16} className={`shrink-0 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} />
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search name, description, or subsection"
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                className={`w-full bg-transparent text-sm outline-none placeholder:text-slate-500 ${isDark ? 'text-white' : 'text-gray-900'}`}
               />
             </label>
 
             <button
               type="button"
               onClick={openAddCustomizationModal}
-              className="h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20"
+              className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${
+                isDark 
+                  ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20' 
+                  : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
+              }`}
             >
               <Plus size={15} /> Add
             </button>
@@ -475,13 +586,13 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
             Loading customizations...
           </div>
         ) : filteredCustomizations.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-slate-300">
+          <div className={`rounded-3xl border border-dashed px-6 py-16 text-center text-sm ${isDark ? 'border-white/10 bg-white/5 text-slate-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
             No customizations found.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-            <table className="min-w-full divide-y divide-white/10 text-left">
-              <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+          <div className={`overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 ${isDark ? 'border-white/10 bg-white/5 shadow-black/40' : 'border-gray-200 bg-white shadow-gray-200/20'}`}>
+            <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
+              <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
                 <tr>
                   <th className="px-5 py-4 font-semibold">
                     <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
@@ -718,70 +829,52 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                       )}
                     </div>
                   </th>
-                  <th className="px-5 py-4 font-semibold">Actions</th>
+                  <th className="px-5 py-4 font-semibold text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/8">
+              <tbody className={`divide-y ${isDark ? 'divide-white/8' : 'divide-gray-50'}`}>
                 {filteredCustomizations.map((item) => (
-                  <tr key={item.id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-sm font-medium text-white">
-                      {editingCustomizationId === item.id ? (
-                        <input
-                          value={editForm.name}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
-                          className="w-full rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-sm text-white outline-none"
-                        />
-                      ) : (
-                        item.name
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-cyan-200">
+                  <tr key={item.id} className={`transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'}`}>
+                    <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.name}</td>
+                    <td className={`px-5 py-4 text-sm ${isDark ? 'text-cyan-200' : 'text-cyan-600 font-semibold'}`}>
                       {item.subsection?.name || 'Unassigned'}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-300">
-                      {editingCustomizationId === item.id ? (
-                        <input
-                          value={editForm.description}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                          className="w-full rounded-lg border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-sm text-white outline-none"
-                        />
-                      ) : (
-                        item.description || 'No description provided'
-                      )}
+                    <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                      {item.description || 'No description provided'}
                     </td>
-                    <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
+                    <td className={`px-5 py-4 text-sm font-medium tracking-wide ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                       {item.tenantCount}
                     </td>
-                    <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
+                    <td className={`px-5 py-4 text-sm font-mono whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                       {item.createdAt ?? '—'}
                     </td>
-                    <td className="px-5 py-4 text-sm text-slate-300">
-                      {editingCustomizationId === item.id ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => saveCustomizationEdit(item.id)}
-                            className="inline-flex items-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2.5 py-1 text-xs font-medium text-emerald-200 transition hover:bg-emerald-500/20"
-                          >
-                            <Save size={13} /> Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelEditCustomization}
-                            className="inline-flex items-center gap-1 rounded-md border border-rose-400/35 bg-rose-500/12 px-2.5 py-1 text-xs font-medium text-rose-200 transition hover:bg-rose-500/20"
-                          >
-                            <X size={13} /> Cancel
-                          </button>
-                        </div>
-                      ) : (
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           type="button"
-                          onClick={() => startEditCustomization(item)}
-                          className="inline-flex items-center gap-1 rounded-md border border-cyan-400/35 bg-cyan-500/12 px-2.5 py-1 text-xs font-medium text-cyan-200 transition hover:bg-cyan-500/20"
+                          onClick={() => openEditCustomizationModal(item)}
+                          className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
+                            isDark 
+                              ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' 
+                              : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
+                          }`}
+                          title="Edit"
                         >
-                          <Edit2 size={13} /> Edit
+                          <Edit2 size={13} />
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCustomization(item.id)}
+                          className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
+                            isDark 
+                              ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20' 
+                              : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300'
+                          }`}
+                          title="Delete"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -793,18 +886,22 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
       {isAddCustomizationOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[#0B1220] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+          <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">Add Customization</h2>
-                <p className="text-sm text-slate-400">
+                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Customization</h2>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                   {companyName ? `Create a customization for ${companyName}.` : 'Create a customization.'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeAddCustomizationModal}
-                className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:border-white/20 hover:text-white"
+                className={`rounded-full border p-2 transition-all ${
+                  isDark 
+                    ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                    : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                }`}
                 aria-label="Close add customization modal"
               >
                 <X size={16} />
@@ -813,11 +910,15 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
             <form onSubmit={handleCreateCustomization} className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-300">Name</label>
+                <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Name</label>
                 <input
                   value={createForm.name}
                   onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
-                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/40"
+                  className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                    isDark 
+                      ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                      : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                  }`}
                   placeholder="Enter customization name"
                 />
               </div>
@@ -827,11 +928,15 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                 <select
                   value={createForm.sectionId}
                   onChange={(event) => setCreateForm((prev) => ({ ...prev, sectionId: event.target.value, subsectionId: '' }))}
-                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/40"
+                  className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                    isDark 
+                      ? 'border-white/10 bg-[#1e293b] text-white focus:border-cyan-400/40' 
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40'
+                  }`}
                 >
-                  <option value="">Select section</option>
+                  <option value="" className={isDark ? 'bg-slate-800' : ''}>Select section</option>
                   {sections.map((section) => (
-                    <option key={section.id} value={String(section.id)}>
+                    <option key={section.id} value={String(section.id)} className={isDark ? 'bg-slate-800' : ''}>
                       {section.name}
                     </option>
                   ))}
@@ -844,11 +949,15 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                   value={createForm.subsectionId}
                   onChange={(event) => setCreateForm((prev) => ({ ...prev, subsectionId: event.target.value }))}
                   disabled={!createForm.sectionId}
-                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/40"
+                  className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                    isDark 
+                      ? 'border-white/10 bg-[#1e293b] text-white focus:border-cyan-400/40' 
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40'
+                  }`}
                 >
-                  <option value="">{createForm.sectionId ? 'Unassigned' : 'Select section first'}</option>
-                  {subsections.map((subsection) => (
-                    <option key={subsection.id} value={String(subsection.id)}>
+                  <option value="" className={isDark ? 'bg-slate-800' : ''}>{createForm.sectionId ? 'Unassigned' : 'Select section first'}</option>
+                  {createSubsections.map((subsection) => (
+                    <option key={subsection.id} value={String(subsection.id)} className={isDark ? 'bg-slate-800' : ''}>
                       {subsection.name}
                     </option>
                   ))}
@@ -861,7 +970,11 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                   value={createForm.description}
                   onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
                   rows={4}
-                  className="w-full resize-none rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-cyan-400/40"
+                  className={`w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                    isDark 
+                      ? 'border-white/10 bg-[#1e293b] text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                      : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                  }`}
                   placeholder="Enter customization description"
                 />
               </div>
@@ -870,14 +983,22 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                 <button
                   type="button"
                   onClick={closeAddCustomizationModal}
-                  className="h-[42px] rounded-xl border border-white/10 px-4 text-sm text-slate-300 transition hover:border-white/20 hover:text-white"
+                  className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${
+                    isDark 
+                      ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingCustomization}
-                  className="h-[42px] rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 text-sm text-cyan-200 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`h-[42px] rounded-xl border px-4 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                    isDark 
+                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                      : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700'
+                  }`}
                 >
                   {isSavingCustomization ? 'Saving...' : 'Create Customization'}
                 </button>
@@ -886,6 +1007,134 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
           </div>
         </div>
       )}
+
+      {/* Edit Customization Modal */}
+      {isEditCustomizationOpen && editingCustomization && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-slate-950/60" onClick={closeEditCustomizationModal} />
+          <div className={`relative w-full max-w-lg rounded-3xl border p-6 shadow-2xl ${isDark ? 'border-white/10 bg-[#0b1729]' : 'border-gray-200 bg-white'}`}>
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Customization</h3>
+              <button
+                onClick={closeEditCustomizationModal}
+                className={`rounded-full p-2 transition-all ${
+                  isDark 
+                    ? 'text-slate-400 hover:bg-white/5 hover:text-white' 
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCustomization} className="space-y-5">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+                    isDark 
+                      ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50' 
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                  }`}
+                  placeholder="e.g. Dark Mode"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className={`h-24 w-full resize-none rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+                    isDark 
+                      ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50' 
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                  }`}
+                  placeholder="What does this customization do?"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Section
+                  </label>
+                  <select
+                    value={editForm.sectionId}
+                    onChange={(e) => setEditForm({ ...editForm, sectionId: e.target.value, subsectionId: '' })}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all ${
+                      isDark 
+                        ? 'border-white/10 bg-[#1e293b] text-white focus:border-blue-500/50' 
+                        : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500'
+                    }`}
+                  >
+                    <option value="" className={isDark ? 'bg-slate-800' : ''}>Select Section</option>
+                    {sections.map((s) => (
+                      <option key={s.id} value={s.id} className={isDark ? 'bg-slate-800' : ''}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Subsection
+                  </label>
+                  <select
+                    value={editForm.subsectionId}
+                    onChange={(e) => setEditForm({ ...editForm, subsectionId: e.target.value })}
+                    className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all ${
+                      isDark 
+                        ? 'border-white/10 bg-[#1e293b] text-white focus:border-blue-500/50' 
+                        : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500'
+                    }`}
+                    disabled={!editForm.sectionId}
+                  >
+                    <option value="" className={isDark ? 'bg-slate-800' : ''}>Select Subsection</option>
+                    {editSubsections.map((ss) => (
+                      <option key={ss.id} value={ss.id} className={isDark ? 'bg-slate-800' : ''}>
+                        {ss.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeEditCustomizationModal}
+                  className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${
+                    isDark 
+                      ? 'text-slate-400 hover:bg-white/5 hover:text-white' 
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingCustomization}
+                  className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-500 disabled:opacity-50"
+                >
+                  {isUpdatingCustomization ? 'Updating...' : 'Update Customization'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+        </main>
+      </div>
     </div>
   );
 }

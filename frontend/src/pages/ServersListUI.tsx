@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowUpDown, Edit2, Plus, Save, Search, ServerCog, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Edit2, Plus, Save, Search, ServerCog, Trash2, X } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
+import { useDrawer } from '../context/DrawerContext';
 
 type ServerRecord = {
   id: number;
@@ -38,11 +40,15 @@ type ServersListUIProps = {
 
 
 export default function ServersListUI({ token, onUnauthorized }: ServersListUIProps) {
+  const { isDark } = useTheme();
+  const { isDrawerOpen } = useDrawer();
+  const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const navigate = useNavigate();
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const companyId = params.get('companyId') || '';
-  const companyName = params.get('companyName') || '';
+  const companyIdParam = params.get('companyId')?.trim() || '';
+  const companyName = params.get('companyName')?.trim() || '';
+  const companyId = companyIdParam ? Number(companyIdParam) : NaN;
   const idSortMenuRef = useRef<HTMLDivElement>(null);
   const companySortMenuRef = useRef<HTMLDivElement>(null);
   const companyIdSortMenuRef = useRef<HTMLDivElement>(null);
@@ -62,14 +68,17 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
   const [isIpAddressSortMenuOpen, setIsIpAddressSortMenuOpen] = useState(false);
   const [isLabelSortMenuOpen, setIsLabelSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
-  const [editingServerId, setEditingServerId] = useState<number | null>(null);
-  const [serverForm, setServerForm] = useState({ ipAddress: '', label: '' });
-  const [isSavingServer, setIsSavingServer] = useState(false);
+  
+  const [isEditServerModalOpen, setIsEditServerModalOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<ServerRecord | null>(null);
+  const [isUpdatingServer, setIsUpdatingServer] = useState(false);
+  const [editForm, setEditForm] = useState({ ipAddress: '', label: '' });
+
   const [isAddServerModalOpen, setIsAddServerModalOpen] = useState(false);
   const [addServerStep, setAddServerStep] = useState(1);
   const [isCreatingServer, setIsCreatingServer] = useState(false);
   const [addServerForm, setAddServerForm] = useState({
-    companyId: companyId || '',
+    companyId: companyIdParam || '',
     ipAddress: '',
     label: '',
   });
@@ -192,32 +201,37 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
     });
   }, [servers, searchTerm, sortBy, sortOrder]);
 
-  const startEditServer = (server: ServerRecord) => {
-    setEditingServerId(server.id);
-    setServerForm({
+  const openEditServerModal = (server: ServerRecord) => {
+    setEditingServer(server);
+    setEditForm({
       ipAddress: server.ipAddress,
       label: server.label || '',
     });
+    setIsEditServerModalOpen(true);
   };
 
-  const cancelEditServer = () => {
-    setEditingServerId(null);
-    setServerForm({ ipAddress: '', label: '' });
-    setIsSavingServer(false);
+  const closeEditServerModal = () => {
+    setIsEditServerModalOpen(false);
+    setEditingServer(null);
+    setEditForm({ ipAddress: '', label: '' });
+    setIsUpdatingServer(false);
   };
 
-  const saveServerEdit = async (serverId: number) => {
+  const handleUpdateServer = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingServer) return;
+
     try {
-      const trimmedIp = serverForm.ipAddress.trim();
-      const trimmedLabel = serverForm.label.trim();
+      const trimmedIp = editForm.ipAddress.trim();
+      const trimmedLabel = editForm.label.trim();
 
       if (!trimmedIp) {
         toast.error('IP address is required');
         return;
       }
 
-      setIsSavingServer(true);
-      const response = await fetch(`${API_BASE_URL}/api/servers/${serverId}`, {
+      setIsUpdatingServer(true);
+      const response = await fetch(`${API_BASE_URL}/api/servers/${editingServer.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -245,14 +259,40 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
         throw new Error('Updated server payload missing');
       }
 
-      setServers((prev) => prev.map((row) => (row.id === serverId ? payload.server as ServerRecord : row)));
-      cancelEditServer();
+      setServers((prev) => prev.map((row) => (row.id === editingServer.id ? payload.server as ServerRecord : row)));
+      closeEditServerModal();
       toast.success('Server updated');
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : 'Failed to update server';
       toast.error(message);
     } finally {
-      setIsSavingServer(false);
+      setIsUpdatingServer(false);
+    }
+  };
+
+  const handleDeleteServer = async (serverId: number) => {
+    if (!window.confirm('Are you sure you want to delete this server?')) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/servers/${serverId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('Session expired. Please log in again.');
+          onUnauthorized();
+          return;
+        }
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || 'Failed to delete server');
+      }
+
+      setServers((prev) => prev.filter((s) => s.id !== serverId));
+      toast.success('Server deleted');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete server');
     }
   };
 
@@ -368,552 +408,581 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
   };
 
   return (
-    <div className="theme-page min-h-screen bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.12),_transparent_28%),linear-gradient(180deg,_#07111f_0%,_#0b1729_100%)] px-4 py-6 text-slate-100 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-7xl rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-6">
-        <div className="mb-6 flex flex-col gap-4 border-b border-white/10 pb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-200 transition hover:bg-violet-500/20"
-            >
-              <ArrowLeft size={14} />
-              Back to dashboard
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-400/30 bg-violet-500/10 text-violet-200 shadow-[0_0_18px_rgba(139,92,246,0.22)]">
-                <ServerCog size={20} />
-              </div>
+    <div className={`min-h-screen transition-all duration-300 ${isDark ? 'bg-[#030712] text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="flex">
+        <main className={`flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 ${mainMarginClass}`}>
+          <div className="mx-auto max-w-7xl">
+            {/* Header section */}
+            <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Server List</h1>
-                <p className="text-sm text-slate-300">
-                  {companyName ? `Showing server records for ${companyName}.` : 'Showing all server records in the database.'}
-                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/companies')}
+                  className={`mb-4 flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium transition-all ${
+                    isDark 
+                      ? 'border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20' 
+                      : 'border-violet-200 bg-violet-50 text-violet-600 hover:bg-violet-100 hover:border-violet-300'
+                  }`}
+                >
+                  <ArrowLeft size={14} />
+                  Back to Company List
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border transition-all ${
+                    isDark 
+                      ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.15)]' 
+                      : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-[0_0_15px_rgba(34,211,238,0.1)]'
+                  }`}>
+                    <ServerCog size={24} />
+                  </div>
+                  <div>
+                    <h1 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Server List</h1>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                      {companyName ? `Showing server records for ${companyName}.` : 'Showing all server records in the database.'}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="flex w-full max-w-2xl items-center gap-2">
-            <label className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-slate-300 shadow-inner shadow-black/20 focus-within:border-violet-400/40 focus-within:bg-black/30">
-              <Search size={16} className="shrink-0 text-violet-300" />
-              <input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search by id, IP, label, company"
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-              />
-            </label>
-
-            <button
-              type="button"
-              onClick={openAddServerModal}
-              className="h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20"
-            >
-              <Plus size={15} /> Add
-            </button>
-          </div>
-        </div>
-
-        {error ? (
-          <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-            {error}
-          </div>
-        ) : null}
-
-        {loading ? (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-slate-300">
-            Loading server records...
-          </div>
-        ) : filteredServers.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center text-sm text-slate-300">
-            No server records found.
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-            <table className="min-w-full divide-y divide-white/10 text-left">
-              <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                <tr>
-                  <th className="px-5 py-4 font-semibold">
-                    <div className="relative inline-flex items-center gap-2" ref={idSortMenuRef}>
-                      <span>ID</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsIdSortMenuOpen((prev) => !prev);
-                          setIsCompanySortMenuOpen(false);
-                          setIsCompanyIdSortMenuOpen(false);
-                          setIsIpAddressSortMenuOpen(false);
-                          setIsLabelSortMenuOpen(false);
-                          setIsCreatedAtSortMenuOpen(false);
-                        }}
-                        className="rounded-md p-1 transition-colors hover:bg-white/10"
-                        aria-label="Sort server id"
-                        title="Sort server id"
-                      >
-                        <ArrowUpDown size={13} />
-                      </button>
-                      {isIdSortMenuOpen && (
-                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('id', 'asc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'id' && sortOrder === 'asc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            asc
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('id', 'desc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'id' && sortOrder === 'desc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            dsc
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    <div className="relative inline-flex items-center gap-2" ref={companySortMenuRef}>
-                      <span>Company</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsCompanySortMenuOpen((prev) => !prev);
-                          setIsIdSortMenuOpen(false);
-                          setIsCompanyIdSortMenuOpen(false);
-                          setIsIpAddressSortMenuOpen(false);
-                          setIsLabelSortMenuOpen(false);
-                          setIsCreatedAtSortMenuOpen(false);
-                        }}
-                        className="rounded-md p-1 transition-colors hover:bg-white/10"
-                        aria-label="Sort server company"
-                        title="Sort server company"
-                      >
-                        <ArrowUpDown size={13} />
-                      </button>
-                      {isCompanySortMenuOpen && (
-                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('company', 'asc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'company' && sortOrder === 'asc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            asc
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('company', 'desc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'company' && sortOrder === 'desc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            dsc
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    <div className="relative inline-flex items-center gap-2" ref={companyIdSortMenuRef}>
-                      <span>Company ID</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsCompanyIdSortMenuOpen((prev) => !prev);
-                          setIsIdSortMenuOpen(false);
-                          setIsCompanySortMenuOpen(false);
-                          setIsIpAddressSortMenuOpen(false);
-                          setIsLabelSortMenuOpen(false);
-                          setIsCreatedAtSortMenuOpen(false);
-                        }}
-                        className="rounded-md p-1 transition-colors hover:bg-white/10"
-                        aria-label="Sort server company id"
-                        title="Sort server company id"
-                      >
-                        <ArrowUpDown size={13} />
-                      </button>
-                      {isCompanyIdSortMenuOpen && (
-                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('companyId', 'asc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'companyId' && sortOrder === 'asc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            asc
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('companyId', 'desc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'companyId' && sortOrder === 'desc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            dsc
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    <div className="relative inline-flex items-center gap-2" ref={ipAddressSortMenuRef}>
-                      <span>IP Address</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsIpAddressSortMenuOpen((prev) => !prev);
-                          setIsIdSortMenuOpen(false);
-                          setIsCompanySortMenuOpen(false);
-                          setIsCompanyIdSortMenuOpen(false);
-                          setIsLabelSortMenuOpen(false);
-                          setIsCreatedAtSortMenuOpen(false);
-                        }}
-                        className="rounded-md p-1 transition-colors hover:bg-white/10"
-                        aria-label="Sort server ip address"
-                        title="Sort server ip address"
-                      >
-                        <ArrowUpDown size={13} />
-                      </button>
-                      {isIpAddressSortMenuOpen && (
-                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('ipAddress', 'asc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'ipAddress' && sortOrder === 'asc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            asc
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('ipAddress', 'desc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'ipAddress' && sortOrder === 'desc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            dsc
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    <div className="relative inline-flex items-center gap-2" ref={labelSortMenuRef}>
-                      <span>Label</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsLabelSortMenuOpen((prev) => !prev);
-                          setIsIdSortMenuOpen(false);
-                          setIsCompanySortMenuOpen(false);
-                          setIsCompanyIdSortMenuOpen(false);
-                          setIsIpAddressSortMenuOpen(false);
-                          setIsCreatedAtSortMenuOpen(false);
-                        }}
-                        className="rounded-md p-1 transition-colors hover:bg-white/10"
-                        aria-label="Sort server label"
-                        title="Sort server label"
-                      >
-                        <ArrowUpDown size={13} />
-                      </button>
-                      {isLabelSortMenuOpen && (
-                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('label', 'asc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'label' && sortOrder === 'asc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            asc
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('label', 'desc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'label' && sortOrder === 'desc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            dsc
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-5 py-4 font-semibold">
-                    <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
-                      <span>CREATED_AT</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsCreatedAtSortMenuOpen((prev) => !prev);
-                          setIsIdSortMenuOpen(false);
-                          setIsCompanySortMenuOpen(false);
-                          setIsCompanyIdSortMenuOpen(false);
-                          setIsIpAddressSortMenuOpen(false);
-                          setIsLabelSortMenuOpen(false);
-                        }}
-                        className="rounded-md p-1 transition-colors hover:bg-white/10"
-                        aria-label="Sort server created date"
-                        title="Sort server created date"
-                      >
-                        <ArrowUpDown size={13} />
-                      </button>
-                      {isCreatedAtSortMenuOpen && (
-                        <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('createdAt', 'asc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'createdAt' && sortOrder === 'asc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            asc
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applyColumnSort('createdAt', 'desc')}
-                            className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
-                              sortBy === 'createdAt' && sortOrder === 'desc'
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'text-gray-300 hover:bg-white/5'
-                            }`}
-                          >
-                            dsc
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-5 py-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/8">
-                {filteredServers.map((server) => (
-                  <tr key={server.id} className="transition hover:bg-white/5">
-                    <td className="px-5 py-4 text-sm font-medium text-white">{server.id}</td>
-                    <td className="px-5 py-4 text-sm text-violet-200">{server.company?.name || 'N/A'}</td>
-                    <td className="px-5 py-4 text-sm text-slate-300">{server.companyId}</td>
-                    <td className="px-5 py-4 text-sm text-slate-200">
-                      {editingServerId === server.id ? (
-                        <input
-                          value={serverForm.ipAddress}
-                          onChange={(event) => setServerForm((prev) => ({ ...prev, ipAddress: event.target.value }))}
-                          className="w-full rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-1 text-sm text-white outline-none"
-                        />
-                      ) : (
-                        server.ipAddress
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-300">
-                      {editingServerId === server.id ? (
-                        <input
-                          value={serverForm.label}
-                          onChange={(event) => setServerForm((prev) => ({ ...prev, label: event.target.value }))}
-                          className="w-full rounded-lg border border-violet-400/30 bg-violet-500/10 px-2 py-1 text-sm text-white outline-none"
-                        />
-                      ) : (
-                        server.label || '-'
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-400">{server.createdAt ?? '—'}</td>
-                    <td className="px-5 py-4 text-sm text-slate-300">
-                      {editingServerId === server.id ? (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => saveServerEdit(server.id)}
-                            disabled={isSavingServer}
-                            className="inline-flex items-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2.5 py-1 text-xs font-medium text-emerald-200 transition hover:bg-emerald-500/20 disabled:opacity-60"
-                          >
-                            <Save size={13} /> Save
-                          </button>
-                          <button
-                            type="button"
-                            onClick={cancelEditServer}
-                            disabled={isSavingServer}
-                            className="inline-flex items-center gap-1 rounded-md border border-rose-400/35 bg-rose-500/12 px-2.5 py-1 text-xs font-medium text-rose-200 transition hover:bg-rose-500/20 disabled:opacity-60"
-                          >
-                            <X size={13} /> Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => startEditServer(server)}
-                          className="inline-flex items-center gap-1 rounded-md border border-violet-400/35 bg-violet-500/12 px-2.5 py-1 text-xs font-medium text-violet-200 transition hover:bg-violet-500/20"
-                        >
-                          <Edit2 size={13} /> Edit
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {isAddServerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#111318] p-6 shadow-[0_0_35px_rgba(139,92,246,0.25)]">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h4 className="text-lg font-semibold text-white">Add a new server</h4>
-              <button
-                type="button"
-                onClick={closeAddServerModal}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
-                aria-label="Close add server modal"
-                title="Close"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="mb-5 rounded-xl border border-white/10 bg-white/5 px-4 py-4">
-              <div className="flex items-center justify-between gap-2 text-[12px] font-semibold uppercase tracking-[0.2em]">
-                <span className="text-gray-400">Step {addServerStep} of {addServerWizardSteps.length}</span>
-                <span className="text-violet-200">{addServerWizardSteps[addServerStep - 1]?.title}</span>
-              </div>
-              <div className="mt-4 flex gap-2">
-                {addServerWizardSteps.map((step) => (
-                  <div
-                    key={step.step}
-                    className={`h-2.5 flex-1 rounded-full transition-colors ${
-                      addServerStep >= step.step ? 'bg-violet-500/80' : 'bg-white/10'
-                    }`}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className={`relative flex items-center gap-3 rounded-2xl border px-4 py-2.5 transition-all focus-within:ring-2 ${
+                  isDark 
+                    ? 'border-white/10 bg-white/5 focus-within:border-cyan-400/40 focus-within:ring-cyan-400/20' 
+                    : 'border-gray-200 bg-white focus-within:border-cyan-500/40 focus-within:ring-cyan-500/10 shadow-sm'
+                }`}>
+                  <Search size={18} className={isDark ? 'text-cyan-400/60' : 'text-cyan-600/60'} />
+                  <input
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search servers..."
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-slate-500 min-w-[240px]"
                   />
-                ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={openAddServerModal}
+                  className={`flex h-[46px] items-center gap-2 rounded-2xl border px-6 text-sm font-semibold transition-all shadow-lg active:scale-95 ${
+                    isDark 
+                      ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                      : 'border-cyan-600 bg-cyan-600 text-white hover:bg-cyan-700 hover:shadow-cyan-500/20'
+                  }`}
+                >
+                  <Plus size={18} />
+                  Add Server
+                </button>
               </div>
             </div>
 
-            {addServerStep === 1 && (
-              <div>
-                <label htmlFor="addServerCompanyId" className="text-[13px] text-gray-300">Company ID *</label>
-                <input
-                  id="addServerCompanyId"
-                  type="number"
-                  autoFocus
-                  value={addServerForm.companyId}
-                  onChange={(event) => setAddServerForm((prev) => ({ ...prev, companyId: event.target.value }))}
-                  className={`mt-2 w-full rounded-xl border px-4 py-3 text-base text-gray-200 outline-none ${
-                    addServerErrors.companyId
-                      ? 'border-red-500/50 bg-red-500/10'
-                      : 'border-white/10 bg-[#09090B] focus:border-violet-500/50'
-                  }`}
-                  placeholder="Company id"
-                />
-                {addServerErrors.companyId && <p className="mt-2 text-xs text-red-400">{addServerErrors.companyId}</p>}
+            {error ? (
+              <div className="mb-6 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-4 text-sm text-rose-300 flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+                {error}
+              </div>
+            ) : null}
+
+            {loading ? (
+              <div className={`flex flex-col items-center justify-center rounded-3xl border border-dashed py-24 text-center ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-cyan-500/20 border-t-cyan-500" />
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Loading server records...</p>
+              </div>
+            ) : filteredServers.length === 0 ? (
+              <div className={`flex flex-col items-center justify-center rounded-3xl border border-dashed py-24 text-center ${isDark ? 'border-white/10 bg-white/5 text-slate-300' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isDark ? 'bg-white/5' : 'bg-white shadow-sm'}`}>
+                  <ServerCog size={32} className="opacity-20" />
+                </div>
+                <p className="font-medium">No server records found.</p>
+                <p className="mt-1 text-sm opacity-60">Try adjusting your search criteria.</p>
+              </div>
+            ) : (
+              <div className={`overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 ${isDark ? 'border-white/10 bg-white/5 shadow-black/40' : 'border-gray-200 bg-white shadow-gray-200/20'}`}>
+                <div className="overflow-x-auto">
+                  <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
+                    <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
+                      <tr>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={idSortMenuRef}>
+                            <span>ID</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isOpen = isIdSortMenuOpen;
+                                closeAllSortMenus();
+                                setIsIdSortMenuOpen(!isOpen);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+                            {isIdSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border p-1 shadow-xl ${isDark ? 'border-white/10 bg-[#111318]' : 'border-gray-200 bg-white'}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('id', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'id' && sortOrder === 'asc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('id', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'id' && sortOrder === 'desc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={companySortMenuRef}>
+                            <span>Company</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isOpen = isCompanySortMenuOpen;
+                                closeAllSortMenus();
+                                setIsCompanySortMenuOpen(!isOpen);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+                            {isCompanySortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border p-1 shadow-xl ${isDark ? 'border-white/10 bg-[#111318]' : 'border-gray-200 bg-white'}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('company', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'company' && sortOrder === 'asc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('company', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'company' && sortOrder === 'desc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={ipAddressSortMenuRef}>
+                            <span>IP Address</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isOpen = isIpAddressSortMenuOpen;
+                                closeAllSortMenus();
+                                setIsIpAddressSortMenuOpen(!isOpen);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+                            {isIpAddressSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border p-1 shadow-xl ${isDark ? 'border-white/10 bg-[#111318]' : 'border-gray-200 bg-white'}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('ipAddress', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'ipAddress' && sortOrder === 'asc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('ipAddress', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'ipAddress' && sortOrder === 'desc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={labelSortMenuRef}>
+                            <span>Label</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isOpen = isLabelSortMenuOpen;
+                                closeAllSortMenus();
+                                setIsLabelSortMenuOpen(!isOpen);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+                            {isLabelSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border p-1 shadow-xl ${isDark ? 'border-white/10 bg-[#111318]' : 'border-gray-200 bg-white'}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('label', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'label' && sortOrder === 'asc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('label', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'label' && sortOrder === 'desc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
+                            <span>Created At</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const isOpen = isCreatedAtSortMenuOpen;
+                                closeAllSortMenus();
+                                setIsCreatedAtSortMenuOpen(!isOpen);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+                            {isCreatedAtSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border p-1 shadow-xl ${isDark ? 'border-white/10 bg-[#111318]' : 'border-gray-200 bg-white'}`}>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('createdAt', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'createdAt' && sortOrder === 'asc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('createdAt', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                    sortBy === 'createdAt' && sortOrder === 'desc'
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-white/8' : 'divide-gray-50'}`}>
+                      {filteredServers.map((server) => (
+                        <tr key={server.id} className={`transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'}`}>
+                          <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{server.id}</td>
+                          <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-violet-200' : 'text-violet-600 font-semibold'}`}>
+                            {server.company?.name || 'N/A'}
+                          </td>
+                          <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                            {server.ipAddress}
+                          </td>
+                          <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                            {server.label || '-'}
+                          </td>
+                          <td className={`px-5 py-4 text-sm font-mono whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                            {server.createdAt ?? '—'}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEditServerModal(server)}
+                                className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
+                                  isDark 
+                                    ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' 
+                                    : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
+                                }`}
+                                title="Edit"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteServer(server.id)}
+                                className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
+                                  isDark 
+                                    ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20' 
+                                    : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300'
+                                }`}
+                                title="Delete"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-
-            {addServerStep === 2 && (
-              <div>
-                <label htmlFor="addServerIpAddress" className="text-[13px] text-gray-300">IP Address *</label>
-                <input
-                  id="addServerIpAddress"
-                  type="text"
-                  autoFocus
-                  value={addServerForm.ipAddress}
-                  onChange={(event) => setAddServerForm((prev) => ({ ...prev, ipAddress: event.target.value }))}
-                  className={`mt-2 w-full rounded-xl border px-4 py-3 text-base text-gray-200 outline-none ${
-                    addServerErrors.ipAddress
-                      ? 'border-red-500/50 bg-red-500/10'
-                      : 'border-white/10 bg-[#09090B] focus:border-violet-500/50'
-                  }`}
-                  placeholder="10.20.1.11"
-                />
-                {addServerErrors.ipAddress && <p className="mt-2 text-xs text-red-400">{addServerErrors.ipAddress}</p>}
-              </div>
-            )}
-
-            {addServerStep === 3 && (
-              <div>
-                <label htmlFor="addServerLabel" className="text-[13px] text-gray-300">Label</label>
-                <input
-                  id="addServerLabel"
-                  type="text"
-                  autoFocus
-                  value={addServerForm.label}
-                  onChange={(event) => setAddServerForm((prev) => ({ ...prev, label: event.target.value }))}
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-[#09090B] px-4 py-3 text-base text-gray-200 outline-none focus:border-violet-500/50"
-                  placeholder="Primary"
-                />
-              </div>
-            )}
-
-            <div className="pt-5 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeAddServerModal}
-                className="rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-gray-300 transition hover:bg-white/5"
-              >
-                Cancel
-              </button>
-
-              {addServerStep > 1 && (
-                <button
-                  type="button"
-                  onClick={handleAddServerBack}
-                  className="rounded-xl border border-white/10 bg-transparent px-4 py-3 text-sm text-gray-300 transition hover:bg-white/5"
-                >
-                  Back
-                </button>
-              )}
-
-              {addServerStep < addServerWizardSteps.length ? (
-                <button
-                  type="button"
-                  onClick={handleAddServerNext}
-                  className="rounded-xl border border-violet-400/35 bg-violet-500/15 px-4 py-3 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/25"
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleCreateServer}
-                  disabled={isCreatingServer}
-                  className="rounded-xl border border-violet-400/35 bg-violet-500/15 px-4 py-3 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/25 disabled:opacity-60"
-                >
-                  {isCreatingServer ? 'Saving...' : 'Save'}
-                </button>
-              )}
-            </div>
           </div>
-        </div>
-      )}
+
+          {/* Add Server Modal */}
+          {isAddServerModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+              <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Server</h2>
+                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                      {companyName ? `Create a server for ${companyName}.` : 'Create a new server record.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeAddServerModal}
+                    className={`rounded-full border p-2 transition-all ${
+                      isDark 
+                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                    aria-label="Close"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className={`mb-6 rounded-2xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'}`}>
+                  <div className="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-[0.2em]">
+                    <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>Step {addServerStep} of {addServerWizardSteps.length}</span>
+                    <span className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>{addServerWizardSteps[addServerStep - 1]?.title}</span>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    {addServerWizardSteps.map((step) => (
+                      <div
+                        key={step.step}
+                        className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                          addServerStep >= step.step 
+                            ? isDark ? 'bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]' : 'bg-cyan-600' 
+                            : isDark ? 'bg-white/10' : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {addServerStep === 1 && (
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Company ID</label>
+                      <input
+                        type="number"
+                        autoFocus
+                        value={addServerForm.companyId}
+                        onChange={(e) => setAddServerForm({ ...addServerForm, companyId: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                          addServerErrors.companyId
+                            ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
+                            : isDark 
+                              ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                              : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                        }`}
+                        placeholder="Enter company ID"
+                      />
+                      {addServerErrors.companyId && <p className="mt-2 text-xs text-rose-400">{addServerErrors.companyId}</p>}
+                    </div>
+                  )}
+
+                  {addServerStep === 2 && (
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={addServerForm.ipAddress}
+                        onChange={(e) => setAddServerForm({ ...addServerForm, ipAddress: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                          addServerErrors.ipAddress
+                            ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
+                            : isDark 
+                              ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                              : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                        }`}
+                        placeholder="e.g. 192.168.1.1"
+                      />
+                      {addServerErrors.ipAddress && <p className="mt-2 text-xs text-rose-400">{addServerErrors.ipAddress}</p>}
+                    </div>
+                  )}
+
+                  {addServerStep === 3 && (
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={addServerForm.label}
+                        onChange={(e) => setAddServerForm({ ...addServerForm, label: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                          isDark 
+                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                        }`}
+                        placeholder="e.g. Production Server"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-6">
+                  {addServerStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={handleAddServerBack}
+                      className={`h-[42px] rounded-xl border px-6 text-sm font-medium transition-all ${
+                        isDark 
+                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      Back
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={addServerStep === addServerWizardSteps.length ? handleCreateServer : handleAddServerNext}
+                    disabled={isCreatingServer}
+                    className={`h-[42px] rounded-xl px-6 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                      isDark 
+                        ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                        : 'border-cyan-600 bg-cyan-600 text-white hover:bg-cyan-700'
+                    }`}
+                  >
+                    {isCreatingServer ? 'Saving...' : addServerStep === addServerWizardSteps.length ? 'Create Server' : 'Next'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Server Modal */}
+          {isEditServerModalOpen && editingServer && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+              <div className="absolute inset-0 bg-slate-950/60" onClick={closeEditServerModal} />
+              <div className={`relative w-full max-w-lg rounded-3xl border p-6 shadow-2xl ${isDark ? 'border-white/10 bg-[#0b1729]' : 'border-gray-200 bg-white'}`}>
+                <div className="mb-6 flex items-center justify-between">
+                  <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Server</h3>
+                  <button
+                    onClick={closeEditServerModal}
+                    className={`rounded-full p-2 transition-all ${
+                      isDark 
+                        ? 'text-slate-400 hover:bg-white/5 hover:text-white' 
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateServer} className="space-y-5">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      IP Address
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.ipAddress}
+                      onChange={(e) => setEditForm({ ...editForm, ipAddress: e.target.value })}
+                      className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+                        isDark 
+                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50' 
+                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
+                      placeholder="e.g. 192.168.1.1"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                      Label
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.label}
+                      onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
+                      className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+                        isDark 
+                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50' 
+                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
+                      placeholder="e.g. Main Server"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={closeEditServerModal}
+                      className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${
+                        isDark 
+                          ? 'text-slate-400 hover:bg-white/5 hover:text-white' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isUpdatingServer}
+                      className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-500 disabled:opacity-50"
+                    >
+                      {isUpdatingServer ? 'Updating...' : 'Update Server'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

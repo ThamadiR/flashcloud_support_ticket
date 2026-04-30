@@ -314,6 +314,25 @@ export class ManagementService {
     }
   }
 
+  async deleteServer(requesterIdRaw: unknown, serverIdRaw: unknown) {
+    await this.requireAdmin(requesterIdRaw, 'Forbidden: Only admins can delete servers');
+
+    const serverId = parseInt(String(serverIdRaw), 10);
+    if (!Number.isFinite(serverId)) {
+      throw new ApiError(400, 'Invalid server id');
+    }
+
+    try {
+      await this.repository.deleteServer(serverId);
+      return { message: 'Server deleted successfully' };
+    } catch (error: any) {
+      if (error?.code === 'P2025' || error?.code === '23503') {
+        throw new ApiError(404, 'Server not found');
+      }
+      throw error;
+    }
+  }
+
   async listTenants(requesterIdRaw: unknown, query: any) {
     await this.getRequesterUser(requesterIdRaw);
 

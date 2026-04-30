@@ -59,6 +59,17 @@ export class ManagementAdminController {
     }
   };
 
+  deleteServer = async (req: any, res: any) => {
+    try {
+      const result = await this.managementService.deleteServer(req?.user?.id, req.params.id);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      if (error instanceof ApiError) return res.status(error.statusCode).json({ error: error.message });
+      console.error('Delete server error:', error);
+      return res.status(500).json({ error: 'Error deleting server' });
+    }
+  };
+
   createTenant = async (req: any, res: any) => {
     try {
       const result = await this.managementService.createTenant(req?.user?.id, req.body);

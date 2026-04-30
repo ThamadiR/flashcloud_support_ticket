@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Edit2, Plus, Save, Search, ServerCog, X } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
 
 type SipConfigRecord = {
   id: number;
@@ -42,6 +43,7 @@ type SipConfigsListUIProps = {
 };
 
 export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsListUIProps) {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -501,24 +503,32 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
       </div>
 
       {isAddSipConfigOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#111318] p-6 shadow-[0_0_35px_rgba(34,211,238,0.25)]">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+          <div className={`w-full max-w-2xl rounded-2xl border p-6 ${
+            isDark 
+              ? 'border-white/10 bg-[#111318] shadow-[0_0_35px_rgba(34,211,238,0.25)]' 
+              : 'border-gray-200 bg-white shadow-[0_0_25px_rgba(34,211,238,0.15)]'
+          }`}>
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-semibold text-white">
+                <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   Add SIP Configuration
                 </h2>
-                <p className="text-sm text-slate-400">
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                   {tenantName ? `For ${tenantName}.` : 'Create a new SIP configuration.'}
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-[0.24em] text-cyan-300">
+                <p className={`mt-1 text-xs uppercase tracking-[0.24em] ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`}>
                   {sipConfigWizardSteps[sipConfigWizardStep - 1].title}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeSipConfigModal}
-                className="rounded-full border border-white/10 p-2 text-slate-300 transition hover:border-white/20 hover:text-white"
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all ${
+                  isDark 
+                    ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                    : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                }`}
                 aria-label="Close SIP configuration modal"
               >
                 <X size={16} />
@@ -604,7 +614,11 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                   <button
                     type="button"
                     onClick={handleSipConfigBack}
-                    className="h-[42px] rounded-xl border border-white/10 px-4 text-sm text-slate-300 transition hover:border-white/20 hover:text-white"
+                    className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${
+                      isDark 
+                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                   >
                     Back
                   </button>
@@ -612,14 +626,22 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                 <button
                   type="button"
                   onClick={closeSipConfigModal}
-                  className="h-[42px] rounded-xl border border-white/10 px-4 text-sm text-slate-300 transition hover:border-white/20 hover:text-white"
+                  className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${
+                    isDark 
+                      ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingSipConfig}
-                  className="h-[42px] rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 text-sm text-cyan-200 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${
+                    isDark 
+                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                      : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300 font-semibold'
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   {isSavingSipConfig ? 'Saving...' : sipConfigWizardStep === sipConfigWizardSteps.length ? (editingSipConfigId ? 'Update SIP Configuration' : 'Create SIP Configuration') : 'Next'}
                 </button>

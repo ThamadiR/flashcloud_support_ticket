@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaPlus, FaTimes, FaUserCircle, FaTrash } from "react-icons/fa";
 import { useDrawer } from "../../context/DrawerContext";
+import { useTheme } from "../../context/ThemeContext";
+import { API_BASE_URL as API_BASE } from "../../config/api";
 
 type Contact = {
   id: number;
@@ -13,10 +15,8 @@ type Contact = {
   createdAt: string;
 };
 
-const API_BASE =
-  (import.meta as any)?.env?.VITE_API_URL || "http://localhost:5000";
-
 function Contacts() {
+  const { isDark } = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(false);
@@ -206,18 +206,22 @@ function Contacts() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-100"}`}>
       <main
         className={`p-4 ${mainMarginClass} h-auto pt-20 space-y-4 transition-all duration-300`}
       >
         {/* Header with Add Contact button */}
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className={`${isDark ? "bg-gray-800 border-gray-700 shadow-[0_0_20px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-md"} rounded-lg p-3 border flex justify-between items-center transition-colors`}>
+          <h1 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
             {editingContact ? "Edit Contact" : "Add New Contact"}
           </h1>
           <button
             type="button"
-            className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center"
+            className={`inline-flex items-center px-5 py-2.5 text-sm font-medium rounded-lg border focus:outline-none transition-all ${
+              isDark 
+                ? "bg-gray-800 text-white border-gray-600 hover:bg-gray-700 hover:border-gray-500" 
+                : "bg-white text-gray-900 border-gray-300 hover:bg-gray-100"
+            }`}
             onClick={() => setIsModalOpen(true)}
           >
             <FaPlus className="w-4 h-4 me-2" />
@@ -227,44 +231,48 @@ function Contacts() {
 
         {/* Alerts */}
         {loading && (
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             Loading…
           </div>
         )}
         {error && (
-          <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
+          <div className={`text-sm ${isDark ? "text-red-400" : "text-red-600"}`}>{error}</div>
         )}
 
         {/* Contact table */}
-        <div className="overflow-x-auto overflow-y-auto h-[438px] rounded-xl border border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 bg-white dark:bg-gray-900 shadow-sm">
-          <table className="w-full text-sm text-left text-gray-700 dark:text-gray-300">
-            <thead className="bg-[#eeeeee] dark:bg-gray-800 rounded-t-xl">
+        <div className={`overflow-x-auto overflow-y-auto h-[438px] rounded-xl border px-4 md:px-6 py-4 transition-colors ${
+          isDark 
+            ? "border-gray-700 bg-gray-900 shadow-[inset_0_0_20px_rgba(0,0,0,0.2)]" 
+            : "border-gray-200 bg-white shadow-sm"
+        }`}>
+          <table className={`w-full text-sm text-left ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+            <thead className={`rounded-t-xl transition-colors ${isDark ? "bg-gray-800" : "bg-[#eeeeee]"}`}>
               <tr>
-                <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   Profile
                 </th>
-                <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   Name
                 </th>
-                <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   Phone
                 </th>
-                <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   Email
                 </th>
-                <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   Company
                 </th>
-                <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                <th className={`px-6 py-3 font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className={`divide-y transition-colors ${isDark ? "divide-gray-700" : "divide-gray-200"}`}>
               {!loading && contacts.length === 0 && (
                 <tr>
                   <td
-                    className="px-6 py-4 text-gray-500 dark:text-gray-400"
+                    className={`px-6 py-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                     colSpan={6}
                   >
                     No contacts found.
@@ -275,14 +283,14 @@ function Contacts() {
               {contacts.map((contact) => (
                 <tr
                   key={contact.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                  className={`transition-colors ${isDark ? "hover:bg-gray-800/50" : "hover:bg-gray-50"}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     {contact.profileImage ? (
                       <img
                         src={imgSrc(contact.profileImage) || ""}
                         alt="Profile"
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-10 h-10 rounded-full object-cover border border-gray-700"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -291,7 +299,7 @@ function Contacts() {
                       <FaUserCircle className="w-10 h-10 text-gray-400" />
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className={`px-6 py-4 whitespace-nowrap font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                     {`${contact.firstName} ${contact.lastName}`}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -305,13 +313,13 @@ function Contacts() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      className="text-blue-600 dark:text-blue-400 hover:underline mr-3"
+                      className={`hover:underline mr-3 font-medium transition-colors ${isDark ? "text-blue-400 hover:text-blue-300" : "text-blue-600"}`}
                       onClick={() => handleEdit(contact)}
                     >
                       Edit
                     </button>
                     <button
-                      className="text-red-600 dark:text-red-400 hover:underline"
+                      className={`hover:underline font-medium transition-colors ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600"}`}
                       onClick={() => handleDelete(contact.id)}
                     >
                       Delete
@@ -325,10 +333,12 @@ function Contacts() {
 
         {/* Add Contact Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl">
-              <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 p-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm transition-all">
+            <div className={`rounded-2xl shadow-2xl w-full max-w-2xl border transition-all ${
+              isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <div className={`flex justify-between items-center border-b p-4 ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                   {editingContact ? "Edit Contact" : "Add New Contact"}
                 </h2>
                 <button
@@ -336,7 +346,7 @@ function Contacts() {
                     setIsModalOpen(false);
                     resetForm();
                   }}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                  className={`p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`}
                 >
                   <FaTimes className="w-5 h-5" />
                 </button>
@@ -351,22 +361,26 @@ function Contacts() {
                         <img
                           src={previewImage}
                           alt="Profile preview"
-                          className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
+                          className="w-24 h-24 rounded-full object-cover border-2 border-blue-500/50 shadow-lg"
                         />
                         <button
                           type="button"
                           onClick={removeImage}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-md transition-all"
                         >
-                          <FaTrash className="w-3 h-3" />
+                          <FaTrash className="w-2.5 h-2.5" />
                         </button>
                       </>
                     ) : (
-                      <FaUserCircle className="w-24 h-24 text-gray-400" />
+                      <FaUserCircle className="w-24 h-24 text-gray-400 dark:text-gray-600" />
                     )}
                   </div>
-                  <label className="cursor-pointer">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                  <label className="cursor-pointer group">
+                    <span className={`text-sm font-medium px-5 py-2 rounded-xl transition-all ${
+                      isDark 
+                        ? "bg-gray-700 text-white hover:bg-gray-600" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}>
                       {previewImage ? "Change Image" : "Upload Image"}
                     </span>
                     <input
@@ -385,7 +399,7 @@ function Contacts() {
                     <div>
                       <label
                         htmlFor="firstName"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
                       >
                         First Name *
                       </label>
@@ -396,13 +410,17 @@ function Contacts() {
                         value={formData.firstName}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
+                          isDark 
+                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
+                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        }`}
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="lastName"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
                       >
                         Last Name *
                       </label>
@@ -413,7 +431,11 @@ function Contacts() {
                         value={formData.lastName}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
+                          isDark 
+                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
+                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        }`}
                       />
                     </div>
                   </div>
@@ -423,7 +445,7 @@ function Contacts() {
                     <div>
                       <label
                         htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
                       >
                         Phone
                       </label>
@@ -433,13 +455,17 @@ function Contacts() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
+                          isDark 
+                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
+                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        }`}
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="email"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
                       >
                         Email *
                       </label>
@@ -450,7 +476,11 @@ function Contacts() {
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
+                          isDark 
+                            ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50" 
+                            : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        }`}
                       />
                     </div>
                   </div>
@@ -459,7 +489,7 @@ function Contacts() {
                   <div>
                     <label
                       htmlFor="company"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      className={`block text-sm font-medium mb-1.5 transition-colors ${isDark ? "text-gray-300" : "text-gray-700"}`}
                     >
                       Company
                     </label>
@@ -468,7 +498,11 @@ function Contacts() {
                       name="company"
                       value={formData.company}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className={`w-full px-4 py-2.5 border rounded-xl outline-none transition-all ${
+                        isDark 
+                          ? "bg-gray-900 border-gray-700 text-white focus:border-blue-500/50" 
+                          : "bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500"
+                      }`}
                     >
                       <option value="">Select a company</option>
                       {companies.map((company) => (
@@ -480,20 +514,24 @@ function Contacts() {
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className={`flex justify-end space-x-3 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                   <button
                     type="button"
                     onClick={() => {
                       setIsModalOpen(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className={`px-5 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                      isDark 
+                        ? "bg-gray-700 text-white hover:bg-gray-600" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                   >
                     {editingContact ? "Update Contact" : "Save Contact"}
                   </button>
