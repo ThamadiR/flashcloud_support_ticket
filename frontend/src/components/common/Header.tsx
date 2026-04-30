@@ -41,9 +41,8 @@ const Header: React.FC = () => {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const initials = `${user?.fname?.charAt(0) || ""}${
-    user?.lname?.charAt(0) || ""
-  }`.toUpperCase();
+  const initials = `${user?.fname?.charAt(0) || ""}${user?.lname?.charAt(0) || ""
+    }`.toUpperCase();
 
   const navigate = useNavigate();
 
@@ -315,11 +314,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Dashboard
@@ -346,11 +344,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Tickets
@@ -377,11 +374,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Contacts
@@ -408,11 +404,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Companies
@@ -439,11 +434,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Tenants
@@ -470,11 +464,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Servers
@@ -510,11 +503,10 @@ const Header: React.FC = () => {
                 {/* Text */}
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                            ${
-                              !isDrawerOpen
-                                ? "opacity-0 hidden"
-                                : "opacity-100 block"
-                            }
+                            ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                           `}
                 >
                   Admin Manage
@@ -523,9 +515,8 @@ const Header: React.FC = () => {
                 {/* Arrow */}
                 <svg
                   aria-hidden="true"
-                  className={`w-6 h-6 transition-transform ${
-                    showAdminDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`w-6 h-6 transition-transform ${showAdminDropdown ? "rotate-180" : ""
+                    }`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -540,18 +531,17 @@ const Header: React.FC = () => {
               {/* Dropdown Items */}
               {isDrawerOpen ? (
                 <ul
-                  className={`${
-                    showAdminDropdown ? "block" : "hidden"
-                  } py-2 space-y-2`}
+                  className={`${showAdminDropdown ? "block" : "hidden"
+                    } py-2 space-y-2`}
                 >
-                  <li>
+                  {/* <li>
                     <Link
                       to="/create-user"
                       className="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                     >
                       Create User
                     </Link>
-                  </li>
+                  </li> */}
 
                   <li>
                     <Link
@@ -564,14 +554,14 @@ const Header: React.FC = () => {
                 </ul>
               ) : (
                 <div className="absolute left-16 top-0 hidden group-hover:block w-48 bg-white dark:bg-gray-700 shadow-lg rounded-lg z-50">
-                  <li>
+                  {/* <li>
                     <a
                       href="#"
                       className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
                     >
                       Create User
                     </a>
-                  </li>
+                  </li> */}
                   <li>
                     <a
                       href="#"
@@ -604,11 +594,10 @@ const Header: React.FC = () => {
                 </svg>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
+                              ${!isDrawerOpen
+                      ? "opacity-0 hidden"
+                      : "opacity-100 block"
+                    }
                             `}
                 >
                   Help
