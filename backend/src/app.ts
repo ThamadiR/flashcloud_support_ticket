@@ -1,4 +1,4 @@
-// Re-parsing file
+// Restarting to apply new .env values
 import express from 'express';
 import cors from 'cors';
 import path from 'path';

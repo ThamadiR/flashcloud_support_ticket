@@ -481,37 +481,6 @@ const Header: React.FC = () => {
                 </span>
               </Link>
             </li>
-            <li>
-              <Link
-                to="/customizations"
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              >
-                <svg
-                  aria-hidden="true"
-                  className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M3 3a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3zm3 2v2h8V5H6zm0 4v2h8V9H6zm0 4v2h8v-2H6z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${
-                                !isDrawerOpen
-                                  ? "opacity-0 hidden"
-                                  : "opacity-100 block"
-                              }
-                            `}
-                >
-                  Customizations
-                </span>
-              </Link>
-            </li>
           </ul>
 
           {/* Removed Reports Dropdown */}

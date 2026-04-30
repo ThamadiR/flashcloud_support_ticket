@@ -93,7 +93,7 @@ export default function App() {
             } />
 
             <Route path="/contacts" element={
-              <Contacts />
+              <Contacts token={token!} />
             } />
           </Route>
         </Routes>

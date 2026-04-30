@@ -244,13 +244,6 @@ function Companies() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap flex items-center gap-3">
                       <button
-                        onClick={() => navigate(`/customizations?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-cyan-400/35 bg-cyan-500/12 text-cyan-200 transition-all duration-200 hover:bg-cyan-500/20 hover:text-cyan-100 hover:border-cyan-300"
-                        title="Customizations"
-                      >
-                        <FaSlidersH size={12} />
-                      </button>
-                      <button
                         onClick={() => navigate(`/servers?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
                         className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-violet-400/35 bg-violet-500/12 text-violet-200 transition-all duration-200 hover:bg-violet-500/20 hover:text-violet-100 hover:border-violet-300"
                         title="Servers"

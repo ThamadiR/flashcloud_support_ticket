@@ -7,8 +7,21 @@ import {
   deleteContact,
 } from "../models/contactModel.js";
 import { pool } from "../config/db.js";
+import cloudinary from "../config/cloudinary";
 
-// Multer augments Express.Request with 'file', so no need for custom interface
+// Helper to upload buffer to Cloudinary
+const uploadToCloudinary = (buffer: Buffer): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: "contacts" },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result?.secure_url || "");
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
 
 export async function list(req: Request, res: Response) {
   try {
@@ -40,19 +53,31 @@ export async function create(req: Request, res: Response) {
     // If multer processed an image
     let profileImage: string | null = null;
     if ((req as any).file) {
-      profileImage = `/uploads/${(req as any).file.filename}`;
+      try {
+        profileImage = await uploadToCloudinary((req as any).file.buffer);
+      } catch (cloudinaryErr) {
+        console.error("Cloudinary upload failed:", cloudinaryErr);
+        return res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+      }
     }
 
-    const created = await createContact({
-      firstName,
-      lastName,
-      phone: phone || null,
-      email,
-      company: company || null,
-      profileImage,
-    });
-
-    res.status(201).json(created);
+    try {
+      const created = await createContact({
+        firstName,
+        lastName,
+        phone: phone || null,
+        email,
+        company: company || null,
+        profileImage,
+      });
+      res.status(201).json(created);
+    } catch (dbErr: any) {
+      if (dbErr?.code === "ER_DUP_ENTRY") {
+        return res.status(409).json({ error: "Email already exists" });
+      }
+      console.error("Database error creating contact:", dbErr);
+      res.status(500).json({ error: "Failed to save contact to database" });
+    }
   } catch (err: any) {
     if (err?.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ error: "Email already exists" });
@@ -72,14 +97,23 @@ export async function edit(req: Request, res: Response) {
 
     const { firstName, lastName, phone, email, company } = req.body;
 
+    console.log("Editing contact:", id, "New data:", { firstName, lastName, email });
     const existing = await getContactById(Number(id));
     if (!existing) {
+      console.warn("Contact not found:", id);
       return res.status(404).json({ error: "Contact not found" });
     }
 
     let profileImage = existing.profileImage;
     if ((req as any).file) {
-      profileImage = `/uploads/${(req as any).file.filename}`;
+      console.log("Uploading new profile image to Cloudinary...");
+      try {
+        profileImage = await uploadToCloudinary((req as any).file.buffer);
+        console.log("Upload successful:", profileImage);
+      } catch (cloudinaryErr) {
+        console.error("Cloudinary upload failed:", cloudinaryErr);
+        return res.status(500).json({ error: "Failed to upload image to Cloudinary" });
+      }
     }
 
     const updatedContact = {
@@ -92,11 +126,16 @@ export async function edit(req: Request, res: Response) {
       profileImage,
     };
 
-    const result = await updateContact(id, updatedContact);
-    res.json(result);
-  } catch (err) {
+    try {
+      const result = await updateContact(id, updatedContact);
+      res.json(result);
+    } catch (dbErr) {
+      console.error("Database update failed:", dbErr);
+      res.status(500).json({ error: "Failed to update contact in database" });
+    }
+  } catch (err: any) {
     console.error("Error updating contact:", err);
-    res.status(500).json({ error: "Failed to update contact" });
+    res.status(500).json({ error: err.message || "Failed to update contact" });
   }
 }
 

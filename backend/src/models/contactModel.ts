@@ -107,10 +107,24 @@ export async function createContact(input: {
   return rows[0] as unknown as Contact;
 }
 
-export async function getContactById(id: number) {
-  const [rows] = await pool.query("SELECT * FROM contacts WHERE id = ?", [id]);
-  const contacts = rows as any[];
-  return contacts.length ? contacts[0] : null;
+export async function getContactById(id: number): Promise<Contact | null> {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `
+    SELECT
+      id,
+      first_name AS firstName,
+      last_name  AS lastName,
+      phone,
+      email,
+      company,
+      profile_image AS profileImage,
+      DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS createdAt
+    FROM contacts
+    WHERE id = ?;
+    `,
+    [id]
+  );
+  return (rows[0] as unknown as Contact) || null;
 }
 
 export async function updateContact(id: number, contact: Contact) {

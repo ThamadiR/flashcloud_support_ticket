@@ -6,22 +6,8 @@ import * as contactController from '../controllers/contactController';
 
 const router = Router();
 
-// Configure Multer for profile image uploads
-const uploadsDir = path.resolve('uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'contact-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+// Configure Multer for profile image uploads (using memory storage for Cloudinary)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Routes
