@@ -368,6 +368,19 @@ function Contacts({ token }: { token: string }) {
                   {/* Image Upload Area */}
                   <div className="flex flex-col items-center gap-3 py-2">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      {previewImage && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage();
+                          }}
+                          className="absolute -top-2 -right-2 z-10 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-all transform hover:scale-110 active:scale-95"
+                          title="Remove image"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       {previewImage ? (
                         <img src={previewImage} alt="Preview" className="w-24 h-24 rounded-2xl object-cover ring-2 ring-cyan-500/50 shadow-xl" />
                       ) : (
