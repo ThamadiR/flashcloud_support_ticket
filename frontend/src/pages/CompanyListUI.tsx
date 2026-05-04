@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ArrowUpDown, ChevronLeft, ChevronRight, Download, Edit2, Plus, Search, ServerCog, Settings2, SlidersHorizontal, Users, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { Label } from 'flowbite-react';
+import { Datepicker, Label } from 'flowbite-react';
 import { API_BASE_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
 import { useDrawer } from '../context/DrawerContext';
@@ -104,6 +104,23 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     sipProvider?: string;
   }>({});
   const [companyWizardStep, setCompanyWizardStep] = useState(1);
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    fromDate: '',
+    toDate: '',
+    companyName: '',
+    tenantCount: '',
+  });
+  const [tempFilters, setTempFilters] = useState({
+    fromDate: '',
+    toDate: '',
+    companyName: '',
+    tenantCount: '',
+  });
+
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+
 
   const formatDateTime = (date: Date) => {
     const yyyy = date.getFullYear();
@@ -653,11 +670,10 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     : companies.find((company) => company.id === editingCompanyId) || null;
   const isEditingCompany = editingCompanyId !== null;
 
-  const actionTooltipClass = `action-tooltip pointer-events-none absolute -top-9 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-bold shadow-xl opacity-0 transition-all duration-150 ease-out peer-hover:opacity-100 peer-focus-visible:opacity-100 ${
-    isDark
+  const actionTooltipClass = `action-tooltip pointer-events-none absolute -top-9 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-bold shadow-xl opacity-0 transition-all duration-150 ease-out peer-hover:opacity-100 peer-focus-visible:opacity-100 ${isDark
       ? 'bg-slate-950 text-sky-200 border border-sky-500/30 shadow-sky-500/10'
       : 'bg-slate-900 text-slate-100 border border-slate-800'
-  }`;
+    }`;
 
   useEffect(() => {
     if (token) {
@@ -703,17 +719,72 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutsideFilter = (event: MouseEvent) => {
+      // Check if the click is inside the dropdown or on a flowbite datepicker element
+      const target = event.target as HTMLElement;
+      const isDatepickerClick = target.closest('.datepicker') || target.closest('[data-testid="datepicker-popup"]');
+      
+      if (filterDropdownRef.current && 
+          !filterDropdownRef.current.contains(target) && 
+          !isDatepickerClick) {
+        setIsFilterDropdownOpen(false);
+      }
+    };
+    if (isFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutsideFilter);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutsideFilter);
+  }, [isFilterDropdownOpen]);
+
+
+
   const filteredAndSortedCompanies = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
-    let rows = companies.filter((company) => !keyword || (
-      company.name.toLowerCase().includes(keyword) ||
-      company.description.toLowerCase().includes(keyword) ||
-      String(company.tenantCount).includes(keyword) ||
-      company.createdAt.toLowerCase().includes(keyword) ||
-      company.updatedAt.toLowerCase().includes(keyword)
-    ));
+    let rows = companies.filter((company) => {
+      // Keyword Search
+      const matchesKeyword = !keyword || (
+        company.name.toLowerCase().includes(keyword) ||
+        company.description.toLowerCase().includes(keyword) ||
+        String(company.tenantCount).includes(keyword) ||
+        company.createdAt.toLowerCase().includes(keyword) ||
+        company.updatedAt.toLowerCase().includes(keyword)
+      );
+
+      // Date Range Filter
+      let matchesDate = true;
+      if (filters.fromDate || filters.toDate) {
+        const companyDate = new Date(company.createdAt).getTime();
+        if (filters.fromDate) {
+          const from = new Date(filters.fromDate).getTime();
+          if (companyDate < from) matchesDate = false;
+        }
+        if (filters.toDate) {
+          const to = new Date(filters.toDate).getTime();
+          // Add one day to 'to' date to include the full day
+          const toEndOfDay = to + (24 * 60 * 60 * 1000) - 1;
+          if (companyDate > toEndOfDay) matchesDate = false;
+        }
+      }
+
+      // Company Name Filter
+      let matchesCompany = true;
+      if (filters.companyName) {
+        if (company.name !== filters.companyName) matchesCompany = false;
+      }
+
+
+      // Tenant Count Filter
+      let matchesTenantCount = true;
+      if (filters.tenantCount) {
+        if (company.tenantCount !== Number(filters.tenantCount)) matchesTenantCount = false;
+      }
+
+      return matchesKeyword && matchesDate && matchesCompany && matchesTenantCount;
+    });
 
     rows = [...rows].sort((a, b) => {
+
       const direction = sortOrder === 'asc' ? 1 : -1;
 
       if (sortBy === 'id' || sortBy === 'tenantCount') {
@@ -730,7 +801,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     });
 
     return rows;
-  }, [companies, searchTerm, sortBy, sortOrder]);
+  }, [companies, searchTerm, sortBy, sortOrder, filters]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedCompanies.length / rowsPerPage));
 
@@ -767,1408 +838,1581 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       <div className="flex-grow">
         <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
           <div className="mt-4 w-full">
-      <div className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5 pl-2 border-b pb-3 ${isDark ? 'border-white/5' : 'border-gray-200'}`}>
-        <h3 className={`text-[1.1rem] font-medium tracking-wide ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
-          Company List
-        </h3>
+            <div className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5 pl-2 border-b pb-3 ${isDark ? 'border-white/5' : 'border-gray-200'}`}>
+              <h3 className={`text-[1.1rem] font-medium tracking-wide ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
+                Company List
+              </h3>
 
-        <div className="flex items-center gap-2 w-full lg:w-auto">
-          <div className="relative w-full lg:w-[320px] max-w-full">
-            <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search name, description, tenant count"
-              className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition-all ${
-                isDark
-                  ? 'bg-[#09090B] border border-white/10 text-gray-200 placeholder:text-gray-600 focus:border-blue-500/50 focus:shadow-[0_0_20px_rgba(59,130,246,0.12)]'
-                  : 'bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-400 focus:shadow-[0_0_20px_rgba(59,130,246,0.1)]'
-              }`}
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={openAddCompanyModal}
-            className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${
-              isDark
-                ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
-                : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400'
-            }`}
-            title="Add"
-            aria-label="Add"
-          >
-            <Plus size={15} /> Add
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportCompanies}
-            className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all ${
-              isDark
-                ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
-                : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400'
-            }`}
-            title="Export companies to Excel"
-          >
-            <Download size={15} /> Export
-          </button>
-        </div>
-      </div>
-
-      <div className={`w-full max-w-full rounded-2xl px-3 pb-3 pt-2 table-animated-surface ${isDark ? 'table-animated-surface--dark' : 'table-animated-surface--light'} ${
-        isDark
-          ? 'bg-gradient-to-b from-[#10131D]/95 to-[#0D1018]/95 shadow-[0_22px_50px_rgba(0,0,0,0.45)]'
-          : 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)]'
-      }`}>
-        <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left border-separate [border-spacing:0_10px]">
-            <thead>
-              <tr>
-                <th className={`font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`} style={{ padding: isSidebarMinimized ? '12px 24px' : '12px 16px', fontSize: isSidebarMinimized ? '10px' : '9px' }}>
-                  <div className="relative inline-flex items-center gap-2" ref={idSortMenuRef}>
-                    <span>id</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsIdSortMenuOpen(prev => !prev);
-                        setIsNameSortMenuOpen(false);
-                        setIsDescriptionSortMenuOpen(false);
-                        setIsTenantCountSortMenuOpen(false);
-                        setIsCreatedAtSortMenuOpen(false);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+              <div className="flex items-center gap-2 w-full lg:w-auto">
+                <div className="relative w-full lg:w-[320px] max-w-full">
+                  <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Search name, description, tenant count"
+                    className={`w-full rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition-all ${isDark
+                        ? 'bg-[#09090B] border border-white/10 text-gray-200 placeholder:text-gray-600 focus:border-blue-500/50 focus:shadow-[0_0_20px_rgba(59,130,246,0.12)]'
+                        : 'bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-400 focus:shadow-[0_0_20px_rgba(59,130,246,0.1)]'
                       }`}
-                      aria-label="Sort company id"
-                      title="Sort company id"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
+                  />
+                </div>
 
-                    {isIdSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('id', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'id' && sortOrder === 'asc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('id', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'id' && sortOrder === 'desc'
-                              ? isDark
-                                ? 'bg-blue-500/20 text-blue-300'
-                                : 'bg-blue-100 text-blue-700'
-                              : isDark
-                                ? 'text-gray-300 hover:bg-white/5'
-                                : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </th>
-                <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
-                    <span>name</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const isOpen = isNameSortMenuOpen;
-                        closeAllSortMenus();
-                        setIsNameSortMenuOpen(!isOpen);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                <div className="relative" ref={filterDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempFilters(filters);
+                      setIsFilterDropdownOpen(!isFilterDropdownOpen);
+                    }}
+                    className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
+                        ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                        : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400'
                       }`}
-                      aria-label="Sort name"
-                      title="Sort name"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
+                    title="Filter"
+                  >
+                    <SlidersHorizontal size={15} /> Filter
+                  </button>
 
-                    {isNameSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
+                  {isFilterDropdownOpen && (
+                    <div className={`absolute top-full right-0 mt-2 w-80 rounded-2xl border p-4 z-[60] shadow-2xl ${isDark ? 'bg-[#0B0E14] border-white/10 text-white' : 'bg-white border-gray-200 text-gray-900'
                       }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('name', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'name' && sortOrder === 'asc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('name', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'name' && sortOrder === 'desc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
+                      <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-white/5">
+                        <h4 className="font-semibold text-sm">Filter</h4>
                       </div>
-                    )}
-                  </div>
-                </th>
-                <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={emailSortMenuRef}>
-                    <span>email</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const isOpen = isEmailSortMenuOpen;
-                        closeAllSortMenus();
-                        setIsEmailSortMenuOpen(!isOpen);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+
+                      <div className="space-y-4">
+                        {/* Date Range */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Publishing Date (MM/DD/YYYY)</span>
+                            <button 
+                              onClick={() => setTempFilters(prev => ({ ...prev, fromDate: '', toDate: '' }))}
+                              className="text-[10px] text-blue-500 hover:underline"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <Datepicker
+                                placeholder="From"
+                                value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
+                                onSelectedDateChanged={(date) => {
+                                  if (date) {
+                                    const yyyy = date.getFullYear();
+                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(date.getDate()).padStart(2, '0');
+                                    setTempFilters(prev => ({ ...prev, fromDate: `${yyyy}-${mm}-${dd}` }));
+                                  }
+                                }}
+                                theme={{
+                                  root: {
+                                    input: {
+                                      base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${
+                                        isDark 
+                                          ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' 
+                                          : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'
+                                      }`,
+                                    }
+                                  },
+                                  popup: {
+                                    root: {
+                                      base: `absolute top-12 left-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}`
+                                    },
+                                    footer: {
+                                      base: "hidden"
+                                    }
+                                  },
+                                  header: {
+                                    root: {
+                                      base: "flex justify-between items-center mb-2 px-2",
+                                      title: "text-sm font-semibold text-gray-700 dark:text-gray-200"
+                                    },
+                                    selectors: {
+                                      button: {
+                                        base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1"
+                                      }
+                                    }
+                                  },
+                                  views: {
+                                    days: {
+                                      header: {
+                                        base: "grid grid-cols-7 mb-1",
+                                        title: "text-[11px] font-medium text-gray-400 text-center"
+                                      },
+                                      items: {
+                                        base: "grid grid-cols-7",
+                                        item: {
+                                          base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5",
+                                          selected: "bg-cyan-500 text-white hover:bg-cyan-600",
+                                          disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Datepicker
+                                placeholder="to"
+                                value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
+                                onSelectedDateChanged={(date) => {
+                                  if (date) {
+                                    const yyyy = date.getFullYear();
+                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(date.getDate()).padStart(2, '0');
+                                    setTempFilters(prev => ({ ...prev, toDate: `${yyyy}-${mm}-${dd}` }));
+                                  }
+                                }}
+                                theme={{
+                                  root: {
+                                    input: {
+                                      base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${
+                                        isDark 
+                                          ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' 
+                                          : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'
+                                      }`,
+                                    }
+                                  },
+                                  popup: {
+                                    root: {
+                                      base: `absolute top-12 right-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}`
+                                    },
+                                    footer: {
+                                      base: "hidden"
+                                    }
+                                  },
+                                  header: {
+                                    root: {
+                                      base: "flex justify-between items-center mb-2 px-2",
+                                      title: "text-sm font-semibold text-gray-700 dark:text-gray-200"
+                                    },
+                                    selectors: {
+                                      button: {
+                                        base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1"
+                                      }
+                                    }
+                                  },
+                                  views: {
+                                    days: {
+                                      header: {
+                                        base: "grid grid-cols-7 mb-1",
+                                        title: "text-[11px] font-medium text-gray-400 text-center"
+                                      },
+                                      items: {
+                                        base: "grid grid-cols-7",
+                                        item: {
+                                          base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5",
+                                          selected: "bg-cyan-500 text-white hover:bg-cyan-600",
+                                          disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+
+
+                        </div>
+
+                  {/* Company Name */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
+                      <button 
+                        onClick={() => setTempFilters(prev => ({ ...prev, companyName: '' }))}
+                        className="text-[10px] text-blue-500 hover:underline"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <select
+                      value={tempFilters.companyName}
+                      onChange={(e) => setTempFilters(prev => ({ ...prev, companyName: e.target.value }))}
+                      className={`w-full text-xs rounded-lg p-2 border outline-none ${
+                        isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
                       }`}
-                      aria-label="Sort email"
-                      title="Sort email"
                     >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isEmailSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('email', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'email' && sortOrder === 'asc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('email', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'email' && sortOrder === 'desc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
+                      <option value="">All companies</option>
+                      {Array.from(new Set(companies.map(c => c.name))).sort().map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
                   </div>
-                </th>
-                <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
-                    <span>tenant_count</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const isOpen = isTenantCountSortMenuOpen;
-                        closeAllSortMenus();
-                        setIsTenantCountSortMenuOpen(!isOpen);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort tenant count"
-                      title="Sort tenant count"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isTenantCountSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('tenantCount', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'tenantCount' && sortOrder === 'asc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('tenantCount', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'tenantCount' && sortOrder === 'desc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </th>
-                <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
-                    <span>created_at</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const isOpen = isCreatedAtSortMenuOpen;
-                        closeAllSortMenus();
-                        setIsCreatedAtSortMenuOpen(!isOpen);
-                      }}
-                      className={`rounded-md p-1 transition-colors ${
-                        isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
-                      }`}
-                      aria-label="Sort created at"
-                      title="Sort created at"
-                    >
-                      <ArrowUpDown size={13} />
-                    </button>
-
-                    {isCreatedAtSortMenuOpen && (
-                      <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${
-                        isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
-                      }`}>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('createdAt', 'asc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'createdAt' && sortOrder === 'asc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          asc
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => applyColumnSort('createdAt', 'desc')}
-                          className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${
-                            sortBy === 'createdAt' && sortOrder === 'desc'
-                              ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                              : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                        >
-                          dsc
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </th>
 
 
-
-                <th className={`px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase text-center ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loadingCompanies && (
-                <tr>
-                                  <td colSpan={7} className="text-center py-8 text-gray-500 text-sm">Loading companies...</td>
-                </tr>
-              )}
-
-              {!loadingCompanies && pagedCompanies.map((company, index) => (
-                <tr key={company.id} className="group transition-transform duration-200 hover:-translate-y-[1px]">
-                  <td
-                    className={`rounded-l-xl transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
-                  >
-                    <span className={`font-semibold tracking-wide ${isDark ? 'text-blue-200/90' : 'text-blue-700'}`} style={{ fontSize: isSidebarMinimized ? '13px' : '12px' }}>
-                      #{company.id}
-                    </span>
-                  </td>
-
-                  <td
-                    className={`transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
-                  >
-                    <span className={`font-semibold tracking-[0.01em] ${isDark ? 'text-gray-100' : 'text-gray-900'}`} style={{ fontSize: isSidebarMinimized ? '13px' : '13px' }}>
-                      {company.name}
-                    </span>
-                  </td>
-
-                  <td
-                    className={`transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
-                  >
-                    <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
-                      {company.email}
-                    </span>
-                  </td>
-
-                  <td
-                    className={`transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
-                  >
-                    <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
-                      {company.tenantCount}
-                    </span>
-                  </td>
-
-                  <td
-                    className={`transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
-                  >
-                    <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
-                      {company.createdAt}
-                    </span>
-                  </td>
-
-
-
-
-
-                  <td
-                    className={`rounded-r-xl transition-colors ${
-                      isDark
-                        ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
-                        : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
-                    }`}
-                    style={{ padding: isSidebarMinimized ? '12px 20px' : '12px 16px' }}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/customizations?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
-                          className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
-                            isDark
-                              ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.22)] hover:bg-cyan-500/20 hover:shadow-[0_0_18px_rgba(34,211,238,0.38)]'
-                              : 'border-cyan-300 bg-cyan-50 text-cyan-700 shadow-[0_0_12px_rgba(34,211,238,0.14)] hover:bg-cyan-100'
-                          }`}
-                          aria-label="Customization"
-                          title="Customization"
-                        >
-                          <Settings2 size={13} />
-                        </button>
-                        <span className={actionTooltipClass}>Customization</span>
+                        {/* Tenants Count */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tenants Count</span>
+                            <button 
+                              onClick={() => setTempFilters(prev => ({ ...prev, tenantCount: '' }))}
+                              className="text-[10px] text-blue-500 hover:underline"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <input 
+                            type="number"
+                            placeholder="Input count..."
+                            value={tempFilters.tenantCount}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, tenantCount: e.target.value }))}
+                            className={`w-full text-xs rounded-lg p-2 border outline-none ${
+                              isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                            }`}
+                          />
+                        </div>
                       </div>
 
-                      <div className="relative group">
+                      <div className="flex items-center gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-white/5">
                         <button
-                          type="button"
-                          onClick={() => navigate(`/servers?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
-                          className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
-                            isDark
-                              ? 'border-violet-400/40 bg-violet-500/10 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.22)] hover:bg-violet-500/20 hover:shadow-[0_0_18px_rgba(139,92,246,0.38)]'
-                              : 'border-violet-300 bg-violet-50 text-violet-700 shadow-[0_0_12px_rgba(139,92,246,0.14)] hover:bg-violet-100'
-                          }`}
-                          aria-label="Servers"
-                          title="Servers"
-                        >
-                          <ServerCog size={13} />
-                        </button>
-                        <span className={actionTooltipClass}>Servers</span>
-                      </div>
+                          onClick={() => {
+                            setTempFilters({ fromDate: '', toDate: '', companyName: '', tenantCount: '' });
+                            setFilters({ fromDate: '', toDate: '', companyName: '', tenantCount: '' });
+                            setIsFilterDropdownOpen(false);
+                          }}
 
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/tenants?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
-                          className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
-                            isDark
-                              ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 shadow-[0_0_12px_rgba(34,197,94,0.22)] hover:bg-emerald-500/20 hover:shadow-[0_0_18px_rgba(34,197,94,0.38)]'
-                              : 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-[0_0_12px_rgba(34,197,94,0.14)] hover:bg-emerald-100'
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                            isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
                           }`}
-                          aria-label="Tenants"
-                          title="Tenants"
                         >
-                          <Users size={13} />
+                          Reset all
                         </button>
-                        <span className={actionTooltipClass}>Tenants</span>
-                      </div>
-
-                      <div className="relative group">
                         <button
-                          type="button"
-                          onClick={() => openEditCompanyModal(company)}
-                          className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${
-                            isDark
-                              ? 'border-rose-400/40 bg-rose-500/10 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.22)] hover:bg-rose-500/20 hover:shadow-[0_0_18px_rgba(244,63,94,0.38)]'
-                              : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_0_12px_rgba(244,63,94,0.14)] hover:bg-rose-100'
+                          onClick={() => {
+                            setFilters(tempFilters);
+                            setIsFilterDropdownOpen(false);
+                          }}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all shadow-lg ${
+                            isDark 
+                              ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20' 
+                              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
                           }`}
-                          aria-label="Edit"
-                          title="Edit"
                         >
-                          <Edit2 size={13} />
+                          Apply now
                         </button>
-                        <span className={actionTooltipClass}>Edit</span>
                       </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-
-              {!loadingCompanies && pagedCompanies.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="text-center py-8 text-gray-500 text-sm">No companies found in companyList table.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="w-full flex flex-wrap items-center justify-between gap-3 mt-6">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="companiesPerPage" className={`text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Per page
-          </Label>
-          <select
-            id="companiesPerPage"
-            value={rowsPerPage}
-            onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className={`rounded-lg px-2.5 py-1.5 text-sm outline-none transition-all ${
-              isDark
-                ? 'bg-[#121214] border border-white/10 text-gray-200 focus:border-blue-500/50'
-                : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-400'
-            }`}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={15}>15</option>
-          </select>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center gap-2 -mr-2">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                isDark
-                  ? 'bg-[#121214] border-white/10 text-gray-400 hover:text-white hover:border-white/20'
-                  : 'bg-white border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400'
-              }`}
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={16} />
-            </button>
-
-            <span className={`min-w-[36px] text-center text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              {currentPage}
-            </span>
-
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                isDark
-                  ? 'bg-[#121214] border-white/10 text-gray-400 hover:text-white hover:border-white/20'
-                  : 'bg-white border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400'
-              }`}
-              aria-label="Next page"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-
-    {activeServerCompanyId !== null && (
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
-        <div className={`w-full max-w-4xl rounded-2xl border p-6 ${
-          isDark
-            ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(139,92,246,0.25)]'
-            : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(139,92,246,0.15)]'
-        }`}>
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-violet-500/10 p-2.5 text-violet-400 shadow-[0_0_20px_rgba(139,92,246,0.15)]">
-                <ServerCog size={22} />
-              </div>
-              <div>
-                <h4 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Servers
-                </h4>
-                <p className="text-sm text-slate-400">
-                  Managing servers for this company.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={serverSearchTerm}
-                  onChange={(e) => setServerSearchTerm(e.target.value)}
-                  className="w-48 rounded-2xl border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-400/40"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveServerCompanyId(null)}
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border ${
-                  isDark
-                    ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
-                    : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                aria-label="Close servers modal"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
-
-          {loadingServers ? (
-            <div className="text-center py-12 text-gray-500 text-sm">Loading servers...</div>
-          ) : serverRecords.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-sm">No servers found for this company.</div>
-          ) : (
-            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-              <table className="min-w-full divide-y divide-white/10 text-left">
-                <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                  <tr>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>IP Address</span>
-                        <button type="button" onClick={() => setIsModalServerIpSortMenuOpen(!isModalServerIpSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalServerIpSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('asc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('desc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>Label</span>
-                        <button type="button" onClick={() => setIsModalServerLabelSortMenuOpen(!isModalServerLabelSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalServerLabelSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('asc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'label' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('desc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'label' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>Tenant Count</span>
-                        <button type="button" onClick={() => setIsModalServerTenantCountSortMenuOpen(!isModalServerTenantCountSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalServerTenantCountSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('asc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('desc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>Created At</span>
-                        <button type="button" onClick={() => setIsModalServerCreatedAtSortMenuOpen(!isModalServerCreatedAtSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalServerCreatedAtSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('asc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('desc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/8">
-                  {[...serverRecords]
-                    .filter(item => 
-                      item.ipAddress?.toLowerCase().includes(serverSearchTerm.toLowerCase()) ||
-                      item.label?.toLowerCase().includes(serverSearchTerm.toLowerCase())
-                    )
-                    .sort((a, b) => {
-                      const direction = serverSortOrder === 'asc' ? 1 : -1;
-                      if (serverSortBy === 'tenantCount') return ((a.tenantCount || 0) - (b.tenantCount || 0)) * direction;
-                      if (serverSortBy === 'createdAt') {
-                        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                        return (dateA - dateB) * direction;
-                      }
-                      const left = String(a[serverSortBy] || '').toLowerCase();
-                      const right = String(b[serverSortBy] || '').toLowerCase();
-                      return left.localeCompare(right) * direction;
-                    })
-                    .map((item, idx) => (
-                    <tr key={item.id || idx} className="transition hover:bg-white/5">
-                      <td className="px-5 py-4 text-sm font-medium text-white">
-                        {item.ipAddress || 'N/A'}
-                      </td>
-                      <td className="px-5 py-4 text-sm text-violet-300">
-                        {item.label || 'N/A'}
-                      </td>
-                      <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
-                        {item.tenantCount || 0}
-                      </td>
-                      <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-
-    {activeTenantCompanyId !== null && (
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
-        <div className={`w-full max-w-4xl rounded-2xl border p-6 ${
-          isDark
-            ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.25)]'
-            : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(34,197,94,0.15)]'
-        }`}>
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-emerald-500/10 p-2.5 text-emerald-400 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
-                <Users size={22} />
-              </div>
-              <div>
-                <h4 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Tenants
-                </h4>
-                <p className="text-sm text-slate-400">
-                  Managing tenants for this company.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={tenantSearchTerm}
-                  onChange={(e) => setTenantSearchTerm(e.target.value)}
-                  className="w-48 rounded-2xl border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/40"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveTenantCompanyId(null)}
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border ${
-                  isDark
-                    ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
-                    : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                aria-label="Close tenants modal"
-              >
-                <X size={18} />
-              </button>
-            </div>
-          </div>
-
-          {loadingTenants ? (
-            <div className="text-center py-12 text-gray-500 text-sm">Loading tenants...</div>
-          ) : tenantRecords.length === 0 ? (
-            <div className="text-center py-12 text-gray-500 text-sm">No tenants found for this company.</div>
-          ) : (
-            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
-              <table className="min-w-full divide-y divide-white/10 text-left">
-                <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                  <tr>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>Name</span>
-                        <button type="button" onClick={() => setIsModalTenantNameSortMenuOpen(!isModalTenantNameSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalTenantNameSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('asc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('desc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>Description</span>
-                        <button type="button" onClick={() => setIsModalTenantDescSortMenuOpen(!isModalTenantDescSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalTenantDescSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('asc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('desc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>SIP Count</span>
-                        <button type="button" onClick={() => setIsModalTenantSipSortMenuOpen(!isModalTenantSipSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalTenantSipSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('asc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('desc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>License Count</span>
-                        <button type="button" onClick={() => setIsModalTenantLicenseSortMenuOpen(!isModalTenantLicenseSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalTenantLicenseSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('asc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('desc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      <div className="relative inline-flex items-center gap-2">
-                        <span>Created At</span>
-                        <button type="button" onClick={() => setIsModalTenantCreatedAtSortMenuOpen(!isModalTenantCreatedAtSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
-                        {isModalTenantCreatedAtSortMenuOpen && (
-                          <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                            <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('asc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                            <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('desc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
-                          </div>
-                        )}
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/8">
-                  {tenantRecords
-                    .filter(item => 
-                      item.name?.toLowerCase().includes(tenantSearchTerm.toLowerCase()) ||
-                      item.description?.toLowerCase().includes(tenantSearchTerm.toLowerCase())
-                    )
-                    .sort((a, b) => {
-                      const direction = tenantSortOrder === 'asc' ? 1 : -1;
-                      if (tenantSortBy === 'sipConfigsCount' || tenantSortBy === 'licenseCount') return ((a[tenantSortBy] || 0) - (b[tenantSortBy] || 0)) * direction;
-                      if (tenantSortBy === 'createdAt') {
-                        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                        return (dateA - dateB) * direction;
-                      }
-                      const left = String(a[tenantSortBy] || '').toLowerCase();
-                      const right = String(b[tenantSortBy] || '').toLowerCase();
-                      return left.localeCompare(right) * direction;
-                    })
-                    .map((item, idx) => (
-                    <tr key={item.id || idx} className="transition hover:bg-white/5">
-                      <td className="px-5 py-4 text-sm font-medium text-white">
-                        {item.name || 'N/A'}
-                      </td>
-                      <td className="px-5 py-4 text-sm text-slate-300">
-                        {item.description || 'No description'}
-                      </td>
-                      <td className="px-5 py-4 text-sm font-medium font-mono text-emerald-300">
-                        {item.sipConfigsCount || 0}
-                      </td>
-                      <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
-                        {item.licenseCount || 0}
-                      </td>
-                      <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
-                        {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    )}
-
-    {isCompanyModalOpen && (
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
-        <div className={`w-full max-w-2xl rounded-2xl border p-6 ${
-          isDark
-            ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(59,130,246,0.25)]'
-            : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(59,130,246,0.15)]'
-        }`}>
-          <div className="flex items-center justify-between gap-3 mb-5">
-            <h4 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              {editingCompanyId === null ? 'Add a new company' : 'Edit Company'}
-            </h4>
-            <button
-              type="button"
-              onClick={closeCompanyModal}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${
-                isDark
-                  ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
-                  : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-              aria-label="Close company modal"
-              title="Close"
-            >
-              <X size={14} />
-            </button>
-          </div>
-
-          <form className="space-y-4" onSubmit={handleCompanySubmit}>
-            {!isEditingCompany && (
-              <div className={`mb-5 rounded-xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
-                <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]">
-                  <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Step {companyWizardStep} of {addCompanyWizardSteps.length}</span>
-                  <span className={isDark ? 'text-blue-200' : 'text-blue-700'}>{addCompanyWizardSteps[companyWizardStep - 1]?.title}</span>
+                  )}
                 </div>
-                <div className="mt-3 flex gap-2">
-                  {addCompanyWizardSteps.map((step) => (
-                    <div
-                      key={step.step}
-                      className={`h-2 flex-1 rounded-full transition-colors ${
-                        companyWizardStep >= step.step
-                          ? isDark
-                            ? 'bg-blue-500/80'
-                            : 'bg-blue-500'
-                          : isDark
-                            ? 'bg-white/10'
-                            : 'bg-gray-200'
+
+
+                <button
+                  type="button"
+                  onClick={openAddCompanyModal}
+                  className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
+                      ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                      : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400'
+                    }`}
+                  title="Add"
+                  aria-label="Add"
+                >
+                  <Plus size={15} /> Add
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleExportCompanies}
+                  className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all ${isDark
+                      ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                      : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400'
+                    }`}
+                  title="Export companies to Excel"
+                >
+                  <Download size={15} /> Export
+                </button>
+              </div>
+            </div>
+
+            <div className={`w-full max-w-full rounded-2xl px-3 pb-3 pt-2 table-animated-surface ${isDark ? 'table-animated-surface--dark' : 'table-animated-surface--light'} ${isDark
+                ? 'bg-gradient-to-b from-[#10131D]/95 to-[#0D1018]/95 shadow-[0_22px_50px_rgba(0,0,0,0.45)]'
+                : 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)]'
+              }`}>
+              <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-left border-separate [border-spacing:0_10px]">
+                  <thead>
+                    <tr>
+                      <th className={`font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`} style={{ padding: isSidebarMinimized ? '12px 24px' : '12px 16px', fontSize: isSidebarMinimized ? '10px' : '9px' }}>
+                        <div className="relative inline-flex items-center gap-2" ref={idSortMenuRef}>
+                          <span>id</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsIdSortMenuOpen(prev => !prev);
+                              setIsNameSortMenuOpen(false);
+                              setIsDescriptionSortMenuOpen(false);
+                              setIsTenantCountSortMenuOpen(false);
+                              setIsCreatedAtSortMenuOpen(false);
+                            }}
+                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                              }`}
+                            aria-label="Sort company id"
+                            title="Sort company id"
+                          >
+                            <ArrowUpDown size={13} />
+                          </button>
+
+                          {isIdSortMenuOpen && (
+                            <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
+                              }`}>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('id', 'asc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'asc'
+                                    ? isDark
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : 'bg-blue-100 text-blue-700'
+                                    : isDark
+                                      ? 'text-gray-300 hover:bg-white/5'
+                                      : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                asc
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('id', 'desc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'desc'
+                                    ? isDark
+                                      ? 'bg-blue-500/20 text-blue-300'
+                                      : 'bg-blue-100 text-blue-700'
+                                    : isDark
+                                      ? 'text-gray-300 hover:bg-white/5'
+                                      : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                dsc
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </th>
+                      <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                        <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
+                          <span>name</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isOpen = isNameSortMenuOpen;
+                              closeAllSortMenus();
+                              setIsNameSortMenuOpen(!isOpen);
+                            }}
+                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                              }`}
+                            aria-label="Sort name"
+                            title="Sort name"
+                          >
+                            <ArrowUpDown size={13} />
+                          </button>
+
+                          {isNameSortMenuOpen && (
+                            <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
+                              }`}>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('name', 'asc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'asc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                asc
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('name', 'desc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'desc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                dsc
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </th>
+                      <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                        <div className="relative inline-flex items-center gap-2" ref={emailSortMenuRef}>
+                          <span>email</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isOpen = isEmailSortMenuOpen;
+                              closeAllSortMenus();
+                              setIsEmailSortMenuOpen(!isOpen);
+                            }}
+                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                              }`}
+                            aria-label="Sort email"
+                            title="Sort email"
+                          >
+                            <ArrowUpDown size={13} />
+                          </button>
+
+                          {isEmailSortMenuOpen && (
+                            <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
+                              }`}>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('email', 'asc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'email' && sortOrder === 'asc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                asc
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('email', 'desc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'email' && sortOrder === 'desc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                dsc
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </th>
+                      <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                        <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
+                          <span>tenant_count</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isOpen = isTenantCountSortMenuOpen;
+                              closeAllSortMenus();
+                              setIsTenantCountSortMenuOpen(!isOpen);
+                            }}
+                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                              }`}
+                            aria-label="Sort tenant count"
+                            title="Sort tenant count"
+                          >
+                            <ArrowUpDown size={13} />
+                          </button>
+
+                          {isTenantCountSortMenuOpen && (
+                            <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
+                              }`}>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('tenantCount', 'asc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'asc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                asc
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('tenantCount', 'desc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'desc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                dsc
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </th>
+                      <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                        <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
+                          <span>created_at</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isOpen = isCreatedAtSortMenuOpen;
+                              closeAllSortMenus();
+                              setIsCreatedAtSortMenuOpen(!isOpen);
+                            }}
+                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                              }`}
+                            aria-label="Sort created at"
+                            title="Sort created at"
+                          >
+                            <ArrowUpDown size={13} />
+                          </button>
+
+                          {isCreatedAtSortMenuOpen && (
+                            <div className={`absolute top-full left-0 mt-2 min-w-[92px] rounded-lg border p-1 z-30 shadow-xl ${isDark ? 'bg-[#111318] border-white/10' : 'bg-white border-gray-200'
+                              }`}>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('createdAt', 'asc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'asc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                asc
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => applyColumnSort('createdAt', 'desc')}
+                                className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'desc'
+                                    ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
+                                    : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
+                                  }`}
+                              >
+                                dsc
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </th>
+
+
+
+                      <th className={`px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase text-center ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingCompanies && (
+                      <tr>
+                        <td colSpan={7} className="text-center py-8 text-gray-500 text-sm">Loading companies...</td>
+                      </tr>
+                    )}
+
+                    {!loadingCompanies && pagedCompanies.map((company, index) => (
+                      <tr key={company.id} className="group transition-transform duration-200 hover:-translate-y-[1px]">
+                        <td
+                          className={`rounded-l-xl transition-colors ${isDark
+                              ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                              : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
+                            }`}
+                          style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
+                        >
+                          <span className={`font-semibold tracking-wide ${isDark ? 'text-blue-200/90' : 'text-blue-700'}`} style={{ fontSize: isSidebarMinimized ? '13px' : '12px' }}>
+                            #{company.id}
+                          </span>
+                        </td>
+
+                        <td
+                          className={`transition-colors ${isDark
+                              ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                              : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
+                            }`}
+                          style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
+                        >
+                          <span className={`font-semibold tracking-[0.01em] ${isDark ? 'text-gray-100' : 'text-gray-900'}`} style={{ fontSize: isSidebarMinimized ? '13px' : '13px' }}>
+                            {company.name}
+                          </span>
+                        </td>
+
+                        <td
+                          className={`transition-colors ${isDark
+                              ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                              : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
+                            }`}
+                          style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
+                        >
+                          <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
+                            {company.email}
+                          </span>
+                        </td>
+
+                        <td
+                          className={`transition-colors ${isDark
+                              ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                              : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
+                            }`}
+                          style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
+                        >
+                          <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
+                            {company.tenantCount}
+                          </span>
+                        </td>
+
+                        <td
+                          className={`transition-colors ${isDark
+                              ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                              : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
+                            }`}
+                          style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
+                        >
+                          <span className={`font-medium tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ fontSize: isSidebarMinimized ? '12px' : '12px' }}>
+                            {company.createdAt}
+                          </span>
+                        </td>
+
+
+
+
+
+                        <td
+                          className={`rounded-r-xl transition-colors ${isDark
+                              ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]`
+                              : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-blue-50`
+                            }`}
+                          style={{ padding: isSidebarMinimized ? '12px 20px' : '12px 16px' }}
+                        >
+                          <div className="flex items-center justify-center gap-1.5">
+                            <div className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/customizations?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
+                                className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${isDark
+                                    ? 'border-cyan-400/40 bg-cyan-500/10 text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.22)] hover:bg-cyan-500/20 hover:shadow-[0_0_18px_rgba(34,211,238,0.38)]'
+                                    : 'border-cyan-300 bg-cyan-50 text-cyan-700 shadow-[0_0_12px_rgba(34,211,238,0.14)] hover:bg-cyan-100'
+                                  }`}
+                                aria-label="Customization"
+                                title="Customization"
+                              >
+                                <Settings2 size={13} />
+                              </button>
+                              <span className={actionTooltipClass}>Customization</span>
+                            </div>
+
+                            <div className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/servers?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
+                                className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${isDark
+                                    ? 'border-violet-400/40 bg-violet-500/10 text-violet-200 shadow-[0_0_12px_rgba(139,92,246,0.22)] hover:bg-violet-500/20 hover:shadow-[0_0_18px_rgba(139,92,246,0.38)]'
+                                    : 'border-violet-300 bg-violet-50 text-violet-700 shadow-[0_0_12px_rgba(139,92,246,0.14)] hover:bg-violet-100'
+                                  }`}
+                                aria-label="Servers"
+                                title="Servers"
+                              >
+                                <ServerCog size={13} />
+                              </button>
+                              <span className={actionTooltipClass}>Servers</span>
+                            </div>
+
+                            <div className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/tenants?companyId=${company.id}&companyName=${encodeURIComponent(company.name)}`)}
+                                className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${isDark
+                                    ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200 shadow-[0_0_12px_rgba(34,197,94,0.22)] hover:bg-emerald-500/20 hover:shadow-[0_0_18px_rgba(34,197,94,0.38)]'
+                                    : 'border-emerald-300 bg-emerald-50 text-emerald-700 shadow-[0_0_12px_rgba(34,197,94,0.14)] hover:bg-emerald-100'
+                                  }`}
+                                aria-label="Tenants"
+                                title="Tenants"
+                              >
+                                <Users size={13} />
+                              </button>
+                              <span className={actionTooltipClass}>Tenants</span>
+                            </div>
+
+                            <div className="relative group">
+                              <button
+                                type="button"
+                                onClick={() => openEditCompanyModal(company)}
+                                className={`peer inline-flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-200 ${isDark
+                                    ? 'border-rose-400/40 bg-rose-500/10 text-rose-200 shadow-[0_0_12px_rgba(244,63,94,0.22)] hover:bg-rose-500/20 hover:shadow-[0_0_18px_rgba(244,63,94,0.38)]'
+                                    : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_0_12px_rgba(244,63,94,0.14)] hover:bg-rose-100'
+                                  }`}
+                                aria-label="Edit"
+                                title="Edit"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <span className={actionTooltipClass}>Edit</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {!loadingCompanies && pagedCompanies.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="text-center py-8 text-gray-500 text-sm">No companies found in companyList table.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="w-full flex flex-wrap items-center justify-between gap-3 mt-6">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="companiesPerPage" className={`text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Per page
+                </Label>
+                <select
+                  id="companiesPerPage"
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className={`rounded-lg px-2.5 py-1.5 text-sm outline-none transition-all ${isDark
+                      ? 'bg-[#121214] border border-white/10 text-gray-200 focus:border-blue-500/50'
+                      : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-400'
+                    }`}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={15}>15</option>
+                </select>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2 -mr-2">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark
+                        ? 'bg-[#121214] border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                        : 'bg-white border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400'
                       }`}
-                    />
-                  ))}
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <span className={`min-w-[36px] text-center text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {currentPage}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark
+                        ? 'bg-[#121214] border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                        : 'bg-white border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400'
+                      }`}
+                    aria-label="Next page"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {activeServerCompanyId !== null && (
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+              <div className={`w-full max-w-4xl rounded-2xl border p-6 ${isDark
+                  ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(139,92,246,0.25)]'
+                  : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(139,92,246,0.15)]'
+                }`}>
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl bg-violet-500/10 p-2.5 text-violet-400 shadow-[0_0_20px_rgba(139,92,246,0.15)]">
+                      <ServerCog size={22} />
+                    </div>
+                    <div>
+                      <h4 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Servers
+                      </h4>
+                      <p className="text-sm text-slate-400">
+                        Managing servers for this company.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={serverSearchTerm}
+                        onChange={(e) => setServerSearchTerm(e.target.value)}
+                        className="w-48 rounded-2xl border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-violet-400/40"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveServerCompanyId(null)}
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border ${isDark
+                          ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                          : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      aria-label="Close servers modal"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {loadingServers ? (
+                  <div className="text-center py-12 text-gray-500 text-sm">Loading servers...</div>
+                ) : serverRecords.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 text-sm">No servers found for this company.</div>
+                ) : (
+                  <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+                    <table className="min-w-full divide-y divide-white/10 text-left">
+                      <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                        <tr>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>IP Address</span>
+                              <button type="button" onClick={() => setIsModalServerIpSortMenuOpen(!isModalServerIpSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalServerIpSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('asc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('desc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>Label</span>
+                              <button type="button" onClick={() => setIsModalServerLabelSortMenuOpen(!isModalServerLabelSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalServerLabelSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('asc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'label' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('desc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'label' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>Tenant Count</span>
+                              <button type="button" onClick={() => setIsModalServerTenantCountSortMenuOpen(!isModalServerTenantCountSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalServerTenantCountSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('asc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('desc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>Created At</span>
+                              <button type="button" onClick={() => setIsModalServerCreatedAtSortMenuOpen(!isModalServerCreatedAtSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalServerCreatedAtSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('asc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('desc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/8">
+                        {[...serverRecords]
+                          .filter(item =>
+                            item.ipAddress?.toLowerCase().includes(serverSearchTerm.toLowerCase()) ||
+                            item.label?.toLowerCase().includes(serverSearchTerm.toLowerCase())
+                          )
+                          .sort((a, b) => {
+                            const direction = serverSortOrder === 'asc' ? 1 : -1;
+                            if (serverSortBy === 'tenantCount') return ((a.tenantCount || 0) - (b.tenantCount || 0)) * direction;
+                            if (serverSortBy === 'createdAt') {
+                              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                              return (dateA - dateB) * direction;
+                            }
+                            const left = String(a[serverSortBy] || '').toLowerCase();
+                            const right = String(b[serverSortBy] || '').toLowerCase();
+                            return left.localeCompare(right) * direction;
+                          })
+                          .map((item, idx) => (
+                            <tr key={item.id || idx} className="transition hover:bg-white/5">
+                              <td className="px-5 py-4 text-sm font-medium text-white">
+                                {item.ipAddress || 'N/A'}
+                              </td>
+                              <td className="px-5 py-4 text-sm text-violet-300">
+                                {item.label || 'N/A'}
+                              </td>
+                              <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
+                                {item.tenantCount || 0}
+                              </td>
+                              <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
+                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {isEditingCompany && (
-              <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                Edit company details and tenant count below.
-              </p>
-            )}
-
-            {isEditingCompany ? (
-              <>
-                  <div>
-                  <Label htmlFor="companyName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name</Label>
-                  <input
-                    id="companyName"
-                    type="text"
-                    value={companyForm.name}
-                    onChange={(event) => updateCompanyForm('name', event.target.value)}
-                    className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                      formErrors.name
-                        ? isDark
-                          ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                          : 'border-red-500 bg-red-50 text-gray-900'
-                        : isDark
-                          ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                    }`}
-                    placeholder="Company name"
-                  />
+          {activeTenantCompanyId !== null && (
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+              <div className={`w-full max-w-4xl rounded-2xl border p-6 ${isDark
+                  ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.25)]'
+                  : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(34,197,94,0.15)]'
+                }`}>
+                <div className="mb-6 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl bg-emerald-500/10 p-2.5 text-emerald-400 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+                      <Users size={22} />
+                    </div>
+                    <div>
+                      <h4 className={`text-lg font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Tenants
+                      </h4>
+                      <p className="text-sm text-slate-400">
+                        Managing tenants for this company.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={tenantSearchTerm}
+                        onChange={(e) => setTenantSearchTerm(e.target.value)}
+                        className="w-48 rounded-2xl border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-emerald-400/40"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTenantCompanyId(null)}
+                      className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl border ${isDark
+                          ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                          : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      aria-label="Close tenants modal"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
                 </div>
 
-                  <div>
-                  <Label htmlFor="companyDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description</Label>
-                  <textarea
-                    id="companyDescription"
-                    rows={3}
-                    value={companyForm.description}
-                    onChange={(event) => updateCompanyForm('description', event.target.value)}
-                    className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${
-                      formErrors.description
-                        ? isDark
-                          ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                          : 'border-red-500 bg-red-50 text-gray-900'
-                        : isDark
-                          ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                    }`}
-                    placeholder="Company description"
-                  />
+                {loadingTenants ? (
+                  <div className="text-center py-12 text-gray-500 text-sm">Loading tenants...</div>
+                ) : tenantRecords.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 text-sm">No tenants found for this company.</div>
+                ) : (
+                  <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+                    <table className="min-w-full divide-y divide-white/10 text-left">
+                      <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                        <tr>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>Name</span>
+                              <button type="button" onClick={() => setIsModalTenantNameSortMenuOpen(!isModalTenantNameSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalTenantNameSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('asc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('desc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>Description</span>
+                              <button type="button" onClick={() => setIsModalTenantDescSortMenuOpen(!isModalTenantDescSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalTenantDescSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('asc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('desc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>SIP Count</span>
+                              <button type="button" onClick={() => setIsModalTenantSipSortMenuOpen(!isModalTenantSipSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalTenantSipSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('asc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('desc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>License Count</span>
+                              <button type="button" onClick={() => setIsModalTenantLicenseSortMenuOpen(!isModalTenantLicenseSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalTenantLicenseSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('asc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('desc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                          <th className="px-5 py-4 font-semibold">
+                            <div className="relative inline-flex items-center gap-2">
+                              <span>Created At</span>
+                              <button type="button" onClick={() => setIsModalTenantCreatedAtSortMenuOpen(!isModalTenantCreatedAtSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
+                              {isModalTenantCreatedAtSortMenuOpen && (
+                                <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                  <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('asc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                                  <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('desc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                                </div>
+                              )}
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/8">
+                        {tenantRecords
+                          .filter(item =>
+                            item.name?.toLowerCase().includes(tenantSearchTerm.toLowerCase()) ||
+                            item.description?.toLowerCase().includes(tenantSearchTerm.toLowerCase())
+                          )
+                          .sort((a, b) => {
+                            const direction = tenantSortOrder === 'asc' ? 1 : -1;
+                            if (tenantSortBy === 'sipConfigsCount' || tenantSortBy === 'licenseCount') return ((a[tenantSortBy] || 0) - (b[tenantSortBy] || 0)) * direction;
+                            if (tenantSortBy === 'createdAt') {
+                              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                              return (dateA - dateB) * direction;
+                            }
+                            const left = String(a[tenantSortBy] || '').toLowerCase();
+                            const right = String(b[tenantSortBy] || '').toLowerCase();
+                            return left.localeCompare(right) * direction;
+                          })
+                          .map((item, idx) => (
+                            <tr key={item.id || idx} className="transition hover:bg-white/5">
+                              <td className="px-5 py-4 text-sm font-medium text-white">
+                                {item.name || 'N/A'}
+                              </td>
+                              <td className="px-5 py-4 text-sm text-slate-300">
+                                {item.description || 'No description'}
+                              </td>
+                              <td className="px-5 py-4 text-sm font-medium font-mono text-emerald-300">
+                                {item.sipConfigsCount || 0}
+                              </td>
+                              <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
+                                {item.licenseCount || 0}
+                              </td>
+                              <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
+                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isCompanyModalOpen && (
+            <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+              <div className={`w-full max-w-2xl rounded-2xl border p-6 ${isDark
+                  ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(59,130,246,0.25)]'
+                  : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(59,130,246,0.15)]'
+                }`}>
+                <div className="flex items-center justify-between gap-3 mb-5">
+                  <h4 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {editingCompanyId === null ? 'Add a new company' : 'Edit Company'}
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={closeCompanyModal}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${isDark
+                        ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                        : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    aria-label="Close company modal"
+                    title="Close"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
 
-                  <div>
-                  <Label htmlFor="companyEmail" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email</Label>
-                  <input
-                    id="companyEmail"
-                    type="email"
-                    value={companyForm.email}
-                    onChange={(event) => updateCompanyForm('email', event.target.value)}
-                    className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                      formErrors.email
-                        ? isDark
-                          ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                          : 'border-red-500 bg-red-50 text-gray-900'
-                        : isDark
-                          ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                    }`}
-                    placeholder="company@example.com"
-                  />
-                </div>
+                <form className="space-y-4" onSubmit={handleCompanySubmit}>
+                  {!isEditingCompany && (
+                    <div className={`mb-5 rounded-xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]">
+                        <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Step {companyWizardStep} of {addCompanyWizardSteps.length}</span>
+                        <span className={isDark ? 'text-blue-200' : 'text-blue-700'}>{addCompanyWizardSteps[companyWizardStep - 1]?.title}</span>
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        {addCompanyWizardSteps.map((step) => (
+                          <div
+                            key={step.step}
+                            className={`h-2 flex-1 rounded-full transition-colors ${companyWizardStep >= step.step
+                                ? isDark
+                                  ? 'bg-blue-500/80'
+                                  : 'bg-blue-500'
+                                : isDark
+                                  ? 'bg-white/10'
+                                  : 'bg-gray-200'
+                              }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                  <div>
-                  <Label htmlFor="tenantCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Count</Label>
-                  <input
-                    id="tenantCount"
-                    type="number"
-                    value={companyForm.tenantCount}
-                    onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
-                    className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                      formErrors.tenantCount
-                        ? isDark
-                          ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                          : 'border-red-500 bg-red-50 text-gray-900'
-                        : isDark
-                          ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                    }`}
-                  />
-                  {formErrors.tenantCount && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantCount}</p>}
-                </div>
-              </>
-            ) : (
-              <>
-                {companyWizardStep === 1 && (
-                  <div>
-                    <div className="grid gap-4 md:grid-cols-2">
+                  {isEditingCompany && (
+                    <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      Edit company details and tenant count below.
+                    </p>
+                  )}
+
+                  {isEditingCompany ? (
+                    <>
                       <div>
-                        <Label htmlFor="companyName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name *</Label>
+                        <Label htmlFor="companyName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name</Label>
                         <input
                           id="companyName"
                           type="text"
-                          autoFocus
                           value={companyForm.name}
                           onChange={(event) => updateCompanyForm('name', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                            formErrors.name
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.name
                               ? isDark
                                 ? 'border-red-500/50 bg-red-500/10 text-gray-200'
                                 : 'border-red-500 bg-red-50 text-gray-900'
                               : isDark
                                 ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
                                 : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                          }`}
+                            }`}
                           placeholder="Company name"
                         />
-                        {formErrors.name && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.name}</p>}
                       </div>
 
                       <div>
-                        <Label htmlFor="companyTenantCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Count *</Label>
+                        <Label htmlFor="companyDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description</Label>
+                        <textarea
+                          id="companyDescription"
+                          rows={3}
+                          value={companyForm.description}
+                          onChange={(event) => updateCompanyForm('description', event.target.value)}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${formErrors.description
+                              ? isDark
+                                ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                : 'border-red-500 bg-red-50 text-gray-900'
+                              : isDark
+                                ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                            }`}
+                          placeholder="Company description"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="companyEmail" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email</Label>
                         <input
-                          id="companyTenantCount"
+                          id="companyEmail"
+                          type="email"
+                          value={companyForm.email}
+                          onChange={(event) => updateCompanyForm('email', event.target.value)}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.email
+                              ? isDark
+                                ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                : 'border-red-500 bg-red-50 text-gray-900'
+                              : isDark
+                                ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                            }`}
+                          placeholder="company@example.com"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tenantCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Count</Label>
+                        <input
+                          id="tenantCount"
                           type="number"
                           value={companyForm.tenantCount}
                           onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                            formErrors.tenantCount
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantCount
                               ? isDark
                                 ? 'border-red-500/50 bg-red-500/10 text-gray-200'
                                 : 'border-red-500 bg-red-50 text-gray-900'
                               : isDark
                                 ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
                                 : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                          }`}
-                          placeholder="0"
+                            }`}
                         />
                         {formErrors.tenantCount && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantCount}</p>}
                       </div>
-                    </div>
+                    </>
+                  ) : (
+                    <>
+                      {companyWizardStep === 1 && (
+                        <div>
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label htmlFor="companyName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name *</Label>
+                              <input
+                                id="companyName"
+                                type="text"
+                                autoFocus
+                                value={companyForm.name}
+                                onChange={(event) => updateCompanyForm('name', event.target.value)}
+                                className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.name
+                                    ? isDark
+                                      ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                      : 'border-red-500 bg-red-50 text-gray-900'
+                                    : isDark
+                                      ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                  }`}
+                                placeholder="Company name"
+                              />
+                              {formErrors.name && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.name}</p>}
+                            </div>
 
-                    <div className="mt-4">
-                      <Label htmlFor="companyDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description *</Label>
-                      <textarea
-                        id="companyDescription"
-                        rows={4}
-                        value={companyForm.description}
-                        onChange={(event) => updateCompanyForm('description', event.target.value)}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${
-                          formErrors.description
-                            ? isDark
-                              ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                              : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                        }`}
-                        placeholder="Company description"
-                      />
-                      {formErrors.description && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.description}</p>}
-                    </div>
+                            <div>
+                              <Label htmlFor="companyTenantCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Count *</Label>
+                              <input
+                                id="companyTenantCount"
+                                type="number"
+                                value={companyForm.tenantCount}
+                                onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
+                                className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantCount
+                                    ? isDark
+                                      ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                      : 'border-red-500 bg-red-50 text-gray-900'
+                                    : isDark
+                                      ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                      : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                  }`}
+                                placeholder="0"
+                              />
+                              {formErrors.tenantCount && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantCount}</p>}
+                            </div>
+                          </div>
 
-                    <div className="mt-4">
-                      <Label htmlFor="companyEmail" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email *</Label>
-                      <input
-                        id="companyEmail"
-                        type="email"
-                        value={companyForm.email}
-                        onChange={(event) => updateCompanyForm('email', event.target.value)}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                          formErrors.email
-                            ? isDark
-                              ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                              : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                        }`}
-                        placeholder="company@example.com"
-                      />
-                      {formErrors.email && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.email}</p>}
-                    </div>
-                  </div>
-                )}
+                          <div className="mt-4">
+                            <Label htmlFor="companyDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description *</Label>
+                            <textarea
+                              id="companyDescription"
+                              rows={4}
+                              value={companyForm.description}
+                              onChange={(event) => updateCompanyForm('description', event.target.value)}
+                              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${formErrors.description
+                                  ? isDark
+                                    ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                    : 'border-red-500 bg-red-50 text-gray-900'
+                                  : isDark
+                                    ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                }`}
+                              placeholder="Company description"
+                            />
+                            {formErrors.description && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.description}</p>}
+                          </div>
 
-                {companyWizardStep === 2 && (
-                  <div>
-                    <Label htmlFor="serverIpAddress" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server IP Address *</Label>
-                    <input
-                      id="serverIpAddress"
-                      type="text"
-                      autoFocus
-                      value={companyForm.serverIpAddress}
-                      onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
-                      className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                        formErrors.serverIpAddress
-                          ? isDark
-                            ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                            : 'border-red-500 bg-red-50 text-gray-900'
-                          : isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                      }`}
-                      placeholder="192.168.0.10"
-                    />
-                    {formErrors.serverIpAddress && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.serverIpAddress}</p>}
+                          <div className="mt-4">
+                            <Label htmlFor="companyEmail" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email *</Label>
+                            <input
+                              id="companyEmail"
+                              type="email"
+                              value={companyForm.email}
+                              onChange={(event) => updateCompanyForm('email', event.target.value)}
+                              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.email
+                                  ? isDark
+                                    ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                    : 'border-red-500 bg-red-50 text-gray-900'
+                                  : isDark
+                                    ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                }`}
+                              placeholder="company@example.com"
+                            />
+                            {formErrors.email && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.email}</p>}
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="mt-4">
-                      <Label htmlFor="serverLabel" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server Label</Label>
-                      <input
-                        id="serverLabel"
-                        type="text"
-                        value={companyForm.serverLabel}
-                        onChange={(event) => setCompanyForm((prev) => ({ ...prev, serverLabel: event.target.value }))}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                          isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                        }`}
-                        placeholder="Primary server"
-                      />
-                    </div>
-                  </div>
-                )}
+                      {companyWizardStep === 2 && (
+                        <div>
+                          <Label htmlFor="serverIpAddress" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server IP Address *</Label>
+                          <input
+                            id="serverIpAddress"
+                            type="text"
+                            autoFocus
+                            value={companyForm.serverIpAddress}
+                            onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
+                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.serverIpAddress
+                                ? isDark
+                                  ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                  : 'border-red-500 bg-red-50 text-gray-900'
+                                : isDark
+                                  ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                              }`}
+                            placeholder="192.168.0.10"
+                          />
+                          {formErrors.serverIpAddress && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.serverIpAddress}</p>}
 
-                {companyWizardStep === 3 && (
-                  <div>
-                    <Label htmlFor="tenantName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Name *</Label>
-                    <input
-                      id="tenantName"
-                      type="text"
-                      autoFocus
-                      value={companyForm.tenantName}
-                      onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
-                      className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                        formErrors.tenantName
-                          ? isDark
-                            ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                            : 'border-red-500 bg-red-50 text-gray-900'
-                          : isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                      }`}
-                      placeholder="Tenant name"
-                    />
-                    {formErrors.tenantName && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantName}</p>}
+                          <div className="mt-4">
+                            <Label htmlFor="serverLabel" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server Label</Label>
+                            <input
+                              id="serverLabel"
+                              type="text"
+                              value={companyForm.serverLabel}
+                              onChange={(event) => setCompanyForm((prev) => ({ ...prev, serverLabel: event.target.value }))}
+                              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
+                                  ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                }`}
+                              placeholder="Primary server"
+                            />
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="mt-4">
-                      <Label htmlFor="tenantDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Description</Label>
-                      <textarea
-                        id="tenantDescription"
-                        rows={4}
-                        value={companyForm.tenantDescription}
-                        onChange={(event) => setCompanyForm((prev) => ({ ...prev, tenantDescription: event.target.value }))}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${
-                          isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                        }`}
-                        placeholder="Tenant description"
-                      />
-                    </div>
-                  </div>
-                )}
+                      {companyWizardStep === 3 && (
+                        <div>
+                          <Label htmlFor="tenantName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Name *</Label>
+                          <input
+                            id="tenantName"
+                            type="text"
+                            autoFocus
+                            value={companyForm.tenantName}
+                            onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
+                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantName
+                                ? isDark
+                                  ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                  : 'border-red-500 bg-red-50 text-gray-900'
+                                : isDark
+                                  ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                              }`}
+                            placeholder="Tenant name"
+                          />
+                          {formErrors.tenantName && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantName}</p>}
 
-                {companyWizardStep === 4 && (
-                  <div>
-                    <div>
-                      <Label htmlFor="sipProvider" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Provider *</Label>
-                      <input
-                        id="sipProvider"
-                        type="text"
-                        autoFocus
-                        value={companyForm.sipProvider}
-                        onChange={(event) => updateCompanyForm('sipProvider', event.target.value)}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                          formErrors.sipProvider
-                            ? isDark
-                              ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                              : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                        }`}
-                        placeholder="Twilio SIP"
-                      />
-                      {formErrors.sipProvider && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.sipProvider}</p>}
-                    </div>
+                          <div className="mt-4">
+                            <Label htmlFor="tenantDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Description</Label>
+                            <textarea
+                              id="tenantDescription"
+                              rows={4}
+                              value={companyForm.tenantDescription}
+                              onChange={(event) => setCompanyForm((prev) => ({ ...prev, tenantDescription: event.target.value }))}
+                              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark
+                                  ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                }`}
+                              placeholder="Tenant description"
+                            />
+                          </div>
+                        </div>
+                      )}
 
-                    <div className="mt-4 grid gap-4 md:grid-cols-2">
-                      <div>
-                        <Label htmlFor="sipCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Count</Label>
-                        <input
-                          id="sipCount"
-                          type="number"
-                          value={companyForm.sipCount}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipCount: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                            isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                          }`}
-                          placeholder="0"
-                        />
-                      </div>
+                      {companyWizardStep === 4 && (
+                        <div>
+                          <div>
+                            <Label htmlFor="sipProvider" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Provider *</Label>
+                            <input
+                              id="sipProvider"
+                              type="text"
+                              autoFocus
+                              value={companyForm.sipProvider}
+                              onChange={(event) => updateCompanyForm('sipProvider', event.target.value)}
+                              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.sipProvider
+                                  ? isDark
+                                    ? 'border-red-500/50 bg-red-500/10 text-gray-200'
+                                    : 'border-red-500 bg-red-50 text-gray-900'
+                                  : isDark
+                                    ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                }`}
+                              placeholder="Twilio SIP"
+                            />
+                            {formErrors.sipProvider && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.sipProvider}</p>}
+                          </div>
 
-                      <div>
-                        <Label htmlFor="sipChannelCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Channel Count</Label>
-                        <input
-                          id="sipChannelCount"
-                          type="number"
-                          value={companyForm.sipChannelCount}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipChannelCount: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                            isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                          }`}
-                          placeholder="0"
-                        />
-                      </div>
+                          <div className="mt-4 grid gap-4 md:grid-cols-2">
+                            <div>
+                              <Label htmlFor="sipCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Count</Label>
+                              <input
+                                id="sipCount"
+                                type="number"
+                                value={companyForm.sipCount}
+                                onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipCount: event.target.value }))}
+                                className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
+                                    ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                  }`}
+                                placeholder="0"
+                              />
+                            </div>
 
-                      <div>
-                        <Label htmlFor="licenseCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>License Count</Label>
-                        <input
-                          id="licenseCount"
-                          type="number"
-                          value={companyForm.licenseCount}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, licenseCount: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${
-                            isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                          }`}
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
+                            <div>
+                              <Label htmlFor="sipChannelCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Channel Count</Label>
+                              <input
+                                id="sipChannelCount"
+                                type="number"
+                                value={companyForm.sipChannelCount}
+                                onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipChannelCount: event.target.value }))}
+                                className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
+                                    ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                  }`}
+                                placeholder="0"
+                              />
+                            </div>
 
-                    <div className="mt-4">
-                      <Label htmlFor="sipDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Description</Label>
-                      <textarea
-                        id="sipDescription"
-                        rows={4}
-                        value={companyForm.sipDescription}
-                        onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipDescription: event.target.value }))}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${
-                          isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                        }`}
-                        placeholder="SIP config description"
-                      />
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+                            <div>
+                              <Label htmlFor="licenseCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>License Count</Label>
+                              <input
+                                id="licenseCount"
+                                type="number"
+                                value={companyForm.licenseCount}
+                                onChange={(event) => setCompanyForm((prev) => ({ ...prev, licenseCount: event.target.value }))}
+                                className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
+                                    ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                  }`}
+                                placeholder="0"
+                              />
+                            </div>
+                          </div>
 
-            <div className="pt-2 flex items-center justify-end gap-2">
-              {editingCompanyId !== null && (
-                <button
-                  type="button"
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                  className={`px-3 py-2 rounded-lg text-sm font-semibold border ${
-                    isDark
-                      ? 'border-rose-400/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25'
-                      : 'border-rose-300 bg-rose-100 text-rose-700 hover:bg-rose-200'
-                  }`}
-                >
-                  Delete
-                </button>
-              )}
-              {isEditingCompany ? (
-                <button
-                  type="submit"
-                  className={`px-3 py-2 rounded-lg text-sm font-semibold border ${
-                    isDark
-                      ? 'border-blue-400/40 bg-blue-500/15 text-blue-200 hover:bg-blue-500/25'
-                      : 'border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  }`}
-                >
-                  Save Changes
-                </button>
-              ) : (
-                <>
-                  <div className="flex items-center gap-4">
-                    {companyWizardStep > 1 && (
+                          <div className="mt-4">
+                            <Label htmlFor="sipDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Description</Label>
+                            <textarea
+                              id="sipDescription"
+                              rows={4}
+                              value={companyForm.sipDescription}
+                              onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipDescription: event.target.value }))}
+                              className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark
+                                  ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
+                                  : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                                }`}
+                              placeholder="SIP config description"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="pt-2 flex items-center justify-end gap-2">
+                    {editingCompanyId !== null && (
                       <button
                         type="button"
-                        onClick={handleWizardBack}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition text-3xl ${
-                          isDark
-                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-gray-900'
-                        }`}
+                        onClick={() => setIsDeleteConfirmOpen(true)}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border ${isDark
+                            ? 'border-rose-400/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25'
+                            : 'border-rose-300 bg-rose-100 text-rose-700 hover:bg-rose-200'
+                          }`}
                       >
-                        ←
+                        Delete
                       </button>
                     )}
-                    {companyWizardStep < addCompanyWizardSteps.length ? (
-                      <button
-                        type="button"
-                        onClick={handleWizardNext}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition text-3xl ${
-                          isDark
-                            ? 'bg-blue-600 text-blue-200 hover:bg-blue-500 hover:text-white'
-                            : 'bg-blue-400 text-white hover:bg-blue-500'
-                        }`}
-                      >
-                        →
-                      </button>
-                    ) : (
+                    {isEditingCompany ? (
                       <button
                         type="submit"
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                          isDark
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                        }`}
+                        className={`px-3 py-2 rounded-lg text-sm font-semibold border ${isDark
+                            ? 'border-blue-400/40 bg-blue-500/15 text-blue-200 hover:bg-blue-500/25'
+                            : 'border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200'
+                          }`}
                       >
-                        Add Company Bundle
+                        Save Changes
                       </button>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-4">
+                          {companyWizardStep > 1 && (
+                            <button
+                              type="button"
+                              onClick={handleWizardBack}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center transition text-3xl ${isDark
+                                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-gray-900'
+                                }`}
+                            >
+                              ←
+                            </button>
+                          )}
+                          {companyWizardStep < addCompanyWizardSteps.length ? (
+                            <button
+                              type="button"
+                              onClick={handleWizardNext}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center transition text-3xl ${isDark
+                                  ? 'bg-blue-600 text-blue-200 hover:bg-blue-500 hover:text-white'
+                                  : 'bg-blue-400 text-white hover:bg-blue-500'
+                                }`}
+                            >
+                              →
+                            </button>
+                          ) : (
+                            <button
+                              type="submit"
+                              className={`px-4 py-2 rounded-lg text-sm font-semibold ${isDark
+                                  ? 'bg-green-600 text-white hover:bg-green-700'
+                                  : 'bg-green-600 text-white hover:bg-green-700'
+                                }`}
+                            >
+                              Add Company Bundle
+                            </button>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
-                </>
-              )}
+                </form>
+              </div>
             </div>
-          </form>
-        </div>
-      </div>
-    )}
+          )}
 
-    {isDeleteConfirmOpen && editingCompanyId !== null && (
-      <div className={`fixed inset-0 z-[60] flex items-center justify-center p-4 ${isDark ? 'bg-black/70' : 'bg-black/45'}`}>
-        <div className={`w-full max-w-sm rounded-xl border p-4 ${
-          isDark
-            ? 'bg-[#10131A] border-rose-400/30 shadow-[0_0_30px_rgba(244,63,94,0.25)]'
-            : 'bg-white border-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.15)]'
-        }`}>
-          <div className="flex items-center justify-between gap-2">
-            <h5 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Delete this company?
-            </h5>
-            <button
-              type="button"
-              onClick={() => setIsDeleteConfirmOpen(false)}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${
-                isDark
-                  ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
-                  : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-              aria-label="Close delete confirmation"
-              title="Close"
-            >
-              <X size={14} />
-            </button>
-          </div>
-          <p className={`mt-2 text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-            Are you sure you want to delete {editingCompany?.name || 'this company'}? This action cannot be undone.
-          </p>
+          {isDeleteConfirmOpen && editingCompanyId !== null && (
+            <div className={`fixed inset-0 z-[60] flex items-center justify-center p-4 ${isDark ? 'bg-black/70' : 'bg-black/45'}`}>
+              <div className={`w-full max-w-sm rounded-xl border p-4 ${isDark
+                  ? 'bg-[#10131A] border-rose-400/30 shadow-[0_0_30px_rgba(244,63,94,0.25)]'
+                  : 'bg-white border-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.15)]'
+                }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <h5 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    Delete this company?
+                  </h5>
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteConfirmOpen(false)}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md border ${isDark
+                        ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                        : 'border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    aria-label="Close delete confirmation"
+                    title="Close"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className={`mt-2 text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Are you sure you want to delete {editingCompany?.name || 'this company'}? This action cannot be undone.
+                </p>
 
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsDeleteConfirmOpen(false)}
-              className={`px-3 py-1.5 rounded-lg text-xs border ${
-                isDark
-                  ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
-                  : 'border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteCompany}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
-                isDark
-                  ? 'border-rose-400/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25'
-                  : 'border-rose-300 bg-rose-100 text-rose-700 hover:bg-rose-200'
-              }`}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteConfirmOpen(false)}
+                    className={`px-3 py-1.5 rounded-lg text-xs border ${isDark
+                        ? 'border-white/10 text-gray-300 hover:text-white hover:bg-white/5'
+                        : 'border-gray-300 text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteCompany}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${isDark
+                        ? 'border-rose-400/40 bg-rose-500/15 text-rose-200 hover:bg-rose-500/25'
+                        : 'border-rose-300 bg-rose-100 text-rose-700 hover:bg-rose-200'
+                      }`}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
