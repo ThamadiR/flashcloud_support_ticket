@@ -40,6 +40,8 @@ export const registerRoutes = (
   app.patch('/api/users/:id/role', authenticate, usersAdminController.updateRole);
   app.put('/api/users/:id', authenticate, usersProfileController.updateUser);
   app.delete('/api/users/:id', authenticate, usersAdminController.deleteUser);
+  app.get('/api/users/assignees', usersAdminController.getAssignees);
+
 
   app.get('/api/companies', authenticate, managementQueryController.listCompanies);
   app.post('/api/companies', authenticate, managementAdminController.createCompany);

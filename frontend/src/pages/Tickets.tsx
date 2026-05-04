@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Badge, Pagination } from "flowbite-react";
 import { User, Building2, Search, Clock, AlertCircle, ChevronRight, Ticket as TicketIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useSearch } from "../../context/SearchContext";
-import { useDrawer } from "../../context/DrawerContext";
-import { useTheme } from "../../context/ThemeContext";
+import { useSearch } from "../context/SearchContext";
+import { useDrawer } from "../context/DrawerContext";
+import { useTheme } from "../context/ThemeContext";
 
 type Ticket = {
   id: number;

@@ -59,4 +59,14 @@ export class UsersAdminController {
       return res.status(500).json({ error: 'Error deleting user' });
     }
   };
+
+  getAssignees = async (req: any, res: any) => {
+    try {
+      const result = await this.usersService.getAssignees();
+      return res.status(200).json(result);
+    } catch (error: any) {
+      console.error('Get assignees error:', error);
+      return res.status(500).json({ error: 'Error fetching assignees' });
+    }
+  };
 }

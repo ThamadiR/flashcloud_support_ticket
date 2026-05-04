@@ -26,6 +26,8 @@ function Contacts({ token }: { token: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("");
+
 
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const { isDrawerOpen } = useDrawer();
@@ -53,11 +55,19 @@ function Contacts({ token }: { token: string }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filtered contacts
-  const filteredContacts = contacts.filter(c => 
-    `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredContacts = contacts.filter(c => {
+    const matchesSearch = `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesCompany = selectedCompany === "" || c.company === selectedCompany;
+    
+    return matchesSearch && matchesCompany;
+  });
+
+  // Unique companies for filter dropdown
+  const uniqueFilterCompanies = Array.from(new Set(companies.map(c => c.name))).sort();
+
 
   const imgSrc = (p: string | null) => {
     if (!p) return null;
@@ -225,8 +235,32 @@ function Contacts({ token }: { token: string }) {
                 }`}
               />
             </div>
+
+            <div className="relative group">
+              <Building2 className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isDark ? 'text-slate-500 group-focus-within:text-cyan-400' : 'text-gray-400 group-focus-within:text-cyan-600'}`} />
+              <select
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+                className={`pl-10 pr-10 py-2 rounded-xl text-sm border transition-all outline-none appearance-none cursor-pointer w-full md:w-48 ${
+                  isDark 
+                    ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50' 
+                    : 'bg-white border-gray-200 text-gray-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'
+                }`}
+              >
+                <option value="">All Companies</option>
+                {uniqueFilterCompanies.map(comp => (
+                  <option key={comp} value={comp} className={isDark ? 'bg-[#111827] text-white' : 'bg-white text-gray-900'}>
+                    {comp}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronRight className="w-4 h-4 rotate-90 opacity-50" />
+              </div>
+            </div>
             
             <button
+
               onClick={() => { resetForm(); setIsModalOpen(true); }}
               className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${
                 isDark 

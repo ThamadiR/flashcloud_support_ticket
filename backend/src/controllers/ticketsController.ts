@@ -163,3 +163,16 @@ export async function getEmailsByTicket(req: Request, res: Response) {
     res.status(500).json({ error: "Failed to fetch ticket emails" });
   }
 }
+
+export async function show(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    const ticket = await getTicketById(Number(id));
+    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+    res.json(ticket);
+  } catch (err) {
+    console.error("Error fetching ticket:", err);
+    res.status(500).json({ error: "Failed to fetch ticket" });
+  }
+}
+

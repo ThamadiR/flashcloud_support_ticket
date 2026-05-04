@@ -3,7 +3,8 @@ import { Datepicker, Label } from 'flowbite-react';
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Building2, Edit2, Plus, Search, ArrowLeft, Trash2, X, SlidersHorizontal, Check, ChevronRight } from 'lucide-react';
+import { Building2, Edit2, Plus, Search, ArrowLeft, Trash2, X, SlidersHorizontal, Check, ChevronRight, ArrowUpDown } from 'lucide-react';
+
 import { API_BASE_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
 import { useDrawer } from '../context/DrawerContext';
@@ -49,11 +50,29 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const companyId = params.get('companyId') || '';
   const companyName = params.get('companyName') || '';
+
+  const idSortMenuRef = useRef<HTMLDivElement>(null);
+  const companySortMenuRef = useRef<HTMLDivElement>(null);
+  const companyIdSortMenuRef = useRef<HTMLDivElement>(null);
+  const nameSortMenuRef = useRef<HTMLDivElement>(null);
+  const descriptionSortMenuRef = useRef<HTMLDivElement>(null);
+  const createdAtSortMenuRef = useRef<HTMLDivElement>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [tenants, setTenants] = useState<TenantRecord[]>([]);
+  const [sortBy, setSortBy] = useState<'id' | 'company' | 'companyId' | 'name' | 'description' | 'createdAt'>('id');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isIdSortMenuOpen, setIsIdSortMenuOpen] = useState(false);
+  const [isCompanySortMenuOpen, setIsCompanySortMenuOpen] = useState(false);
+  const [isCompanyIdSortMenuOpen, setIsCompanyIdSortMenuOpen] = useState(false);
+  const [isNameSortMenuOpen, setIsNameSortMenuOpen] = useState(false);
+  const [isDescriptionSortMenuOpen, setIsDescriptionSortMenuOpen] = useState(false);
+  const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
+
   const [editingTenantId, setEditingTenantId] = useState<number | null>(null);
+
   const [tenantForm, setTenantForm] = useState({ name: '', description: '' });
   const [isSavingTenant, setIsSavingTenant] = useState(false);
   const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
@@ -122,7 +141,26 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
     loadTenants();
   }, [onUnauthorized, token, companyId]);
 
+  const closeAllSortMenus = () => {
+    setIsIdSortMenuOpen(false);
+    setIsCompanySortMenuOpen(false);
+    setIsCompanyIdSortMenuOpen(false);
+    setIsNameSortMenuOpen(false);
+    setIsDescriptionSortMenuOpen(false);
+    setIsCreatedAtSortMenuOpen(false);
+  };
+
+  const applyColumnSort = (
+    field: 'id' | 'company' | 'companyId' | 'name' | 'description' | 'createdAt',
+    nextSortOrder: 'asc' | 'desc'
+  ) => {
+    setSortBy(field);
+    setSortOrder(nextSortOrder);
+    closeAllSortMenus();
+  };
+
   const filteredTenants = useMemo(() => {
+
     const keyword = searchTerm.trim().toLowerCase();
     let rows = tenants.filter((item) => {
       // Keyword Search
@@ -165,25 +203,60 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
     });
 
 
-    return rows;
-  }, [tenants, searchTerm, filters]);
+    return rows.sort((a, b) => {
+      const direction = sortOrder === 'asc' ? 1 : -1;
+
+      if (sortBy === 'id' || sortBy === 'companyId') {
+        return (a[sortBy] - b[sortBy]) * direction;
+      }
+
+      if (sortBy === 'createdAt') {
+        return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction;
+      }
+
+      if (sortBy === 'company') {
+        const leftCompany = String(a.company?.name || '').toLowerCase();
+        const rightCompany = String(b.company?.name || '').toLowerCase();
+        return leftCompany.localeCompare(rightCompany) * direction;
+      }
+
+      const left = String(a[sortBy] || '').toLowerCase();
+      const right = String(b[sortBy] || '').toLowerCase();
+      return left.localeCompare(right) * direction;
+    });
+  }, [tenants, searchTerm, filters, sortBy, sortOrder]);
+
 
   useEffect(() => {
-    const handleClickOutsideFilter = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      const isDatepickerClick = target.closest('.datepicker') || target.closest('[data-testid="datepicker-popup"]');
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        idSortMenuRef.current?.contains(target)
+        || companySortMenuRef.current?.contains(target)
+        || companyIdSortMenuRef.current?.contains(target)
+        || nameSortMenuRef.current?.contains(target)
+        || descriptionSortMenuRef.current?.contains(target)
+        || createdAtSortMenuRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      const htmlTarget = event.target as HTMLElement;
+      const isDatepickerClick = htmlTarget.closest('.datepicker') || htmlTarget.closest('[data-testid="datepicker-popup"]');
       
       if (filterDropdownRef.current && 
-          !filterDropdownRef.current.contains(target) && 
+          !filterDropdownRef.current.contains(htmlTarget) && 
           !isDatepickerClick) {
         setIsFilterDropdownOpen(false);
       }
+
+      closeAllSortMenus();
     };
-    if (isFilterDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutsideFilter);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutsideFilter);
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isFilterDropdownOpen]);
+
 
 
   const startEditTenant = (tenant: TenantRecord) => {
@@ -461,8 +534,9 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
 
 
                                 value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
-                                onSelectedDateChanged={(date) => {
+                                onSelectedDateChanged={(date: Date | null) => {
                                   if (date) {
+
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
@@ -488,8 +562,9 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
 
 
                                 value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
-                                onSelectedDateChanged={(date) => {
+                                onSelectedDateChanged={(date: Date | null) => {
                                   if (date) {
+
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
@@ -624,15 +699,142 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                   <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
                     <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
                       <tr>
-                        <th className="px-5 py-4 font-semibold">ID</th>
-                        <th className="px-5 py-4 font-semibold">Company</th>
-                        <th className="px-5 py-4 font-semibold whitespace-nowrap">Company ID</th>
-                        <th className="px-5 py-4 font-semibold">Name</th>
-                        <th className="px-5 py-4 font-semibold">Description</th>
-                        <th className="px-5 py-4 font-semibold whitespace-nowrap">Created At</th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={idSortMenuRef}>
+                            <span className="uppercase tracking-[0.2em]">ID</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeAllSortMenus();
+                                setIsIdSortMenuOpen(!isIdSortMenuOpen);
+                              }}
+                              className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                            >
+                              <ArrowUpDown size={12} className={sortBy === 'id' ? 'text-cyan-400' : 'opacity-50'} />
+                            </button>
+                            {isIdSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                                <button onClick={() => applyColumnSort('id', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'id' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                                <button onClick={() => applyColumnSort('id', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'id' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={companySortMenuRef}>
+                            <span className="uppercase tracking-[0.2em]">Company</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeAllSortMenus();
+                                setIsCompanySortMenuOpen(!isCompanySortMenuOpen);
+                              }}
+                              className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                            >
+                              <ArrowUpDown size={12} className={sortBy === 'company' ? 'text-cyan-400' : 'opacity-50'} />
+                            </button>
+                            {isCompanySortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                                <button onClick={() => applyColumnSort('company', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'company' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                                <button onClick={() => applyColumnSort('company', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'company' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+
+                        <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                          <div className="relative inline-flex items-center gap-2" ref={companyIdSortMenuRef}>
+                            <span className="uppercase tracking-[0.2em]">Company ID</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeAllSortMenus();
+                                setIsCompanyIdSortMenuOpen(!isCompanyIdSortMenuOpen);
+                              }}
+                              className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                            >
+                              <ArrowUpDown size={12} className={sortBy === 'companyId' ? 'text-cyan-400' : 'opacity-50'} />
+                            </button>
+                            {isCompanyIdSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                                <button onClick={() => applyColumnSort('companyId', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'companyId' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                                <button onClick={() => applyColumnSort('companyId', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'companyId' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
+                            <span className="uppercase tracking-[0.2em]">Name</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeAllSortMenus();
+                                setIsNameSortMenuOpen(!isNameSortMenuOpen);
+                              }}
+                              className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                            >
+                              <ArrowUpDown size={12} className={sortBy === 'name' ? 'text-cyan-400' : 'opacity-50'} />
+                            </button>
+                            {isNameSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                                <button onClick={() => applyColumnSort('name', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'name' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                                <button onClick={() => applyColumnSort('name', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'name' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={descriptionSortMenuRef}>
+                            <span className="uppercase tracking-[0.2em]">Description</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeAllSortMenus();
+                                setIsDescriptionSortMenuOpen(!isDescriptionSortMenuOpen);
+                              }}
+                              className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                            >
+                              <ArrowUpDown size={12} className={sortBy === 'description' ? 'text-cyan-400' : 'opacity-50'} />
+                            </button>
+                            {isDescriptionSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                                <button onClick={() => applyColumnSort('description', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'description' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                                <button onClick={() => applyColumnSort('description', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'description' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+
+                        <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                          <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
+                            <span className="uppercase tracking-[0.2em]">Created At</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeAllSortMenus();
+                                setIsCreatedAtSortMenuOpen(!isCreatedAtSortMenuOpen);
+                              }}
+                              className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                            >
+                              <ArrowUpDown size={12} className={sortBy === 'createdAt' ? 'text-cyan-400' : 'opacity-50'} />
+                            </button>
+                            {isCreatedAtSortMenuOpen && (
+                              <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                                <button onClick={() => applyColumnSort('createdAt', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'createdAt' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                                <button onClick={() => applyColumnSort('createdAt', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'createdAt' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+
                         <th className="px-5 py-4 font-semibold text-center">Actions</th>
                       </tr>
                     </thead>
+
                     <tbody className={`divide-y ${isDark ? 'divide-white/5' : 'divide-gray-100'}`}>
                 {filteredTenants.map((item) => (
                   <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>

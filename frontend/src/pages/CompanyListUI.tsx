@@ -903,8 +903,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
                                 value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
 
-                                onSelectedDateChanged={(date) => {
+                                onSelectedDateChanged={(date: Date | null) => {
                                   if (date) {
+
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
@@ -970,8 +971,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
 
                                 value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
-                                onSelectedDateChanged={(date) => {
+                                onSelectedDateChanged={(date: Date | null) => {
                                   if (date) {
+
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
@@ -1162,7 +1164,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                               setIsTenantCountSortMenuOpen(false);
                               setIsCreatedAtSortMenuOpen(false);
                             }}
-                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                            className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
                               }`}
                             aria-label="Sort company id"
                             title="Sort company id"
@@ -1185,7 +1187,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                       : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                asc
+                                ASC
                               </button>
                               <button
                                 type="button"
@@ -1199,8 +1201,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                       : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                dsc
+                                DSC
                               </button>
+
                             </div>
                           )}
                         </div>
@@ -1215,7 +1218,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                               closeAllSortMenus();
                               setIsNameSortMenuOpen(!isOpen);
                             }}
-                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                            className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
                               }`}
                             aria-label="Sort name"
                             title="Sort name"
@@ -1234,7 +1237,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                asc
+                                ASC
                               </button>
                               <button
                                 type="button"
@@ -1244,8 +1247,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                dsc
+                                DSC
                               </button>
+
                             </div>
                           )}
                         </div>
@@ -1260,7 +1264,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                               closeAllSortMenus();
                               setIsEmailSortMenuOpen(!isOpen);
                             }}
-                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                            className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
                               }`}
                             aria-label="Sort email"
                             title="Sort email"
@@ -1279,7 +1283,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                asc
+                                ASC
                               </button>
                               <button
                                 type="button"
@@ -1289,8 +1293,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                dsc
+                                DSC
                               </button>
+
                             </div>
                           )}
                         </div>
@@ -1305,7 +1310,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                               closeAllSortMenus();
                               setIsTenantCountSortMenuOpen(!isOpen);
                             }}
-                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                            className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
                               }`}
                             aria-label="Sort tenant count"
                             title="Sort tenant count"
@@ -1324,7 +1329,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                asc
+                                ASC
                               </button>
                               <button
                                 type="button"
@@ -1334,8 +1339,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                dsc
+                                DSC
                               </button>
+
                             </div>
                           )}
                         </div>
@@ -1350,7 +1356,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                               closeAllSortMenus();
                               setIsCreatedAtSortMenuOpen(!isOpen);
                             }}
-                            className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
+                            className={`rounded-md p-1.5 transition-colors ${isDark ? 'hover:bg-white/10 text-blue-200/70' : 'hover:bg-blue-100 text-blue-600'
                               }`}
                             aria-label="Sort created at"
                             title="Sort created at"
@@ -1369,7 +1375,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                asc
+                                ASC
                               </button>
                               <button
                                 type="button"
@@ -1379,8 +1385,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                               >
-                                dsc
+                                DSC
                               </button>
+
                             </div>
                           )}
                         </div>

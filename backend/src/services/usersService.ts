@@ -304,4 +304,8 @@ export class UsersService {
     await this.userRepository.deleteUser(targetUserId);
     return { message: 'User deleted successfully' };
   }
+
+  async getAssignees() {
+    return this.userRepository.findAllUsernames();
+  }
 }

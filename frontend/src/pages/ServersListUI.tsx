@@ -568,8 +568,9 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
 
                                 value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
-                                onSelectedDateChanged={(date) => {
+                                onSelectedDateChanged={(date: Date | null) => {
                                   if (date) {
+
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
@@ -595,8 +596,9 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
 
                                 value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
-                                onSelectedDateChanged={(date) => {
+                                onSelectedDateChanged={(date: Date | null) => {
                                   if (date) {
+
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
@@ -737,7 +739,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 closeAllSortMenus();
                                 setIsIdSortMenuOpen(!isOpen);
                               }}
-                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              className="rounded-md p-1.5 transition-colors hover:bg-white/10"
                             >
                               <ArrowUpDown size={13} />
                             </button>
@@ -752,7 +754,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  asc
+                                  ASC
                                 </button>
                                 <button
                                   type="button"
@@ -763,12 +765,13 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  dsc
+                                  DSC
                                 </button>
                               </div>
                             )}
                           </div>
                         </th>
+
                         <th className="px-5 py-4 font-semibold">
                           <div className="relative inline-flex items-center gap-2" ref={companySortMenuRef}>
                             <span>Company</span>
@@ -779,7 +782,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 closeAllSortMenus();
                                 setIsCompanySortMenuOpen(!isOpen);
                               }}
-                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              className="rounded-md p-1.5 transition-colors hover:bg-white/10"
+
                             >
                               <ArrowUpDown size={13} />
                             </button>
@@ -794,7 +798,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  asc
+                                  ASC
                                 </button>
                                 <button
                                   type="button"
@@ -805,8 +809,9 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  dsc
+                                  DSC
                                 </button>
+
                               </div>
                             )}
                           </div>
@@ -821,7 +826,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 closeAllSortMenus();
                                 setIsIpAddressSortMenuOpen(!isOpen);
                               }}
-                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              className="rounded-md p-1.5 transition-colors hover:bg-white/10"
+
                             >
                               <ArrowUpDown size={13} />
                             </button>
@@ -836,7 +842,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  asc
+                                  ASC
                                 </button>
                                 <button
                                   type="button"
@@ -847,8 +853,9 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  dsc
+                                  DSC
                                 </button>
+
                               </div>
                             )}
                           </div>
@@ -863,7 +870,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 closeAllSortMenus();
                                 setIsLabelSortMenuOpen(!isOpen);
                               }}
-                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              className="rounded-md p-1.5 transition-colors hover:bg-white/10"
+
                             >
                               <ArrowUpDown size={13} />
                             </button>
@@ -878,7 +886,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  asc
+                                  ASC
                                 </button>
                                 <button
                                   type="button"
@@ -889,8 +897,9 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  dsc
+                                  DSC
                                 </button>
+
                               </div>
                             )}
                           </div>
@@ -905,7 +914,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 closeAllSortMenus();
                                 setIsCreatedAtSortMenuOpen(!isOpen);
                               }}
-                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              className="rounded-md p-1.5 transition-colors hover:bg-white/10"
+
                             >
                               <ArrowUpDown size={13} />
                             </button>
@@ -920,7 +930,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  asc
+                                  ASC
                                 </button>
                                 <button
                                   type="button"
@@ -931,8 +941,9 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                                   }`}
                                 >
-                                  dsc
+                                  DSC
                                 </button>
+
                               </div>
                             )}
                           </div>

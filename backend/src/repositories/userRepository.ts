@@ -105,4 +105,11 @@ export class UserRepository {
     const [rows] = await pool.execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM `Management` WHERE `role` = "ADMIN"');
     return rows[0]?.count || 0;
   }
+
+  async findAllUsernames(): Promise<string[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT `userName` FROM `Management` ORDER BY `userName` ASC'
+    );
+    return rows.map((r: any) => r.userName);
+  }
 }

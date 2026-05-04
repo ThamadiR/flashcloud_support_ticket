@@ -11,6 +11,9 @@ import TenantsListUI from './pages/TenantsListUI';
 import CompanyListUI from './pages/CompanyListUI';
 import AuthenticatedLayout from './components/layouts/AuthenticatedLayout';
 import Contacts from './components/layouts/Contacts';
+import Tickets from './pages/Tickets';
+import TicketDetail from './pages/TicketDetail';
+
 import { ThemeProvider } from './context/ThemeContext';
 import { DrawerProvider } from './context/DrawerContext';
 
@@ -95,6 +98,15 @@ export default function App() {
             <Route path="/contacts" element={
               <Contacts token={token!} />
             } />
+
+            <Route path="/tickets" element={
+              <Tickets />
+            } />
+
+            <Route path="/ticket/:id" element={
+              <TicketDetail />
+            } />
+
           </Route>
         </Routes>
       </BrowserRouter>

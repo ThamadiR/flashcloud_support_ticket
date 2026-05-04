@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useDrawer } from "../../context/DrawerContext";
+import { useDrawer } from "../context/DrawerContext";
 
 import {
   FaReply,
@@ -201,7 +201,29 @@ const TicketDetail: React.FC = () => {
     };
 
     fetchUnreadEmails();
-  }, []);
+  }, [id]);
+
+  useEffect(() => {
+    const fetchTicketDetails = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/tickets/${id}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        
+        // Update states
+        setStatus(data.status || data.state || "");
+        setPriority(data.priority || "");
+        setGroup(data.group_type || "");
+        setAssignee(data.assignee || "");
+        
+        // We can also update ticketData ref if needed, but states are more important for UI
+      } catch (err) {
+        console.error("Error fetching ticket details:", err);
+      }
+    };
+    if (id) fetchTicketDetails();
+  }, [id]);
+
 
   useEffect(() => {
     if (emails.length > 0 && emails[0].cc) {
