@@ -833,10 +833,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Main content area that will grow to push footer down */}
-      <div className="flex-grow">
-        <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
+    <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300 pb-12`}>
           <div className="mt-4 w-full">
             <div className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5 pl-2 border-b pb-3 ${isDark ? 'border-white/5' : 'border-gray-200'}`}>
               <h3 className={`text-[1.1rem] font-medium tracking-wide ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
@@ -898,15 +895,23 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           </div>
                           <div className="flex items-center gap-2">
                             <div className="flex-1">
+                              <span className="text-[10px] font-medium text-gray-400 mb-1 block">from</span>
                               <Datepicker
+                                key={tempFilters.fromDate || 'from-empty'}
                                 placeholder="From"
+
+
                                 value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
+
                                 onSelectedDateChanged={(date) => {
                                   if (date) {
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
-                                    setTempFilters(prev => ({ ...prev, fromDate: `${yyyy}-${mm}-${dd}` }));
+                                    const dateStr = `${yyyy}-${mm}-${dd}`;
+                                    setTempFilters(prev => ({ ...prev, fromDate: dateStr }));
+                                    setFilters(prev => ({ ...prev, fromDate: dateStr }));
+
                                   }
                                 }}
                                 theme={{
@@ -958,15 +963,22 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                               />
                             </div>
                             <div className="flex-1">
+                              <span className="text-[10px] font-medium text-gray-400 mb-1 block">to</span>
                               <Datepicker
+                                key={tempFilters.toDate || 'to-empty'}
                                 placeholder="to"
+
+
                                 value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
                                 onSelectedDateChanged={(date) => {
                                   if (date) {
                                     const yyyy = date.getFullYear();
                                     const mm = String(date.getMonth() + 1).padStart(2, '0');
                                     const dd = String(date.getDate()).padStart(2, '0');
-                                    setTempFilters(prev => ({ ...prev, toDate: `${yyyy}-${mm}-${dd}` }));
+                                    const dateStr = `${yyyy}-${mm}-${dd}`;
+                                    setTempFilters(prev => ({ ...prev, toDate: dateStr }));
+                                    setFilters(prev => ({ ...prev, toDate: dateStr }));
+
                                   }
                                 }}
                                 theme={{
@@ -1076,7 +1088,6 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           onClick={() => {
                             setTempFilters({ fromDate: '', toDate: '', companyName: '', tenantCount: '' });
                             setFilters({ fromDate: '', toDate: '', companyName: '', tenantCount: '' });
-                            setIsFilterDropdownOpen(false);
                           }}
 
                           className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${
@@ -2414,7 +2425,5 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
             </div>
           )}
         </main>
-      </div>
-    </div>
   );
 }

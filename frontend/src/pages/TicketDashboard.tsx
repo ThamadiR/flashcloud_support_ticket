@@ -61,11 +61,8 @@ function Dashboard() {
   };
 
   return (
-   
+    <div className="pb-12">
 
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
-      {/* Main content area that will grow to push footer down */}
-      <div className="flex-grow">
         {/* Top summary cards */}
         <main
           className={`p-4 ${mainMarginClass} h-auto pt-20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
@@ -190,8 +187,8 @@ function Dashboard() {
             </table>
           </div>
         </main>
-      </div>
     </div>
+
   );
 }
 

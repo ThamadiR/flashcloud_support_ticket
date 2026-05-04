@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Datepicker, Label } from 'flowbite-react';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Building2, Edit2, Plus, Search, ArrowLeft, Trash2, X, SlidersHorizontal, Check, ChevronRight } from 'lucide-react';
@@ -64,6 +66,23 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
   });
   const [addTenantErrors, setAddTenantErrors] = useState<{ companyId?: string; name?: string; description?: string }>({});
 
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    fromDate: '',
+    toDate: '',
+    companyName: '',
+    tenantName: '',
+  });
+  const [tempFilters, setTempFilters] = useState({
+    fromDate: '',
+    toDate: '',
+    companyName: '',
+    tenantName: '',
+  });
+
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+
   useEffect(() => {
     const loadTenants = async () => {
       try {
@@ -105,20 +124,67 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
 
   const filteredTenants = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
-    if (!keyword) {
-      return tenants;
-    }
-
-    return tenants.filter((item) => {
-      return (
+    let rows = tenants.filter((item) => {
+      // Keyword Search
+      const matchesKeyword = !keyword || (
         String(item.id).includes(keyword)
         || String(item.companyId).includes(keyword)
         || item.name.toLowerCase().includes(keyword)
         || item.description.toLowerCase().includes(keyword)
         || String(item.company?.name || '').toLowerCase().includes(keyword)
       );
+
+      // Date Range Filter
+      let matchesDate = true;
+      if (filters.fromDate || filters.toDate) {
+        const itemDate = new Date(item.createdAt).getTime();
+        if (filters.fromDate) {
+          const from = new Date(filters.fromDate).getTime();
+          if (itemDate < from) matchesDate = false;
+        }
+        if (filters.toDate) {
+          const to = new Date(filters.toDate).getTime();
+          const toEndOfDay = to + (24 * 60 * 60 * 1000) - 1;
+          if (itemDate > toEndOfDay) matchesDate = false;
+        }
+      }
+
+      // Company Name Filter
+      let matchesCompany = true;
+      if (filters.companyName) {
+        if (item.company?.name !== filters.companyName) matchesCompany = false;
+      }
+
+      // Tenant Name Filter
+      let matchesTenant = true;
+      if (filters.tenantName) {
+        if (item.name !== filters.tenantName) matchesTenant = false;
+      }
+
+      return matchesKeyword && matchesDate && matchesCompany && matchesTenant;
     });
-  }, [tenants, searchTerm]);
+
+
+    return rows;
+  }, [tenants, searchTerm, filters]);
+
+  useEffect(() => {
+    const handleClickOutsideFilter = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const isDatepickerClick = target.closest('.datepicker') || target.closest('[data-testid="datepicker-popup"]');
+      
+      if (filterDropdownRef.current && 
+          !filterDropdownRef.current.contains(target) && 
+          !isDatepickerClick) {
+        setIsFilterDropdownOpen(false);
+      }
+    };
+    if (isFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutsideFilter);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutsideFilter);
+  }, [isFilterDropdownOpen]);
+
 
   const startEditTenant = (tenant: TenantRecord) => {
     setEditingTenantId(tenant.id);
@@ -349,6 +415,181 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                     className={`w-full bg-transparent text-sm outline-none placeholder:text-slate-500 ${isDark ? 'text-white' : 'text-gray-900'}`}
                   />
                 </label>
+
+                <div className="relative" ref={filterDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFilterDropdownOpen(!isFilterDropdownOpen);
+                      setTempFilters(filters);
+                    }}
+                    className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${
+                      isFilterDropdownOpen 
+                        ? (isDark ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600')
+                        : (isDark ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white' : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900')
+                    }`}
+                  >
+                    <SlidersHorizontal size={15} /> Filter
+                  </button>
+
+                  {isFilterDropdownOpen && (
+                    <div className={`absolute right-0 top-full z-[70] mt-2 w-[340px] rounded-2xl border p-5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 ${
+                      isDark ? 'bg-[#10131A] border-white/10 shadow-black/60' : 'bg-white border-gray-100 shadow-gray-200/50'
+                    }`}>
+                      <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-white/5">
+                        <h4 className="font-semibold text-sm">Filter</h4>
+                      </div>
+
+                      <div className="space-y-4">
+                        {/* Date Range */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Publishing Date (MM/DD/YYYY)</span>
+                            <button 
+                              onClick={() => setTempFilters(prev => ({ ...prev, fromDate: '', toDate: '' }))}
+                              className="text-[10px] text-blue-500 hover:underline"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <span className="text-[10px] font-medium text-gray-400 mb-1 block">from</span>
+                              <Datepicker
+                                key={tempFilters.fromDate || 'from-empty'}
+                                placeholder="From"
+
+
+                                value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
+                                onSelectedDateChanged={(date) => {
+                                  if (date) {
+                                    const yyyy = date.getFullYear();
+                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(date.getDate()).padStart(2, '0');
+                                    const dateStr = `${yyyy}-${mm}-${dd}`;
+                                    setTempFilters(prev => ({ ...prev, fromDate: dateStr }));
+                                    setFilters(prev => ({ ...prev, fromDate: dateStr }));
+
+                                  }
+                                }}
+                                theme={{
+                                  root: { input: { base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${isDark ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'}` } },
+                                  popup: { root: { base: `absolute top-12 left-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, footer: { base: "hidden" } },
+                                  header: { root: { base: "flex justify-between items-center mb-2 px-2", title: "text-sm font-semibold text-gray-700 dark:text-gray-200" }, selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } },
+                                  views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[11px] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-[10px] font-medium text-gray-400 mb-1 block">to</span>
+                              <Datepicker
+                                key={tempFilters.toDate || 'to-empty'}
+                                placeholder="to"
+
+
+                                value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
+                                onSelectedDateChanged={(date) => {
+                                  if (date) {
+                                    const yyyy = date.getFullYear();
+                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(date.getDate()).padStart(2, '0');
+                                    const dateStr = `${yyyy}-${mm}-${dd}`;
+                                    setTempFilters(prev => ({ ...prev, toDate: dateStr }));
+                                    setFilters(prev => ({ ...prev, toDate: dateStr }));
+
+                                  }
+                                }}
+                                theme={{
+                                  root: { input: { base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${isDark ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'}` } },
+                                  popup: { root: { base: `absolute top-12 right-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, footer: { base: "hidden" } },
+                                  header: { root: { base: "flex justify-between items-center mb-2 px-2", title: "text-sm font-semibold text-gray-700 dark:text-gray-200" }, selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } },
+                                  views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[11px] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Company Name */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
+                            <button 
+                              onClick={() => setTempFilters(prev => ({ ...prev, companyName: '' }))}
+                              className="text-[10px] text-blue-500 hover:underline"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <select
+                            value={tempFilters.companyName}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, companyName: e.target.value }))}
+                            className={`w-full text-xs rounded-lg p-2 border outline-none ${
+                              isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                            }`}
+                          >
+                            <option value="">All companies</option>
+                            {Array.from(new Set(tenants.map(t => t.company?.name).filter(Boolean))).sort().map(name => (
+                              <option key={name} value={name!}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Tenant Name */}
+                        <div>
+
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tenant Name</span>
+                            <button 
+                              onClick={() => setTempFilters(prev => ({ ...prev, tenantName: '' }))}
+                              className="text-[10px] text-blue-500 hover:underline"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                          <select
+                            value={tempFilters.tenantName}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, tenantName: e.target.value }))}
+                            className={`w-full text-xs rounded-lg p-2 border outline-none ${
+                              isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                            }`}
+                          >
+                            <option value="">All tenants</option>
+                            {Array.from(new Set(tenants.map(t => t.name).filter(Boolean))).sort().map(name => (
+                              <option key={name} value={name}>{name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-6 pt-4 border-t border-gray-100 dark:border-white/5">
+                        <button
+                          onClick={() => {
+                            setTempFilters({ fromDate: '', toDate: '', companyName: '', tenantName: '' });
+                            setFilters({ fromDate: '', toDate: '', companyName: '', tenantName: '' });
+                          }}
+
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                            isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          Reset all
+                        </button>
+                        <button
+                          onClick={() => {
+                            setFilters(tempFilters);
+                            setIsFilterDropdownOpen(false);
+                          }}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all shadow-lg ${
+                            isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
+                          }`}
+                        >
+                          Apply now
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <button
                   type="button"

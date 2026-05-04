@@ -63,22 +63,18 @@ function Dashboard() {
   };
 
   return (
-   
+    <div className="pb-12">
+      {/* Top summary cards */}
+      <main
+        className={`p-4 ${mainMarginClass} h-auto pt-20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
+      >
+        {/* All Tickets */}
+        <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center space-x-4">
+            <HiTicket className="w-10 h-10 text-blue-500" />
+            <div>
+              <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
 
-    <div className="min-h-screen flex flex-col">
-      {/* Main content area that will grow to push footer down */}
-      <div className="flex-grow">
-        {/* Top summary cards */}
-        <main
-          className={`p-4 ${mainMarginClass} h-auto pt-20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
-        >
-          {/* All Tickets */}
-          <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center space-x-4">
-              <HiTicket className="w-10 h-10 text-blue-500" />
-              <div>
-                <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {loading ? "..." : summary.all}
                 </h5>
                 <p className="text-gray-600 dark:text-gray-400">All Tickets</p>
               </div>
@@ -193,7 +189,6 @@ function Dashboard() {
           </div>
         </main>
       </div>
-    </div>
   );
 }
 
