@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { FaPlus, FaTimes, FaUserCircle, FaTrash } from "react-icons/fa";
-import { Search, Edit2, Trash2, X, Plus, User, Phone, Mail, Building2, ChevronRight, Check } from 'lucide-react';
+import { Search, Edit2, Trash2, X, Plus, User, Phone, Mail, Building2, ChevronRight, ChevronLeft, ArrowUpDown, Check } from 'lucide-react';
 import { useDrawer } from "../../context/DrawerContext";
 import { useTheme } from "../../context/ThemeContext";
 import { API_BASE_URL as API_BASE } from "../../config/api";
@@ -33,6 +33,48 @@ function Contacts({ token }: { token: string }) {
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
 
+  // Sorting state
+  const [sortBy, setSortBy] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Sort menu states
+  const [isNameSortMenuOpen, setIsNameSortMenuOpen] = useState(false);
+  const [isPhoneSortMenuOpen, setIsPhoneSortMenuOpen] = useState(false);
+  const [isEmailSortMenuOpen, setIsEmailSortMenuOpen] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Refs for click-away
+  const nameSortMenuRef = useRef<HTMLDivElement>(null);
+  const phoneSortMenuRef = useRef<HTMLDivElement>(null);
+  const emailSortMenuRef = useRef<HTMLDivElement>(null);
+
+  const closeAllSortMenus = () => {
+    setIsNameSortMenuOpen(false);
+    setIsPhoneSortMenuOpen(false);
+    setIsEmailSortMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (nameSortMenuRef.current && !nameSortMenuRef.current.contains(event.target as Node) &&
+          phoneSortMenuRef.current && !phoneSortMenuRef.current.contains(event.target as Node) &&
+          emailSortMenuRef.current && !emailSortMenuRef.current.contains(event.target as Node)) {
+        closeAllSortMenus();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const applyColumnSort = (column: string, order: 'asc' | 'desc') => {
+    setSortBy(column);
+    setSortOrder(order);
+    closeAllSortMenus();
+  };
+
   const [formData, setFormData] = useState<{
     firstName: string;
     lastName: string;
@@ -54,16 +96,50 @@ function Contacts({ token }: { token: string }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Filtered contacts
-  const filteredContacts = contacts.filter(c => {
-    const matchesSearch = `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCompany = selectedCompany === "" || c.company === selectedCompany;
-    
-    return matchesSearch && matchesCompany;
-  });
+  // Filtered and Sorted contacts
+  const filteredContacts = useMemo(() => {
+    let result = contacts.filter(c => {
+      const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+      const matchesSearch = fullName.includes(searchTerm.toLowerCase()) ||
+        c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCompany = selectedCompany === "" || c.company === selectedCompany;
+      
+      return matchesSearch && matchesCompany;
+    });
+
+    if (sortBy) {
+      result.sort((a, b) => {
+        let valA: string | number = '';
+        let valB: string | number = '';
+
+        if (sortBy === 'name') {
+          valA = `${a.firstName} ${a.lastName}`.toLowerCase();
+          valB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        } else if (sortBy === 'phone') {
+          valA = a.phone || '';
+          valB = b.phone || '';
+        } else if (sortBy === 'email') {
+          valA = a.email.toLowerCase();
+          valB = b.email.toLowerCase();
+        }
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [contacts, searchTerm, selectedCompany, sortBy, sortOrder]);
+
+  const pagedContacts = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredContacts.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredContacts, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredContacts.length / rowsPerPage);
 
   // Unique companies for filter dropdown
   const uniqueFilterCompanies = Array.from(new Set(companies.map(c => c.name))).sort();
@@ -283,9 +359,72 @@ function Contacts({ token }: { token: string }) {
               <thead>
                 <tr className={`${isDark ? 'bg-white/5' : 'bg-gray-50'} border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Profile</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Full Name</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Phone</th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Email</th>
+                  
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
+                      <span>Full Name</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllSortMenus();
+                          setIsNameSortMenuOpen(!isNameSortMenuOpen);
+                        }}
+                        className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                      >
+                        <ArrowUpDown size={12} className={sortBy === 'name' ? 'text-cyan-400' : 'opacity-50'} />
+                      </button>
+                      {isNameSortMenuOpen && (
+                        <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                          <button onClick={() => applyColumnSort('name', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'name' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                          <button onClick={() => applyColumnSort('name', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'name' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="relative inline-flex items-center gap-2" ref={phoneSortMenuRef}>
+                      <span>Phone</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllSortMenus();
+                          setIsPhoneSortMenuOpen(!isPhoneSortMenuOpen);
+                        }}
+                        className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                      >
+                        <ArrowUpDown size={12} className={sortBy === 'phone' ? 'text-cyan-400' : 'opacity-50'} />
+                      </button>
+                      {isPhoneSortMenuOpen && (
+                        <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                          <button onClick={() => applyColumnSort('phone', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'phone' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                          <button onClick={() => applyColumnSort('phone', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'phone' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="relative inline-flex items-center gap-2" ref={emailSortMenuRef}>
+                      <span>Email</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllSortMenus();
+                          setIsEmailSortMenuOpen(!isEmailSortMenuOpen);
+                        }}
+                        className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                      >
+                        <ArrowUpDown size={12} className={sortBy === 'email' ? 'text-cyan-400' : 'opacity-50'} />
+                      </button>
+                      {isEmailSortMenuOpen && (
+                        <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                          <button onClick={() => applyColumnSort('email', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'email' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                          <button onClick={() => applyColumnSort('email', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'email' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
                 </tr>
               </thead>
@@ -299,17 +438,17 @@ function Contacts({ token }: { token: string }) {
                       </div>
                     </td>
                   </tr>
-                ) : filteredContacts.length === 0 ? (
+                ) : pagedContacts.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-3 opacity-50">
-                        <FaUserCircle className="w-12 h-12" />
-                        <p className="text-sm font-medium">No contacts found</p>
+                      <div className="flex flex-col items-center gap-2 text-slate-500">
+                        <Search className="w-8 h-8 opacity-20" />
+                        <span className="text-sm font-medium">No contacts found</span>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredContacts.map((contact) => (
+                  pagedContacts.map((contact) => (
                     <tr key={contact.id} className={`group transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'}`}>
                       <td className="px-6 py-4">
                         <div className="relative">
@@ -375,6 +514,72 @@ function Contacts({ token }: { token: string }) {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Footer */}
+          {filteredContacts.length > 0 && (
+            <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+              <div className="flex items-center gap-3">
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                >
+                  {[5, 10, 20, 50].map(size => (
+                    <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+                  <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pg = i + 1;
+                      if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                        if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500">...</span>;
+                        return null;
+                      }
+                      return (
+                        <button
+                          key={pg}
+                          onClick={() => setCurrentPage(pg)}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
+                        >
+                          {pg}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Add/Edit Modal */}

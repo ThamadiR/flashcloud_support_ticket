@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Badge, Pagination } from "flowbite-react";
-import { User, Building2 } from "lucide-react";
+import { Badge } from "flowbite-react";
+import { User, Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSearch } from "../../context/SearchContext";
 import { useDrawer } from "../../context/DrawerContext";
+import { useTheme } from "../../context/ThemeContext";
 
 type Ticket = {
   id: number;
@@ -27,7 +28,6 @@ type PaginatedTickets = {
   totalPages: number;
 };
 
-const ITEMS_PER_PAGE = 6;
 const API_BASE = "http://localhost:5000";
 
 const avatarColors = [
@@ -52,12 +52,14 @@ function getColorForInitial(initial: string): string {
 
 const Tickets: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [items, setItems] = useState<Ticket[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { searchTerm } = useSearch();
   const { isDrawerOpen } = useDrawer();
+  const { isDark } = useTheme();
 
   const fetchTickets = async (
     currentPage: number,
@@ -73,7 +75,7 @@ const Tickets: React.FC = () => {
         : "";
 
       const res = await fetch(
-        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${ITEMS_PER_PAGE}${query}`
+        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${query}`
       );
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -111,7 +113,7 @@ const Tickets: React.FC = () => {
     return () => {
       cancelledRef.cancelled = true;
     };
-  }, [currentPage, searchTerm]);
+  }, [currentPage, searchTerm, rowsPerPage]);
 
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
 
@@ -197,14 +199,67 @@ const Tickets: React.FC = () => {
           </div>
         ))}
       </main>
-      <div
-        className={`p-4 ${mainMarginClass} flex justify-end mb-6 transition-all duration-300`}
-      >
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => setCurrentPage(page)}
-        />
+      <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'} rounded-2xl mb-8 mx-4 shadow-xl`}>
+        <div className="flex items-center gap-3">
+          <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+          >
+            {[5, 10, 20, 50].map(size => (
+              <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+            <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+            <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+            <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const pg = i + 1;
+                if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                  if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
+                  return null;
+                }
+                return (
+                  <button
+                    key={pg}
+                    onClick={() => setCurrentPage(pg)}
+                    className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
+                  >
+                    {pg}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -292,7 +292,7 @@ const TicketDetail: React.FC = () => {
     const backendField = mapFields[field];
 
     try {
-      await fetch(`http://localhost:5000/api/tickets/${ticketData.id}`, {
+      await fetch(`http://localhost:5000/api/tickets/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [backendField]: value }),
@@ -328,8 +328,8 @@ const TicketDetail: React.FC = () => {
     formData.append("to", originalEmail.from);
     formData.append("subject", originalEmail.subject);
     formData.append("replyMessage", fullReply);
-    if (ticketData.id) {
-      formData.append("inReplyToId", ticketData.id);
+    if (id) {
+      formData.append("inReplyToId", id);
     }
     selectedCc.forEach((cc) => formData.append("cc", cc));
     attachments.forEach((file) => formData.append("attachments", file));

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Datepicker, Label } from 'flowbite-react';
 
+
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Building2, Edit2, Plus, Search, ArrowLeft, Trash2, X, SlidersHorizontal, Check, ChevronRight, ArrowUpDown } from 'lucide-react';
+import { Building2, Edit2, Plus, Search, ArrowLeft, Trash2, X, SlidersHorizontal, Check, ChevronRight, ChevronLeft, ArrowUpDown } from 'lucide-react';
 
 import { API_BASE_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
@@ -70,6 +72,10 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
   const [isNameSortMenuOpen, setIsNameSortMenuOpen] = useState(false);
   const [isDescriptionSortMenuOpen, setIsDescriptionSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
 
   const [editingTenantId, setEditingTenantId] = useState<number | null>(null);
 
@@ -168,7 +174,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
         String(item.id).includes(keyword)
         || String(item.companyId).includes(keyword)
         || item.name.toLowerCase().includes(keyword)
-        || item.description.toLowerCase().includes(keyword)
+        || (item.description || '').toLowerCase().includes(keyword)
         || String(item.company?.name || '').toLowerCase().includes(keyword)
       );
 
@@ -225,6 +231,14 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
       return left.localeCompare(right) * direction;
     });
   }, [tenants, searchTerm, filters, sortBy, sortOrder]);
+
+  const pagedTenants = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredTenants.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredTenants, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredTenants.length / rowsPerPage);
+
 
 
   useEffect(() => {
@@ -695,7 +709,8 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
               </div>
             ) : (
               <div className={`overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 ${isDark ? 'border-white/10 bg-white/5 shadow-black/40' : 'border-gray-200 bg-white shadow-gray-200/20'}`}>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
+
                   <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
                     <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
                       <tr>
@@ -836,102 +851,165 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                     </thead>
 
                     <tbody className={`divide-y ${isDark ? 'divide-white/5' : 'divide-gray-100'}`}>
-                {filteredTenants.map((item) => (
-                  <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
-                    <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-900'}`}>{item.id}</td>
-                    <td className={`px-5 py-4 text-sm whitespace-nowrap ${isDark ? 'text-cyan-300/80' : 'text-cyan-700'}`}>{item.company?.name || 'N/A'}</td>
-                    <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{item.companyId}</td>
-                    <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
-                      {editingTenantId === item.id ? (
-                        <input
-                          value={tenantForm.name}
-                          onChange={(e) => setTenantForm({ ...tenantForm, name: e.target.value })}
-                          className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none transition-all ${isDark
-                              ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                              : 'border-gray-200 bg-white text-gray-900 focus:border-cyan-500/40 shadow-sm'
-                            }`}
-                        />
-                      ) : (
-                        item.name
-                      )}
-                    </td>
-                    <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {editingTenantId === item.id ? (
-                        <input
-                          value={tenantForm.description}
-                          onChange={(e) => setTenantForm({ ...tenantForm, description: e.target.value })}
-                          className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none transition-all ${isDark
-                              ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                              : 'border-gray-200 bg-white text-gray-900 focus:border-cyan-500/40 shadow-sm'
-                            }`}
-                        />
-                      ) : (
-                        item.description || <span className="italic opacity-40">No description</span>
-                      )}
-                    </td>
-                    <td className={`px-5 py-4 text-sm whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>{item.createdAt ?? '—'}</td>
-                    <td className="px-5 py-4 text-sm">
-                      <div className="flex items-center justify-center gap-2">
-                        {editingTenantId === item.id ? (
-                          <>
+                      {pagedTenants.map((item) => (
+                        <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50'}`}>
+                          <td className={`px-5 py-4 font-medium ${isDark ? 'text-slate-300' : 'text-gray-900'}`} style={{ fontSize: '12px' }}>{item.id}</td>
+                          <td className={`px-5 py-4 whitespace-nowrap ${isDark ? 'text-cyan-300/80' : 'text-cyan-700'}`} style={{ fontSize: '12px' }}>{item.company?.name || 'N/A'}</td>
+                          <td className={`px-5 py-4 ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>{item.companyId}</td>
+                          <td className={`px-5 py-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
+                            {editingTenantId === item.id ? (
+                              <input
+                                value={tenantForm.name}
+                                onChange={(e) => setTenantForm({ ...tenantForm, name: e.target.value })}
+                                className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none transition-all ${isDark
+                                    ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
+                                    : 'border-gray-200 bg-white text-gray-900 focus:border-cyan-500/40 shadow-sm'
+                                  }`}
+                              />
+                            ) : (
+                              item.name
+                            )}
+                          </td>
+                          <td className={`px-5 py-4 ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>
+                            {editingTenantId === item.id ? (
+                              <input
+                                value={tenantForm.description}
+                                onChange={(e) => setTenantForm({ ...tenantForm, description: e.target.value })}
+                                className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none transition-all ${isDark
+                                    ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
+                                    : 'border-gray-200 bg-white text-gray-900 focus:border-cyan-500/40 shadow-sm'
+                                  }`}
+                              />
+                            ) : (
+                              item.description || <span className="italic opacity-40">No description</span>
+                            )}
+                          </td>
+                          <td className={`px-5 py-4 whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-gray-400'}`} style={{ fontSize: '12px' }}>{item.createdAt ?? '—'}</td>
+                          <td className="px-5 py-4" style={{ fontSize: '12px' }}>
+                            <div className="flex items-center justify-center gap-2">
+                              {editingTenantId === item.id ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => saveTenantEdit(item.id)}
+                                    disabled={isSavingTenant}
+                                    className={`h-8 rounded-lg px-3 flex items-center gap-2 text-xs font-bold transition-all ${isDark
+                                        ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20'
+                                        : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-600/20'
+                                      } disabled:opacity-50`}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={cancelEditTenant}
+                                    className={`h-8 rounded-lg px-3 flex items-center gap-2 text-xs font-bold transition-all ${isDark
+                                        ? 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
+                                      }`}
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => navigate(`/sip-configs?tenantId=${item.id}&tenantName=${encodeURIComponent(item.name)}&companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}
+                                    className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
+                                        ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                                        : 'border-cyan-200 bg-cyan-50 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-300'
+                                      }`}
+                                    title="SIP Configurations"
+                                  >
+                                    <SlidersHorizontal size={13} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditTenant(item)}
+                                    className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
+                                        ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
+                                        : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
+                                      }`}
+                                    title="Edit"
+                                  >
+                                    <Edit2 size={13} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                    <select
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                    >
+                      {[5, 10, 20, 50].map(size => (
+                        <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+                      <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+                      <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+                      <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        {[...Array(totalPages)].map((_, i) => {
+                          const pg = i + 1;
+                          if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                            if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
+                            return null;
+                          }
+                          return (
                             <button
-                              type="button"
-                              onClick={() => saveTenantEdit(item.id)}
-                              disabled={isSavingTenant}
-                              className={`h-8 rounded-lg px-3 flex items-center gap-2 text-xs font-bold transition-all ${isDark
-                                  ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20'
-                                  : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-600/20'
-                                } disabled:opacity-50`}
+                              key={pg}
+                              onClick={() => setCurrentPage(pg)}
+                              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
                             >
-                              Save
+                              {pg}
                             </button>
-                            <button
-                              type="button"
-                              onClick={cancelEditTenant}
-                              className={`h-8 rounded-lg px-3 flex items-center gap-2 text-xs font-bold transition-all ${isDark
-                                  ? 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
-                                }`}
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/sip-configs?tenantId=${item.id}&tenantName=${encodeURIComponent(item.name)}&companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}
-                              className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
-                                  ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
-                                  : 'border-cyan-200 bg-cyan-50 text-cyan-600 hover:bg-cyan-100 hover:border-cyan-300'
-                                }`}
-                              title="SIP Configurations"
-                            >
-                              <SlidersHorizontal size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => startEditTenant(item)}
-                              className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
-                                  ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
-                                  : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
-                                }`}
-                              title="Edit"
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                          </>
-                        )}
+                          );
+                        })}
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-      </div>
 
       {isAddTenantModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">

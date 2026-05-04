@@ -50,6 +50,13 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
   const [isDescriptionSortMenuOpen, setIsDescriptionSortMenuOpen] = useState(false);
   const [isTenantCountSortMenuOpen, setIsTenantCountSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
+
+  // Modal Pagination State
+  const [modalServerPage, setModalServerPage] = useState(1);
+  const [modalServerRowsPerPage, setModalServerRowsPerPage] = useState(5);
+  const [modalTenantPage, setModalTenantPage] = useState(1);
+  const [modalTenantRowsPerPage, setModalTenantRowsPerPage] = useState(5);
+
   const [companies, setCompanies] = useState<CompanyRecord[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
@@ -745,10 +752,10 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       // Keyword Search
       const matchesKeyword = !keyword || (
         company.name.toLowerCase().includes(keyword) ||
-        company.description.toLowerCase().includes(keyword) ||
+        (company.description || '').toLowerCase().includes(keyword) ||
         String(company.tenantCount).includes(keyword) ||
-        company.createdAt.toLowerCase().includes(keyword) ||
-        company.updatedAt.toLowerCase().includes(keyword)
+        (company.createdAt || '').toLowerCase().includes(keyword) ||
+        (company.updatedAt || '').toLowerCase().includes(keyword)
       );
 
       // Date Range Filter
@@ -1559,60 +1566,67 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
               </div>
             </div>
 
-            <div className="w-full flex flex-wrap items-center justify-between gap-3 mt-6">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="companiesPerPage" className={`text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Per page
-                </Label>
+            <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+              <div className="flex items-center gap-3">
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
                 <select
-                  id="companiesPerPage"
                   value={rowsPerPage}
                   onChange={(e) => {
                     setRowsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className={`rounded-lg px-2.5 py-1.5 text-sm outline-none transition-all ${isDark
-                      ? 'bg-[#121214] border border-white/10 text-gray-200 focus:border-blue-500/50'
-                      : 'bg-white border border-gray-300 text-gray-900 focus:border-blue-400'
-                    }`}
+                  className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
                 >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={15}>15</option>
+                  {[5, 10, 15, 20, 50].map(size => (
+                    <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                  ))}
                 </select>
               </div>
 
-              {totalPages > 1 && (
-                <div className="flex items-center gap-2 -mr-2">
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+                  <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+                </div>
+
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark
-                        ? 'bg-[#121214] border-white/10 text-gray-400 hover:text-white hover:border-white/20'
-                        : 'bg-white border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400'
-                      }`}
-                    aria-label="Previous page"
+                    className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
                   >
                     <ChevronLeft size={16} />
                   </button>
 
-                  <span className={`min-w-[36px] text-center text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {currentPage}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pg = i + 1;
+                      if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                        if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
+                        return null;
+                      }
+                      return (
+                        <button
+                          key={pg}
+                          onClick={() => setCurrentPage(pg)}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
+                        >
+                          {pg}
+                        </button>
+                      );
+                    })}
+                  </div>
 
                   <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isDark
-                        ? 'bg-[#121214] border-white/10 text-gray-400 hover:text-white hover:border-white/20'
-                        : 'bg-white border-gray-300 text-gray-600 hover:text-gray-900 hover:border-gray-400'
-                      }`}
-                    aria-label="Next page"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
                   >
                     <ChevronRight size={16} />
                   </button>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -1721,40 +1735,96 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/8">
-                        {[...serverRecords]
-                          .filter(item =>
-                            item.ipAddress?.toLowerCase().includes(serverSearchTerm.toLowerCase()) ||
-                            item.label?.toLowerCase().includes(serverSearchTerm.toLowerCase())
-                          )
-                          .sort((a, b) => {
-                            const direction = serverSortOrder === 'asc' ? 1 : -1;
-                            if (serverSortBy === 'tenantCount') return ((a.tenantCount || 0) - (b.tenantCount || 0)) * direction;
-                            if (serverSortBy === 'createdAt') {
-                              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                              return (dateA - dateB) * direction;
-                            }
-                            const left = String(a[serverSortBy] || '').toLowerCase();
-                            const right = String(b[serverSortBy] || '').toLowerCase();
-                            return left.localeCompare(right) * direction;
-                          })
-                          .map((item, idx) => (
-                            <tr key={item.id || idx} className="transition hover:bg-white/5">
-                              <td className="px-5 py-4 text-sm font-medium text-white">
-                                {item.ipAddress || 'N/A'}
-                              </td>
-                              <td className="px-5 py-4 text-sm text-violet-300">
-                                {item.label || 'N/A'}
-                              </td>
-                              <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
-                                {item.tenantCount || 0}
-                              </td>
-                              <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
-                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
-                              </td>
-                            </tr>
-                          ))}
+                        {(() => {
+                          const filtered = serverRecords
+                            .filter(item =>
+                              item.ipAddress?.toLowerCase().includes(serverSearchTerm.toLowerCase()) ||
+                              item.label?.toLowerCase().includes(serverSearchTerm.toLowerCase())
+                            )
+                            .sort((a, b) => {
+                              const direction = serverSortOrder === 'asc' ? 1 : -1;
+                              if (serverSortBy === 'tenantCount') return ((a.tenantCount || 0) - (b.tenantCount || 0)) * direction;
+                              if (serverSortBy === 'createdAt') {
+                                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                                return (dateA - dateB) * direction;
+                              }
+                              const left = String(a[serverSortBy] || '').toLowerCase();
+                              const right = String(b[serverSortBy] || '').toLowerCase();
+                              return left.localeCompare(right) * direction;
+                            });
+                          
+                          const totalPages = Math.ceil(filtered.length / modalServerRowsPerPage);
+                          const paged = filtered.slice((modalServerPage - 1) * modalServerRowsPerPage, modalServerPage * modalServerRowsPerPage);
+                          
+                          return (
+                            <>
+                              {paged.map((item, idx) => (
+                                <tr key={item.id || idx} className="transition hover:bg-white/5">
+                                  <td className="px-5 py-4 text-sm font-medium text-white">
+                                    {item.ipAddress || 'N/A'}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm text-violet-300">
+                                    {item.label || 'N/A'}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
+                                    {item.tenantCount || 0}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
+                                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                                  </td>
+                                </tr>
+                              ))}
+                              {/* Modal Pagination Footer */}
+                              <tr className="bg-black/20">
+                                <td colSpan={4} className="px-5 py-4 border-t border-white/5">
+                                  <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Show</span>
+                                      <select
+                                        value={modalServerRowsPerPage}
+                                        onChange={(e) => {
+                                          setModalServerRowsPerPage(Number(e.target.value));
+                                          setModalServerPage(1);
+                                        }}
+                                        className="bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 text-cyan-400"
+                                      >
+                                        {[5, 10, 20, 50].map(size => (
+                                          <option key={size} value={size} className="bg-[#111827]">{size} per page</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1 mr-4 px-3 py-1 rounded-full border border-white/5 bg-white/5">
+                                        <span className="text-[10px] font-bold text-slate-400">Page</span>
+                                        <span className="text-xs font-black text-cyan-400">{modalServerPage}</span>
+                                        <span className="text-[10px] font-bold text-slate-500">of {totalPages || 1}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => setModalServerPage(p => Math.max(1, p - 1))}
+                                          disabled={modalServerPage === 1}
+                                          className={`p-2 rounded-xl transition-all ${modalServerPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                        >
+                                          <ChevronLeft size={16} />
+                                        </button>
+                                        <button
+                                          onClick={() => setModalServerPage(p => Math.min(totalPages, p + 1))}
+                                          disabled={modalServerPage >= totalPages || totalPages === 0}
+                                          className={`p-2 rounded-xl transition-all ${modalServerPage >= totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                        >
+                                          <ChevronRight size={16} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </>
+                          );
+                        })()}
                       </tbody>
+
                     </table>
                   </div>
                 )}
@@ -1879,43 +1949,99 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/8">
-                        {tenantRecords
-                          .filter(item =>
-                            item.name?.toLowerCase().includes(tenantSearchTerm.toLowerCase()) ||
-                            item.description?.toLowerCase().includes(tenantSearchTerm.toLowerCase())
-                          )
-                          .sort((a, b) => {
-                            const direction = tenantSortOrder === 'asc' ? 1 : -1;
-                            if (tenantSortBy === 'sipConfigsCount' || tenantSortBy === 'licenseCount') return ((a[tenantSortBy] || 0) - (b[tenantSortBy] || 0)) * direction;
-                            if (tenantSortBy === 'createdAt') {
-                              const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-                              const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                              return (dateA - dateB) * direction;
-                            }
-                            const left = String(a[tenantSortBy] || '').toLowerCase();
-                            const right = String(b[tenantSortBy] || '').toLowerCase();
-                            return left.localeCompare(right) * direction;
-                          })
-                          .map((item, idx) => (
-                            <tr key={item.id || idx} className="transition hover:bg-white/5">
-                              <td className="px-5 py-4 text-sm font-medium text-white">
-                                {item.name || 'N/A'}
-                              </td>
-                              <td className="px-5 py-4 text-sm text-slate-300">
-                                {item.description || 'No description'}
-                              </td>
-                              <td className="px-5 py-4 text-sm font-medium font-mono text-emerald-300">
-                                {item.sipConfigsCount || 0}
-                              </td>
-                              <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
-                                {item.licenseCount || 0}
-                              </td>
-                              <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
-                                {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
-                              </td>
-                            </tr>
-                          ))}
+                        {(() => {
+                          const filtered = tenantRecords
+                            .filter(item =>
+                              item.name?.toLowerCase().includes(tenantSearchTerm.toLowerCase()) ||
+                              item.description?.toLowerCase().includes(tenantSearchTerm.toLowerCase())
+                            )
+                            .sort((a, b) => {
+                              const direction = tenantSortOrder === 'asc' ? 1 : -1;
+                              if (tenantSortBy === 'sipConfigsCount' || tenantSortBy === 'licenseCount') return ((a[tenantSortBy] || 0) - (b[tenantSortBy] || 0)) * direction;
+                              if (tenantSortBy === 'createdAt') {
+                                const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                                const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                                return (dateA - dateB) * direction;
+                              }
+                              const left = String(a[tenantSortBy] || '').toLowerCase();
+                              const right = String(b[tenantSortBy] || '').toLowerCase();
+                              return left.localeCompare(right) * direction;
+                            });
+
+                          const totalPages = Math.ceil(filtered.length / modalTenantRowsPerPage);
+                          const paged = filtered.slice((modalTenantPage - 1) * modalTenantRowsPerPage, modalTenantPage * modalTenantRowsPerPage);
+
+                          return (
+                            <>
+                              {paged.map((item, idx) => (
+                                <tr key={item.id || idx} className="transition hover:bg-white/5">
+                                  <td className="px-5 py-4 text-sm font-medium text-white">
+                                    {item.name || 'N/A'}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm text-slate-300">
+                                    {item.description || 'No description'}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm font-medium font-mono text-emerald-300">
+                                    {item.sipConfigsCount || 0}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm font-medium tracking-wide text-slate-300">
+                                    {item.licenseCount || 0}
+                                  </td>
+                                  <td className="px-5 py-4 text-sm font-mono text-slate-400 whitespace-nowrap">
+                                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
+                                  </td>
+                                </tr>
+                              ))}
+                              {/* Modal Pagination Footer */}
+                              <tr className="bg-black/20">
+                                <td colSpan={5} className="px-5 py-4 border-t border-white/5">
+                                  <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Show</span>
+                                      <select
+                                        value={modalTenantRowsPerPage}
+                                        onChange={(e) => {
+                                          setModalTenantRowsPerPage(Number(e.target.value));
+                                          setModalTenantPage(1);
+                                        }}
+                                        className="bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 text-cyan-400"
+                                      >
+                                        {[5, 10, 20, 50].map(size => (
+                                          <option key={size} value={size} className="bg-[#111827]">{size} per page</option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1 mr-4 px-3 py-1 rounded-full border border-white/5 bg-white/5">
+                                        <span className="text-[10px] font-bold text-slate-400">Page</span>
+                                        <span className="text-xs font-black text-cyan-400">{modalTenantPage}</span>
+                                        <span className="text-[10px] font-bold text-slate-500">of {totalPages || 1}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => setModalTenantPage(p => Math.max(1, p - 1))}
+                                          disabled={modalTenantPage === 1}
+                                          className={`p-2 rounded-xl transition-all ${modalTenantPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                        >
+                                          <ChevronLeft size={16} />
+                                        </button>
+                                        <button
+                                          onClick={() => setModalTenantPage(p => Math.min(totalPages, p + 1))}
+                                          disabled={modalTenantPage >= totalPages || totalPages === 0}
+                                          className={`p-2 rounded-xl transition-all ${modalTenantPage >= totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                        >
+                                          <ChevronRight size={16} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </>
+                          );
+                        })()}
                       </tbody>
+
                     </table>
                   </div>
                 )}

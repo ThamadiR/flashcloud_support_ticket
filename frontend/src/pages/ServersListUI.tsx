@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Datepicker, Label } from 'flowbite-react';
 
+
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowUpDown, Edit2, Plus, Save, Search, ServerCog, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Edit2, Plus, Save, Search, ServerCog, SlidersHorizontal, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { API_BASE_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
@@ -71,6 +73,11 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
   const [isIpAddressSortMenuOpen, setIsIpAddressSortMenuOpen] = useState(false);
   const [isLabelSortMenuOpen, setIsLabelSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+
   
   const [isEditServerModalOpen, setIsEditServerModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<ServerRecord | null>(null);
@@ -200,7 +207,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
       const matchesKeyword = !normalizedSearch || (
         String(server.id).includes(normalizedSearch)
         || server.ipAddress.toLowerCase().includes(normalizedSearch)
-        || server.label.toLowerCase().includes(normalizedSearch)
+        || (server.label || '').toLowerCase().includes(normalizedSearch)
         || String(server.companyId).includes(normalizedSearch)
         || String(server.company?.name || '').toLowerCase().includes(normalizedSearch)
       );
@@ -258,7 +265,14 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
       const right = String(b[sortBy] || '').toLowerCase();
       return left.localeCompare(right) * direction;
     });
-  }, [servers, searchTerm, sortBy, sortOrder]);
+  }, [servers, searchTerm, filters, sortBy, sortOrder]);
+
+  const pagedServers = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredServers.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredServers, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredServers.length / rowsPerPage);
 
   const openEditServerModal = (server: ServerRecord) => {
     setEditingServer(server);
@@ -725,7 +739,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
               </div>
             ) : (
               <div className={`overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 ${isDark ? 'border-white/10 bg-white/5 shadow-black/40' : 'border-gray-200 bg-white shadow-gray-200/20'}`}>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
+
                   <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
                     <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
                       <tr>
@@ -951,40 +966,41 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         <th className="px-5 py-4 font-semibold text-center">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${isDark ? 'divide-white/8' : 'divide-gray-50'}`}>
-                      {filteredServers.map((server) => (
-                        <tr key={server.id} className={`transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'}`}>
-                          <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{server.id}</td>
-                          <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-violet-200' : 'text-violet-600 font-semibold'}`}>
+                    <tbody className={`divide-y ${isDark ? 'divide-white/5' : 'divide-gray-50'}`}>
+                      {pagedServers.map((server) => (
+                        <tr
+                          key={server.id}
+                          className={`group transition-all duration-300 ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50/50'}`}
+                        >
+                          <td className={`px-5 py-4 font-medium ${isDark ? 'text-white' : 'text-gray-900'}`} style={{ fontSize: '12px' }}>{server.id}</td>
+                          <td className={`px-5 py-4 font-medium ${isDark ? 'text-violet-200' : 'text-violet-600 font-semibold'}`} style={{ fontSize: '12px' }}>
                             {server.company?.name || 'N/A'}
                           </td>
-                          <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                          <td className={`px-5 py-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
                             {server.ipAddress}
                           </td>
-                          <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                          <td className={`px-5 py-4 ${isDark ? 'text-slate-300' : 'text-gray-600'}`} style={{ fontSize: '12px' }}>
                             {server.label || '-'}
                           </td>
-                          <td className={`px-5 py-4 text-sm font-mono whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                          <td className={`px-5 py-4 font-mono whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>
                             {server.createdAt ?? '—'}
                           </td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center justify-center gap-2">
+                          <td className="px-5 py-4" style={{ fontSize: '12px' }}>
+                            <div className="flex items-center gap-4">
                               <button
                                 type="button"
                                 onClick={() => openEditServerModal(server)}
-                                className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
-                                  isDark 
-                                    ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' 
-                                    : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
-                                }`}
-                                title="Edit"
+                                className={`rounded-lg p-2 transition-all duration-300 ${isDark
+                                    ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                                  }`}
                               >
-                                <Edit2 size={13} />
+                                <Edit2 size={14} />
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleDeleteServer(server.id)}
-                                className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${
+                                className={`rounded-lg p-2 transition-all duration-300 ${
                                   isDark 
                                     ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20' 
                                     : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300'
@@ -1000,9 +1016,71 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                     </tbody>
                   </table>
                 </div>
+
+            <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+              <div className="flex items-center gap-3">
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                >
+                  {[5, 10, 20, 50].map(size => (
+                    <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                  ))}
+                </select>
               </div>
-            )}
+
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+                  <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => {
+                      const pg = i + 1;
+                      if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                        if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
+                        return null;
+                      }
+                      return (
+                        <button
+                          key={pg}
+                          onClick={() => setCurrentPage(pg)}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
+                        >
+                          {pg}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
 
 
           {/* Add Server Modal */}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowLeft, ArrowUpDown, Edit2, Plus, Search, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpDown, Edit2, Plus, Search, SlidersHorizontal, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
 import { useDrawer } from '../context/DrawerContext';
@@ -243,6 +243,10 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
     setIsTenantCountSortMenuOpen(false);
     setIsCreatedAtSortMenuOpen(false);
   };
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
 
   const applyColumnSort = (field: 'name' | 'subsection' | 'description' | 'tenantCount' | 'createdAt', nextSortOrder: 'asc' | 'desc') => {
     setSortBy(field);
@@ -489,18 +493,24 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
       return left.localeCompare(right) * direction;
     };
 
-    if (!keyword) {
-      return [...customizations].sort(sortFn);
-    }
-
     return customizations
       .filter((item) =>
         item.name.toLowerCase().includes(keyword) ||
-        item.description.toLowerCase().includes(keyword) ||
+        (item.description || '').toLowerCase().includes(keyword) ||
         (item.subsection?.name?.toLowerCase().includes(keyword) ?? false)
       )
+
       .sort(sortFn);
   }, [customizations, searchTerm, sortBy, sortOrder]);
+
+
+  const pagedCustomizations = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredCustomizations.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredCustomizations, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredCustomizations.length / rowsPerPage);
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -819,8 +829,9 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${isDark ? 'divide-white/8' : 'divide-gray-50'}`}>
-                    {filteredCustomizations.map((item) => (
+                    {pagedCustomizations.map((item) => (
                       <tr key={item.id} className={`transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'}`}>
+
                         <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.name}</td>
                         <td className={`px-5 py-4 text-sm ${isDark ? 'text-cyan-200' : 'text-cyan-600 font-semibold'}`}>
                           {item.subsection?.name || 'Unassigned'}
@@ -865,9 +876,72 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                   </tbody>
                 </table>
               </div>
+
+              <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => {
+                      setRowsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                  >
+                    {[5, 10, 20, 50].map(size => (
+                      <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+                    <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+                    <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      {[...Array(totalPages)].map((_, i) => {
+                        const pg = i + 1;
+                        if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                          if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
+                          return null;
+                        }
+                        return (
+                          <button
+                            key={pg}
+                            onClick={() => setCurrentPage(pg)}
+                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
+                          >
+                            {pg}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
+
           )}
-          </div>
 
           {isAddCustomizationOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
