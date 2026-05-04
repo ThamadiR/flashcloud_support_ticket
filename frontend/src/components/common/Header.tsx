@@ -442,20 +442,7 @@ const Header: React.FC = () => {
                   Admin Manage
                 </span>
 
-                {/* Arrow */}
-                <svg
-                  aria-hidden="true"
-                  className={`w-6 h-6 transition-transform ${showAdminDropdown ? "rotate-180" : ""
-                    }`}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  ></path>
-                </svg>
+
               </button>
 
               {/* Dropdown Items */}
@@ -473,15 +460,7 @@ const Header: React.FC = () => {
                     </Link>
                   </li> */}
 
-                  <li>
-                    <Link
-                      to="/create-role"
-                      className="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700 group"
-                    >
-                      <PlusCircle className="w-4 h-4 mr-2 text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                      Create Role
-                    </Link>
-                  </li>
+
                 </ul>
               ) : (
                 <div className="absolute left-16 top-0 hidden group-hover:block w-48 bg-white dark:bg-gray-700 shadow-lg rounded-lg z-50">
@@ -493,14 +472,7 @@ const Header: React.FC = () => {
                       Create User
                     </a>
                   </li> */}
-                  <li>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
-                    >
-                      Create Role
-                    </a>
-                  </li>
+
                 </div>
               )}
             </li>
