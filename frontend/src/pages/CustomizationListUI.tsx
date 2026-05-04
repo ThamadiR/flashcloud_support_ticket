@@ -888,7 +888,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                       }}
                       className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
                     >
-                      {[5, 10, 20, 50].map(size => (
+                      {[5, 10, 15, 20, 50].map(size => (
                         <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
                       ))}
                     </select>

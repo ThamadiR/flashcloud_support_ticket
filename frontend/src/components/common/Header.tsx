@@ -439,7 +439,7 @@ const Header: React.FC = () => {
                     }
                           `}
                 >
-                  Admin Manage
+                  User Management
                 </span>
 
 
