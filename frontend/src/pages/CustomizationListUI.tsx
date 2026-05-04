@@ -517,8 +517,8 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
       <div className="flex-grow">
         <main className={`p-4 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-24 transition-all duration-300`}>
           <div className={`w-full rounded-3xl border p-4 backdrop-blur-xl sm:p-6 transition-all duration-300 ${isDark
-              ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]'
-              : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
+            ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]'
+            : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
             }`}>
             <div className={`mb-6 flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-center lg:justify-between ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
               <div>
@@ -526,8 +526,8 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                   type="button"
                   onClick={() => navigate('/companies')}
                   className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-all duration-300 ${isDark
-                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
-                      : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300'
+                    ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                    : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300'
                     }`}
                 >
                   <ArrowLeft size={14} />
@@ -535,8 +535,8 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                 </button>
                 <div className="flex items-center gap-3">
                   <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 ${isDark
-                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
-                      : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-sm'
+                    ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
+                    : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-sm'
                     }`}>
                     <SlidersHorizontal size={20} />
                   </div>
@@ -555,8 +555,8 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
               <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                 <label className={`flex w-full max-w-md items-center gap-3 rounded-2xl border px-4 py-3 shadow-inner transition-all duration-300 focus-within:ring-2 ${isDark
-                    ? 'border-white/10 bg-black/20 text-slate-300 shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30'
-                    : 'border-gray-200 bg-gray-50 text-gray-700 shadow-gray-100 focus-within:border-cyan-500/40 focus-within:bg-white'
+                  ? 'border-white/10 bg-black/20 text-slate-300 shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30'
+                  : 'border-gray-200 bg-gray-50 text-gray-700 shadow-gray-100 focus-within:border-cyan-500/40 focus-within:bg-white'
                   }`}>
                   <Search size={16} className={`shrink-0 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} />
                   <input
@@ -571,8 +571,8 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
                   type="button"
                   onClick={openAddCustomizationModal}
                   className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
-                      ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
-                      : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
+                    ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                    : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
                     }`}
                 >
                   <Plus size={15} /> Add
@@ -598,587 +598,588 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
               <div className={`overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 ${isDark ? 'border-white/10 bg-white/5 shadow-black/40' : 'border-gray-200 bg-white shadow-gray-200/20'}`}>
                 <div className="overflow-x-auto">
                   <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
-                  <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
-                    <tr>
-                      <th className="px-5 py-4 font-semibold">
-                        <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
-                          <span>Name</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsNameSortMenuOpen((prev) => !prev);
-                              setIsSubsectionSortMenuOpen(false);
-                              setIsDescriptionSortMenuOpen(false);
-                              setIsTenantCountSortMenuOpen(false);
-                              setIsCreatedAtSortMenuOpen(false);
-                            }}
-                            className="rounded-md p-1 transition-colors hover:bg-white/10"
-                            aria-label="Sort customization name"
-                            title="Sort customization name"
-                          >
-                            <ArrowUpDown size={13} />
-                          </button>
-
-                          {isNameSortMenuOpen && (
-                            <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('name', 'asc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'asc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                asc
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('name', 'desc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'desc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                dsc
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                      <th className="px-5 py-4 font-semibold">
-                        <div className="relative inline-flex items-center gap-2" ref={subsectionSortMenuRef}>
-                          <span>Subsection</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsSubsectionSortMenuOpen((prev) => !prev);
-                              setIsNameSortMenuOpen(false);
-                              setIsDescriptionSortMenuOpen(false);
-                              setIsTenantCountSortMenuOpen(false);
-                              setIsCreatedAtSortMenuOpen(false);
-                            }}
-                            className="rounded-md p-1 transition-colors hover:bg-white/10"
-                            aria-label="Sort customization subsection"
-                            title="Sort customization subsection"
-                          >
-                            <ArrowUpDown size={13} />
-                          </button>
-
-                          {isSubsectionSortMenuOpen && (
-                            <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('subsection', 'asc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'subsection' && sortOrder === 'asc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                asc
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('subsection', 'desc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'subsection' && sortOrder === 'desc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                dsc
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                      <th className="px-5 py-4 font-semibold">
-                        <div className="relative inline-flex items-center gap-2" ref={descriptionSortMenuRef}>
-                          <span>Description</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsDescriptionSortMenuOpen((prev) => !prev);
-                              setIsNameSortMenuOpen(false);
-                              setIsSubsectionSortMenuOpen(false);
-                              setIsTenantCountSortMenuOpen(false);
-                              setIsCreatedAtSortMenuOpen(false);
-                            }}
-                            className="rounded-md p-1 transition-colors hover:bg-white/10"
-                            aria-label="Sort customization description"
-                            title="Sort customization description"
-                          >
-                            <ArrowUpDown size={13} />
-                          </button>
-
-                          {isDescriptionSortMenuOpen && (
-                            <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('description', 'asc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'description' && sortOrder === 'asc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                asc
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('description', 'desc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'description' && sortOrder === 'desc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                dsc
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                      <th className="px-5 py-4 font-semibold">
-                        <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
-                          <span>TENANT_COUNT</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsTenantCountSortMenuOpen((prev) => !prev);
-                              setIsNameSortMenuOpen(false);
-                              setIsSubsectionSortMenuOpen(false);
-                              setIsDescriptionSortMenuOpen(false);
-                              setIsCreatedAtSortMenuOpen(false);
-                            }}
-                            className="rounded-md p-1 transition-colors hover:bg-white/10"
-                            aria-label="Sort customization tenant count"
-                            title="Sort customization tenant count"
-                          >
-                            <ArrowUpDown size={13} />
-                          </button>
-
-                          {isTenantCountSortMenuOpen && (
-                            <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('tenantCount', 'asc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'asc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                asc
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('tenantCount', 'desc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'desc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                dsc
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                      <th className="px-5 py-4 font-semibold">
-                        <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
-                          <span>CREATED_AT</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsCreatedAtSortMenuOpen((prev) => !prev);
-                              setIsNameSortMenuOpen(false);
-                              setIsSubsectionSortMenuOpen(false);
-                              setIsDescriptionSortMenuOpen(false);
-                              setIsTenantCountSortMenuOpen(false);
-                            }}
-                            className="rounded-md p-1 transition-colors hover:bg-white/10"
-                            aria-label="Sort customization created date"
-                            title="Sort customization created date"
-                          >
-                            <ArrowUpDown size={13} />
-                          </button>
-
-                          {isCreatedAtSortMenuOpen && (
-                            <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('createdAt', 'asc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'asc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                asc
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => applyColumnSort('createdAt', 'desc')}
-                                className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'desc'
-                                    ? 'bg-blue-500/20 text-blue-300'
-                                    : 'text-gray-300 hover:bg-white/5'
-                                  }`}
-                              >
-                                dsc
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </th>
-                      <th className="px-5 py-4 font-semibold text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${isDark ? 'divide-white/8' : 'divide-gray-50'}`}>
-                    {pagedCustomizations.map((item) => (
-                      <tr key={item.id} className={`transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'}`}>
-
-                        <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.name}</td>
-                        <td className={`px-5 py-4 text-sm ${isDark ? 'text-cyan-200' : 'text-cyan-600 font-semibold'}`}>
-                          {item.subsection?.name || 'Unassigned'}
-                        </td>
-                        <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
-                          {item.description || 'No description provided'}
-                        </td>
-                        <td className={`px-5 py-4 text-sm font-medium tracking-wide ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
-                          {item.tenantCount}
-                        </td>
-                        <td className={`px-5 py-4 text-sm font-mono whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                          {item.createdAt ?? '—'}
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex items-center justify-center gap-2">
+                    <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
+                      <tr>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
+                            <span>Name</span>
                             <button
                               type="button"
-                              onClick={() => openEditCustomizationModal(item)}
-                              className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
+                              onClick={() => {
+                                setIsNameSortMenuOpen((prev) => !prev);
+                                setIsSubsectionSortMenuOpen(false);
+                                setIsDescriptionSortMenuOpen(false);
+                                setIsTenantCountSortMenuOpen(false);
+                                setIsCreatedAtSortMenuOpen(false);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              aria-label="Sort customization name"
+                              title="Sort customization name"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+
+                            {isNameSortMenuOpen && (
+                              <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('name', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'asc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('name', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'desc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={subsectionSortMenuRef}>
+                            <span>Subsection</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsSubsectionSortMenuOpen((prev) => !prev);
+                                setIsNameSortMenuOpen(false);
+                                setIsDescriptionSortMenuOpen(false);
+                                setIsTenantCountSortMenuOpen(false);
+                                setIsCreatedAtSortMenuOpen(false);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              aria-label="Sort customization subsection"
+                              title="Sort customization subsection"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+
+                            {isSubsectionSortMenuOpen && (
+                              <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('subsection', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'subsection' && sortOrder === 'asc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('subsection', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'subsection' && sortOrder === 'desc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={descriptionSortMenuRef}>
+                            <span>Description</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsDescriptionSortMenuOpen((prev) => !prev);
+                                setIsNameSortMenuOpen(false);
+                                setIsSubsectionSortMenuOpen(false);
+                                setIsTenantCountSortMenuOpen(false);
+                                setIsCreatedAtSortMenuOpen(false);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              aria-label="Sort customization description"
+                              title="Sort customization description"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+
+                            {isDescriptionSortMenuOpen && (
+                              <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('description', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'description' && sortOrder === 'asc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('description', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'description' && sortOrder === 'desc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
+                            <span>TENANT_COUNT</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsTenantCountSortMenuOpen((prev) => !prev);
+                                setIsNameSortMenuOpen(false);
+                                setIsSubsectionSortMenuOpen(false);
+                                setIsDescriptionSortMenuOpen(false);
+                                setIsCreatedAtSortMenuOpen(false);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              aria-label="Sort customization tenant count"
+                              title="Sort customization tenant count"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+
+                            {isTenantCountSortMenuOpen && (
+                              <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('tenantCount', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'asc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('tenantCount', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'desc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold">
+                          <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
+                            <span>CREATED_AT</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsCreatedAtSortMenuOpen((prev) => !prev);
+                                setIsNameSortMenuOpen(false);
+                                setIsSubsectionSortMenuOpen(false);
+                                setIsDescriptionSortMenuOpen(false);
+                                setIsTenantCountSortMenuOpen(false);
+                              }}
+                              className="rounded-md p-1 transition-colors hover:bg-white/10"
+                              aria-label="Sort customization created date"
+                              title="Sort customization created date"
+                            >
+                              <ArrowUpDown size={13} />
+                            </button>
+
+                            {isCreatedAtSortMenuOpen && (
+                              <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('createdAt', 'asc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'asc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  asc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => applyColumnSort('createdAt', 'desc')}
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'desc'
+                                    ? 'bg-blue-500/20 text-blue-300'
+                                    : 'text-gray-300 hover:bg-white/5'
+                                    }`}
+                                >
+                                  dsc
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </th>
+                        <th className="px-5 py-4 font-semibold text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y ${isDark ? 'divide-white/8' : 'divide-gray-50'}`}>
+                      {pagedCustomizations.map((item) => (
+                        <tr key={item.id} className={`transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-blue-50/50'}`}>
+
+                          <td className={`px-5 py-4 text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.name}</td>
+                          <td className={`px-5 py-4 text-sm ${isDark ? 'text-cyan-200' : 'text-cyan-600 font-semibold'}`}>
+                            {item.subsection?.name || 'Unassigned'}
+                          </td>
+                          <td className={`px-5 py-4 text-sm ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+                            {item.description || 'No description provided'}
+                          </td>
+                          <td className={`px-5 py-4 text-sm font-medium tracking-wide ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                            {item.tenantCount}
+                          </td>
+                          <td className={`px-5 py-4 text-sm font-mono whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                            {item.createdAt ?? '—'}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEditCustomizationModal(item)}
+                                className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
                                   ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
                                   : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
-                                }`}
-                              title="Edit"
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteCustomization(item.id)}
-                              className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
+                                  }`}
+                                title="Edit"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCustomization(item.id)}
+                                className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
                                   ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20'
                                   : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300'
-                                }`}
-                              title="Delete"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
-                <div className="flex items-center gap-3">
-                  <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
-                  <select
-                    value={rowsPerPage}
-                    onChange={(e) => {
-                      setRowsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
-                  >
-                    {[5, 10, 20, 50].map(size => (
-                      <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
-                    ))}
-                  </select>
+                                  }`}
+                                title="Delete"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
-                    <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
-                    <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
-                    <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
+                <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                    <select
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                    >
+                      {[5, 10, 20, 50].map(size => (
+                        <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-
-                    <div className="flex items-center gap-1">
-                      {[...Array(totalPages)].map((_, i) => {
-                        const pg = i + 1;
-                        if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
-                          if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
-                          return null;
-                        }
-                        return (
-                          <button
-                            key={pg}
-                            onClick={() => setCurrentPage(pg)}
-                            className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
-                          >
-                            {pg}
-                          </button>
-                        );
-                      })}
+                  <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
+                      <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
+                      <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
+                      <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
                     </div>
 
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages || totalPages === 0}
-                      className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                    >
-                      <ChevronRight size={16} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+
+                      <div className="flex items-center gap-1">
+                        {[...Array(totalPages)].map((_, i) => {
+                          const pg = i + 1;
+                          if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
+                            if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
+                            return null;
+                          }
+                          return (
+                            <button
+                              key={pg}
+                              onClick={() => setCurrentPage(pg)}
+                              className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
+                            >
+                              {pg}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-          )}
+            )}
 
-          {isAddCustomizationOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-              <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Customization</h2>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {companyName ? `Create a customization for ${companyName}.` : 'Create a customization.'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeAddCustomizationModal}
-                    className={`rounded-full border p-2 transition-all ${isDark
-                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                    aria-label="Close add customization modal"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <form onSubmit={handleCreateCustomization} className="space-y-4">
-                  <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Name</label>
-                    <input
-                      value={createForm.name}
-                      onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
-                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                        }`}
-                      placeholder="Enter customization name"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-300">Section</label>
-                    <select
-                      value={createForm.sectionId}
-                      onChange={(event) => setCreateForm((prev) => ({ ...prev, sectionId: event.target.value, subsectionId: '' }))}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                          ? 'border-white/10 bg-[#1e293b] text-white focus:border-cyan-400/40'
-                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40'
-                        }`}
-                    >
-                      <option value="" className={isDark ? 'bg-slate-800' : ''}>Select section</option>
-                      {sections.map((section) => (
-                        <option key={section.id} value={String(section.id)} className={isDark ? 'bg-slate-800' : ''}>
-                          {section.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-300">Subsection</label>
-                    <select
-                      value={createForm.subsectionId}
-                      onChange={(event) => setCreateForm((prev) => ({ ...prev, subsectionId: event.target.value }))}
-                      disabled={!createForm.sectionId}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                          ? 'border-white/10 bg-[#1e293b] text-white focus:border-cyan-400/40'
-                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40'
-                        }`}
-                    >
-                      <option value="" className={isDark ? 'bg-slate-800' : ''}>{createForm.sectionId ? 'Unassigned' : 'Select section first'}</option>
-                      {createSubsections.map((subsection) => (
-                        <option key={subsection.id} value={String(subsection.id)} className={isDark ? 'bg-slate-800' : ''}>
-                          {subsection.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-300">Description</label>
-                    <textarea
-                      value={createForm.description}
-                      onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
-                      rows={4}
-                      className={`w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                          ? 'border-white/10 bg-[#1e293b] text-white placeholder:text-slate-500 focus:border-cyan-400/40'
-                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                        }`}
-                      placeholder="Enter customization description"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-2">
+            {isAddCustomizationOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Customization</h2>
+                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        {companyName ? `Create a customization for ${companyName}.` : 'Create a customization.'}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={closeAddCustomizationModal}
-                      className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${isDark
+                      className={`rounded-full border p-2 transition-all ${isDark
+                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
+                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      aria-label="Close add customization modal"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleCreateCustomization} className="space-y-4">
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Name</label>
+                      <input
+                        value={createForm.name}
+                        onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="Enter customization name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-300">Section</label>
+                      <select
+                        value={createForm.sectionId}
+                        onChange={(event) => setCreateForm((prev) => ({ ...prev, sectionId: event.target.value, subsectionId: '' }))}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                          ? 'border-white/10 bg-[#1e293b] text-white focus:border-cyan-400/40'
+                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40'
+                          }`}
+                      >
+                        <option value="" className={isDark ? 'bg-slate-800' : ''}>Select section</option>
+                        {sections.map((section) => (
+                          <option key={section.id} value={String(section.id)} className={isDark ? 'bg-slate-800' : ''}>
+                            {section.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-300">Subsection</label>
+                      <select
+                        value={createForm.subsectionId}
+                        onChange={(event) => setCreateForm((prev) => ({ ...prev, subsectionId: event.target.value }))}
+                        disabled={!createForm.sectionId}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                          ? 'border-white/10 bg-[#1e293b] text-white focus:border-cyan-400/40'
+                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40'
+                          }`}
+                      >
+                        <option value="" className={isDark ? 'bg-slate-800' : ''}>{createForm.sectionId ? 'Unassigned' : 'Select section first'}</option>
+                        {createSubsections.map((subsection) => (
+                          <option key={subsection.id} value={String(subsection.id)} className={isDark ? 'bg-slate-800' : ''}>
+                            {subsection.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-300">Description</label>
+                      <textarea
+                        value={createForm.description}
+                        onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
+                        rows={4}
+                        className={`w-full resize-none rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                          ? 'border-white/10 bg-[#1e293b] text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="Enter customization description"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={closeAddCustomizationModal}
+                        className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${isDark
                           ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                        }`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSavingCustomization}
-                      className={`h-[42px] rounded-xl border px-4 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isDark
+                          }`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSavingCustomization}
+                        className={`h-[42px] rounded-xl border px-4 text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isDark
                           ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
                           : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700'
-                        }`}
-                    >
-                      {isSavingCustomization ? 'Saving...' : 'Create Customization'}
-                    </button>
-                  </div>
-                </form>
+                          }`}
+                      >
+                        {isSavingCustomization ? 'Saving...' : 'Create Customization'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Edit Customization Modal */}
-          {isEditCustomizationOpen && editingCustomization && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-              <div className="absolute inset-0 bg-slate-950/60" onClick={closeEditCustomizationModal} />
-              <div className={`relative w-full max-w-lg rounded-3xl border p-6 shadow-2xl ${isDark ? 'border-white/10 bg-[#0b1729]' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-6 flex items-center justify-between">
-                  <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Customization</h3>
-                  <button
-                    onClick={closeEditCustomizationModal}
-                    className={`rounded-full p-2 transition-all ${isDark
+            {/* Edit Customization Modal */}
+            {isEditCustomizationOpen && editingCustomization && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div className="absolute inset-0 bg-slate-950/60" onClick={closeEditCustomizationModal} />
+                <div className={`relative w-full max-w-lg rounded-3xl border p-6 shadow-2xl ${isDark ? 'border-white/10 bg-[#0b1729]' : 'border-gray-200 bg-white'}`}>
+                  <div className="mb-6 flex items-center justify-between">
+                    <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Customization</h3>
+                    <button
+                      onClick={closeEditCustomizationModal}
+                      className={`rounded-full p-2 transition-all ${isDark
                         ? 'text-slate-400 hover:bg-white/5 hover:text-white'
                         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-                      }`}
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <form onSubmit={handleUpdateCustomization} className="space-y-5">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${isDark
-                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50'
-                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
                         }`}
-                      placeholder="e.g. Dark Mode"
-                      required
-                    />
+                    >
+                      <X size={20} />
+                    </button>
                   </div>
 
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                      Description
-                    </label>
-                    <textarea
-                      value={editForm.description}
-                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className={`h-24 w-full resize-none rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${isDark
-                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50'
-                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                        }`}
-                      placeholder="What does this customization do?"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                  <form onSubmit={handleUpdateCustomization} className="space-y-5">
                     <div>
                       <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                        Section
+                        Name
                       </label>
-                      <select
-                        value={editForm.sectionId}
-                        onChange={(e) => setEditForm({ ...editForm, sectionId: e.target.value, subsectionId: '' })}
-                        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all ${isDark
-                            ? 'border-white/10 bg-[#1e293b] text-white focus:border-blue-500/50'
-                            : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500'
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${isDark
+                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50'
+                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
                           }`}
-                      >
-                        <option value="" className={isDark ? 'bg-slate-800' : ''}>Select Section</option>
-                        {sections.map((s) => (
-                          <option key={s.id} value={s.id} className={isDark ? 'bg-slate-800' : ''}>
-                            {s.name}
-                          </option>
-                        ))}
-                      </select>
+                        placeholder="e.g. Dark Mode"
+                        required
+                      />
                     </div>
 
                     <div>
                       <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
-                        Subsection
+                        Description
                       </label>
-                      <select
-                        value={editForm.subsectionId}
-                        onChange={(e) => setEditForm({ ...editForm, subsectionId: e.target.value })}
-                        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all ${isDark
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                        className={`h-24 w-full resize-none rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${isDark
+                          ? 'border-white/10 bg-white/5 text-white focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50'
+                          : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          }`}
+                        placeholder="What does this customization do?"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                          Section
+                        </label>
+                        <select
+                          value={editForm.sectionId}
+                          onChange={(e) => setEditForm({ ...editForm, sectionId: e.target.value, subsectionId: '' })}
+                          className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all ${isDark
                             ? 'border-white/10 bg-[#1e293b] text-white focus:border-blue-500/50'
                             : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500'
-                          }`}
-                        disabled={!editForm.sectionId}
-                      >
-                        <option value="" className={isDark ? 'bg-slate-800' : ''}>Select Subsection</option>
-                        {editSubsections.map((ss) => (
-                          <option key={ss.id} value={ss.id} className={isDark ? 'bg-slate-800' : ''}>
-                            {ss.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                            }`}
+                        >
+                          <option value="" className={isDark ? 'bg-slate-800' : ''}>Select Section</option>
+                          {sections.map((s) => (
+                            <option key={s.id} value={s.id} className={isDark ? 'bg-slate-800' : ''}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                  <div className="flex justify-end gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={closeEditCustomizationModal}
-                      className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${isDark
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-slate-400 uppercase tracking-wider">
+                          Subsection
+                        </label>
+                        <select
+                          value={editForm.subsectionId}
+                          onChange={(e) => setEditForm({ ...editForm, subsectionId: e.target.value })}
+                          className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-all ${isDark
+                            ? 'border-white/10 bg-[#1e293b] text-white focus:border-blue-500/50'
+                            : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-blue-500'
+                            }`}
+                          disabled={!editForm.sectionId}
+                        >
+                          <option value="" className={isDark ? 'bg-slate-800' : ''}>Select Subsection</option>
+                          {editSubsections.map((ss) => (
+                            <option key={ss.id} value={ss.id} className={isDark ? 'bg-slate-800' : ''}>
+                              {ss.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={closeEditCustomizationModal}
+                        className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${isDark
                           ? 'text-slate-400 hover:bg-white/5 hover:text-white'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
-                        }`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isUpdatingCustomization}
-                      className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-500 disabled:opacity-50"
-                    >
-                      {isUpdatingCustomization ? 'Updating...' : 'Update Customization'}
-                    </button>
-                  </div>
-                </form>
+                          }`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isUpdatingCustomization}
+                        className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-blue-500 disabled:opacity-50"
+                      >
+                        {isUpdatingCustomization ? 'Updating...' : 'Update Customization'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </main>
       </div>
     </div>

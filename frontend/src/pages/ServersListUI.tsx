@@ -1304,6 +1304,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
               </div>
             </div>
           )}
+          </div>
         </main>
       </div>
     </div>

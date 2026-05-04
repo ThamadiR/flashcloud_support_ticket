@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import axios from "axios";
 import { useDrawer } from "../context/DrawerContext";
+import { useTheme } from "../context/ThemeContext";
 
 
 type DashboardSummary = {
@@ -27,6 +28,7 @@ function Dashboard() {
   
 
   const { isDrawerOpen } = useDrawer();
+  const { isDark } = useTheme();
 
   const [summary, setSummary] = useState<DashboardSummary>({
     all: 0,
