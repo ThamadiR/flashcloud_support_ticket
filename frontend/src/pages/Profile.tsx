@@ -200,8 +200,8 @@ const Profile: React.FC = () => {
                   value={options.find(opt => opt.label === formData.country)}
                   onChange={(val: any) => {
                     if (val) {
-                      setFormData({ 
-                        ...formData, 
+                      setFormData({
+                        ...formData,
                         country: val.label,
                         countryCode: val.value
                       });
@@ -215,7 +215,7 @@ const Profile: React.FC = () => {
                       backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : '#F9FAFB',
                       borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
                       borderRadius: '0.75rem',
-                      padding: '2px 8px 2px 40px',
+                      padding: '2px 8px',
                       fontSize: '13px',
                       fontWeight: '700',
                       color: isDark ? '#fff' : '#111827',
@@ -234,8 +234,8 @@ const Profile: React.FC = () => {
                     }),
                     option: (base, state) => ({
                       ...base,
-                      backgroundColor: state.isFocused 
-                        ? (isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)') 
+                      backgroundColor: state.isFocused
+                        ? (isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)')
                         : 'transparent',
                       color: isDark ? '#fff' : '#111827',
                       fontSize: '13px',
@@ -265,9 +265,6 @@ const Profile: React.FC = () => {
                     </div>
                   )}
                 />
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
-                   <span className="text-lg">{getFlagEmoji(formData.countryCode)}</span>
-                </div>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 z-10">
                   {/* <Globe size={16} /> */}
                 </div>
