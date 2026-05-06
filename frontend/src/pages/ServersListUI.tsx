@@ -598,7 +598,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                   root: { input: { base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${isDark ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'}` } },
                                   popup: { root: { base: `absolute top-12 left-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, footer: { base: "hidden" } },
                                   header: { root: { base: "flex justify-between items-center mb-2 px-2", title: "text-sm font-semibold text-gray-700 dark:text-gray-200" }, selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } },
-                                  views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[11px] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
+                                  views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[0.75rem] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
                                 }}
                               />
                             </div>
@@ -626,7 +626,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                   root: { input: { base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${isDark ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'}` } },
                                   popup: { root: { base: `absolute top-12 right-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, footer: { base: "hidden" } },
                                   header: { root: { base: "flex justify-between items-center mb-2 px-2", title: "text-sm font-semibold text-gray-700 dark:text-gray-200" }, selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } },
-                                  views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[11px] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
+                                  views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[0.75rem] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
                                 }}
                               />
                             </div>
@@ -636,7 +636,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         {/* Company Name */}
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
+                            <span className="text-[0.75rem] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
                             <button 
                               onClick={() => setTempFilters(prev => ({ ...prev, companyName: '' }))}
                               className="text-[10px] text-blue-500 hover:underline"
@@ -661,7 +661,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         {/* IP Address */}
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">IP Address</span>
+                            <span className="text-[0.75rem] font-bold uppercase tracking-wider text-gray-400">IP Address</span>
                             <button 
                               onClick={() => setTempFilters(prev => ({ ...prev, ipAddress: '' }))}
                               className="text-[10px] text-blue-500 hover:underline"
@@ -742,7 +742,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                 <div className="overflow-x-auto no-scrollbar">
 
                   <table className={`min-w-full divide-y text-left ${isDark ? 'divide-white/10' : 'divide-gray-100'}`}>
-                    <thead className={`text-[11px] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
+                    <thead className={`text-[0.75rem] uppercase tracking-[0.24em] ${isDark ? 'bg-black/20 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
                       <tr>
                         <th className="px-5 py-4 font-semibold">
                           <div className="relative inline-flex items-center gap-2" ref={idSortMenuRef}>
@@ -763,7 +763,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('id', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'id' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -774,7 +774,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('id', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'id' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -807,7 +807,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('company', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'company' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -818,7 +818,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('company', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'company' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -851,7 +851,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('ipAddress', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'ipAddress' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -862,7 +862,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('ipAddress', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'ipAddress' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -895,7 +895,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('label', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'label' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -906,7 +906,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('label', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'label' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -939,7 +939,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('createdAt', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'createdAt' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -950,7 +950,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('createdAt', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase transition-colors ${
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
                                     sortBy === 'createdAt' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
@@ -1019,7 +1019,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
             <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
               <div className="flex items-center gap-3">
-                <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                <span className={`text-[0.75rem] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
                 <select
                   value={rowsPerPage}
                   onChange={(e) => {
@@ -1034,49 +1034,31 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
-                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
-                  <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
-                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
-                </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
 
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                    disabled
+                    className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
                   >
-                    <ChevronLeft size={16} />
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {[...Array(totalPages)].map((_, i) => {
-                      const pg = i + 1;
-                      if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
-                        if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
-                        return null;
-                      }
-                      return (
-                        <button
-                          key={pg}
-                          onClick={() => setCurrentPage(pg)}
-                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
-                        >
-                          {pg}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                  >
-                    <ChevronRight size={16} />
+                    {currentPage}
                   </button>
                 </div>
+
+                <button
+                  onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           </div>
@@ -1109,7 +1091,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                 </div>
 
                 <div className={`mb-6 rounded-2xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'}`}>
-                  <div className="flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-[0.2em]">
+                  <div className="flex items-center justify-between gap-2 text-[0.75rem] font-bold uppercase tracking-[0.2em]">
                     <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>Step {addServerStep} of {addServerWizardSteps.length}</span>
                     <span className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>{addServerWizardSteps[addServerStep - 1]?.title}</span>
                   </div>

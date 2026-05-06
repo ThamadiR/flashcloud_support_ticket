@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import toast from 'react-hot-toast';
 import { useParams } from "react-router-dom";
 import { useDrawer } from "../../context/DrawerContext";
 
@@ -323,7 +324,7 @@ const TicketDetail: React.FC = () => {
 
       if (!res.ok) {
         console.error("Reply failed:", res.statusText);
-        alert("Failed to send reply.");
+        toast.error("Failed to send reply.");
         return;
       }
 
@@ -333,10 +334,10 @@ const TicketDetail: React.FC = () => {
       setReplyContent("");
       setAttachments([]);
       setIsReplying(false);
-      alert("Reply sent successfully!");
+      toast.success("Reply sent successfully!");
     } catch (err) {
       console.error("Error sending reply:", err);
-      alert("An error occurred while sending the reply.");
+      toast.error("An error occurred while sending the reply.");
     }
   };
 
@@ -345,7 +346,7 @@ const TicketDetail: React.FC = () => {
     e.preventDefault();
 
     if (!emails || emails.length === 0) {
-      alert("No email selected to forward.");
+      toast.error("No email selected to forward.");
       return;
     }
 
@@ -379,13 +380,13 @@ const TicketDetail: React.FC = () => {
 
       if (!res.ok) {
         console.error("Forward failed:", res.statusText);
-        alert("Failed to forward email.");
+        toast.error("Failed to forward email.");
         return;
       }
 
       const data = await res.json();
       console.log("Email forwarded:", data);
-      alert("Email forwarded successfully!");
+      toast.success("Email forwarded successfully!");
 
       // Reset states
       setForwardContent("");
@@ -393,7 +394,7 @@ const TicketDetail: React.FC = () => {
       setIsForwarding(false);
     } catch (err) {
       console.error("Error forwarding email:", err);
-      alert("An error occurred while forwarding the email.");
+      toast.error("An error occurred while forwarding the email.");
     }
   };
 

@@ -88,20 +88,25 @@ export async function getTicketById(id: number): Promise<Ticket | null> {
   const [rows] = await pool.query<RowDataPacket[]>(
     `
     SELECT
-      id,
-      subject,
-      status,
-      author,
-      company,
-      priority,
-      group_type,
-      state,
-      email,
-      GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS daysAgo,
-      GREATEST(TIMESTAMPDIFF(DAY, due_at, NOW()), 0) AS overdueBy,
-      UPPER(LEFT(TRIM(author), 1)) AS initial
-    FROM tbl_ticket_det
-    WHERE id = ?
+      t.id,
+      t.subject,
+      t.status,
+      t.author,
+      t.company,
+      t.priority,
+      t.group_type,
+      t.state,
+      (
+        SELECT COALESCE(
+          (SELECT sender FROM tbl_email_receive WHERE ticket_id = t.id ORDER BY date_received ASC LIMIT 1),
+          (SELECT sender_email FROM tbl_ticket_email_det WHERE subject = t.subject OR subject LIKE CONCAT('%', t.subject, '%') ORDER BY date_received ASC LIMIT 1)
+        )
+      ) as email,
+      GREATEST(TIMESTAMPDIFF(DAY, t.created_at, NOW()), 0) AS daysAgo,
+      GREATEST(TIMESTAMPDIFF(DAY, t.due_at, NOW()), 0) AS overdueBy,
+      UPPER(LEFT(TRIM(t.author), 1)) AS initial
+    FROM tbl_ticket_det t
+    WHERE t.id = ?
     LIMIT 1;
     `,
     [id]

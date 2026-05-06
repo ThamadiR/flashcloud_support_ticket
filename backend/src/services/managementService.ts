@@ -135,8 +135,29 @@ export class ManagementService {
   }
 
   async listCompanies(requesterIdRaw: unknown) {
-    await this.getRequesterUser(requesterIdRaw);
+    const user = await this.getRequesterUser(requesterIdRaw);
+    console.log(`[DEBUG] listCompanies: requester is ${user.userName} (ID: ${user.id}, Role: ${user.role})`);
+    
     const companiesRaw = await this.repository.listCompanies();
+    console.log(`[DEBUG] listCompanies: found ${companiesRaw.length} companies in database`);
+    
+    // If database returns nothing, provide a mock company to test frontend rendering
+    if (companiesRaw.length === 0) {
+      console.log('[DEBUG] listCompanies: Providing mock data for testing');
+      return { 
+        companies: [
+          { 
+            id: 999, 
+            name: 'Debug Mock Corp', 
+            description: 'System-generated mock for debugging', 
+            email: 'debug@flashcloud.com', 
+            tenant_count: 7,
+            created_at: new Date().toISOString()
+          }
+        ] 
+      };
+    }
+
     return { companies: companiesRaw.map(normalizeCompanyPayload) };
   }
 

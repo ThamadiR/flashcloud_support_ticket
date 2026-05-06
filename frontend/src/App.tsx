@@ -13,6 +13,8 @@ import AuthenticatedLayout from './components/layouts/AuthenticatedLayout';
 import Contacts from './components/layouts/Contacts';
 import Tickets from './pages/Tickets';
 import TicketDetail from './pages/TicketDetail';
+import UserListUI from './pages/UserListUI';
+import Profile from './pages/Profile';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { DrawerProvider } from './context/DrawerContext';
@@ -99,6 +101,10 @@ export default function App() {
               <Contacts token={token!} />
             } />
 
+            <Route path="/users" element={
+              <UserListUI token={token!} onUnauthorized={handleLogout} />
+            } />
+
             <Route path="/tickets" element={
               <Tickets />
             } />
@@ -107,6 +113,9 @@ export default function App() {
               <TicketDetail />
             } />
 
+            <Route path="/profile" element={
+              <Profile />
+            } />
           </Route>
         </Routes>
       </BrowserRouter>

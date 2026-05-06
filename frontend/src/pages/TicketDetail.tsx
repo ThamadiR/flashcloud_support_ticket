@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import toast from 'react-hot-toast';
 import { useDrawer } from "../context/DrawerContext";
 
 import {
@@ -11,14 +12,10 @@ import {
   FaChevronDown,
   FaPaperclip,
   FaFileAlt,
+  FaSearch,
 } from "react-icons/fa";
 
-/*interface CcRecipients {
-  akila: boolean;
-  machiavarathnayake: boolean;
-  nuwanj: boolean;
-  rishui: boolean;
-}*/
+
 
 interface Attachment {
   filename: string;
@@ -36,6 +33,7 @@ interface Email {
   subject: string;
   date: string;
   body: string;
+  status?: string;
   attachments?: Attachment[];
 }
 
@@ -56,25 +54,13 @@ interface TicketData {
   emails: Email[];
 }
 
-/*const ccOptions: { key: keyof CcRecipients; label: string }[] = [
-  { key: "akila", label: "akila@iphonik.com" },
-  { key: "machiavarathnayake", label: "machiavarathnayake@sampath.lk" },
-  { key: "nuwanj", label: "nuwanj@sampath.lk" },
-  { key: "rishui", label: "rishui.hettiarachchi@dialog.lk" },
-];*/
-
 const TicketDetail: React.FC = () => {
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const { id } = useParams<{ id: string }>();
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
-  /*const [ccRecipients, setCcRecipients] = useState<CcRecipients>({
-    akila: false,
-    machiavarathnayake: true,
-    nuwanj: true,
-    rishui: true,
-  });*/
+  
   const [ccList, setCcList] = useState<string[]>([]);
   const [ccRecipients, setCcRecipients] = useState<{
     [email: string]: boolean;
@@ -88,6 +74,7 @@ const TicketDetail: React.FC = () => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Dummy data with proper typing
   const ticketData: TicketData = {
@@ -108,8 +95,8 @@ const TicketDetail: React.FC = () => {
     reportedDate: "",
     resolutionDueDate: "Thu, Jun 12, 2025 03:55 PM",
     statusOptions: ["Open", "In Progress", "Resolved", "Closed"],
-    priorityOptions: ["Low", "Medium", "High", "Critical"],
-    groupOptions: ["Tech Support", "Development", "QA", "Operations"],
+    priorityOptions: ["Low", "Medium", "High", "Urgent"],
+    groupOptions: ["My Groups", "Development Support", "Engineering Support", "Unassigned"],
     assigneeOptions: [""],
     /*emails: [
       {
@@ -129,6 +116,9 @@ const TicketDetail: React.FC = () => {
   const [priority, setPriority] = useState(ticketData.priority);
   const [group, setGroup] = useState(ticketData.group);
   const [assignee, setAssignee] = useState(ticketData.assignee);
+  const [author, setAuthor] = useState("");
+  const [requesterEmail, setRequesterEmail] = useState("");
+  const [subject, setSubject] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [assigneeOptions, setAssigneeOptions] = useState([]);
 
@@ -140,11 +130,14 @@ const TicketDetail: React.FC = () => {
         const res = await fetch(
           `http://localhost:5000/api/tickets/${id}/emails`
         );
+        console.log(`Frontend: Fetch response for ticket ${id}/emails status:`, res.status);
 
         // Check if backend responded
         if (!res.ok) {
-          console.error("Server responded with status:", res.status);
-          setError(`Server Error (${res.status})`);
+          const errorData = await res.json().catch(() => ({}));
+          console.error("Server responded with status:", res.status, errorData);
+          setError(errorData.error || `Server Error (${res.status})`);
+          setLoading(false);
           return;
         }
 
@@ -190,6 +183,7 @@ const TicketDetail: React.FC = () => {
             }))
           : [];
 
+        console.log(`Frontend: Fetched ${data?.length || 0} raw emails for ticket ${id}`, data);
         setEmails(formattedEmails);
         setError(null);
       } catch (err: any) {
@@ -215,6 +209,9 @@ const TicketDetail: React.FC = () => {
         setPriority(data.priority || "");
         setGroup(data.group_type || "");
         setAssignee(data.assignee || "");
+        setAuthor(data.author || "");
+        setRequesterEmail(data.email || "");
+        setSubject(data.subject || "");
         
         // We can also update ticketData ref if needed, but states are more important for UI
       } catch (err) {
@@ -310,26 +307,28 @@ const TicketDetail: React.FC = () => {
       (email) => ccRecipients[email] === true
     );
 
+    const latestEmail = emails[emails.length - 1];
     const originalEmail = emails[0];
 
     const quotedOriginal = `
       <br><br>
-      On ${originalEmail?.date || "a previous date"}, ${
-      originalEmail?.from || "someone"
+      On ${latestEmail?.date || "a previous date"}, ${
+      latestEmail?.from || "someone"
     } wrote:
         <blockquote style="border-left:2px solid #ccc; margin:0; padding-left:10px;">
-          ${originalEmail?.body || ""}
+          ${latestEmail?.body || ""}
         </blockquote>
       `;
 
     const fullReply = `${replyContent}${quotedOriginal}`;
 
     const formData = new FormData();
-    formData.append("to", originalEmail.from);
-    formData.append("subject", originalEmail.subject);
+    formData.append("to", latestEmail.from);
+    formData.append("subject", latestEmail.subject);
     formData.append("replyMessage", fullReply);
     if (id) {
       formData.append("inReplyToId", id);
+      formData.append("ticketId", id);
     }
     selectedCc.forEach((cc) => formData.append("cc", cc));
     attachments.forEach((file) => formData.append("attachments", file));
@@ -344,8 +343,9 @@ const TicketDetail: React.FC = () => {
       );
 
       if (!res.ok) {
-        console.error("Reply failed:", res.statusText);
-        alert("Failed to send reply.");
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Reply failed:", res.statusText, errorData);
+        toast.error(errorData.error || "Failed to send reply.");
         return;
       }
 
@@ -355,40 +355,53 @@ const TicketDetail: React.FC = () => {
       setReplyContent("");
       setAttachments([]);
       setIsReplying(false);
-      alert("Reply sent successfully!");
+      toast.success("Reply sent successfully!");
     } catch (err) {
       console.error("Error sending reply:", err);
-      alert("An error occurred while sending the reply.");
+      toast.error("An error occurred while sending the reply.");
     }
   };
 
-  // Handle forward submission
+ // Handle forward submission
   const handleForwardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!emails || emails.length === 0) {
-      alert("No email selected to forward.");
+      toast.error("No email selected to forward.");
       return;
     }
 
-    const originalEmail = emails[0];
+    // Validate recipient
+    if (!forwardRecipients.to.trim()) {
+      toast.error("Please enter a recipient email address.");
+      return;
+    }
 
-    // Build form data to include attachments
+    const latestEmail = emails[emails.length - 1];
+
     const formData = new FormData();
-    formData.append("to", forwardRecipients.to);
-    formData.append("subject", originalEmail.subject);
-    formData.append("originalBody", originalEmail.body);
+    formData.append("to", forwardRecipients.to.trim());
+    formData.append("cc", forwardRecipients.cc.trim());
+    formData.append("subject", latestEmail.subject);
+    formData.append("originalBody", latestEmail.body);
     formData.append("forwardMessage", forwardContent);
-    formData.append("originalFrom", originalEmail.from);
-    formData.append("originalDate", originalEmail.date);
-    formData.append("originalTo", originalEmail.to);
+    formData.append("originalFrom", latestEmail.from);
+    formData.append("originalDate", latestEmail.date);
+    formData.append("originalTo", latestEmail.to);
+    formData.append("ticketId", id || "");
 
-    // Append attachments (if any selected)
     if (attachments && attachments.length > 0) {
       for (let i = 0; i < attachments.length; i++) {
         formData.append("attachments", attachments[i]);
       }
     }
+
+    // Debug: log what we're sending
+    console.log("Forward payload:", {
+      to: forwardRecipients.to.trim(),
+      subject: latestEmail.subject,
+      ticketId: id,
+    });
 
     try {
       const res = await fetch(
@@ -400,22 +413,23 @@ const TicketDetail: React.FC = () => {
       );
 
       if (!res.ok) {
-        console.error("Forward failed:", res.statusText);
-        alert("Failed to forward email.");
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Forward failed:", res.status, errorData);
+        toast.error(errorData.error || `Failed to forward email (${res.status}).`);
         return;
       }
 
       const data = await res.json();
       console.log("Email forwarded:", data);
-      alert("Email forwarded successfully!");
+      toast.success("Email forwarded successfully!");
 
-      // Reset states
       setForwardContent("");
       setAttachments([]);
       setIsForwarding(false);
+      setForwardRecipients({ to: "", cc: "" });
     } catch (err) {
       console.error("Error forwarding email:", err);
-      alert("An error occurred while forwarding the email.");
+      toast.error("An error occurred while forwarding the email.");
     }
   };
 
@@ -431,10 +445,54 @@ const TicketDetail: React.FC = () => {
     setIsForwarding(!isForwarding);
   };
 
+  // Derived values — computed at render time, not stored as stale consts
+  const latestEmail = emails.length > 0 ? emails[emails.length - 1] : null;
+  const firstEmail = emails.length > 0 ? emails[0] : null;
+
+  // Use subject from ticket details, fallback to first email's subject
+  const displaySubject = subject || firstEmail?.subject || "Loading ticket...";
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
-      <main className={`flex-1 p-4 ${mainMarginClass} h-auto pt-20 flex`}>
+      <main className={`flex-1 p-4 ${mainMarginClass} h-auto pt-20 flex flex-nowrap overflow-x-hidden`}>
         <div className="flex-1 flex flex-col space-y-4 pr-4">
+          {/* Ticket Header */}
+          <div className="mb-2 px-1">
+            <h1 className="flex items-center gap-2 flex-wrap">
+              <span className={`font-semibold tracking-wide ${isDark ? 'text-blue-200/90' : 'text-blue-700'}`} style={{ fontSize: '13px' }}>
+                #{id}
+              </span>
+              <span className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`} style={{ fontSize: '13px', wordBreak: 'break-word', display: 'inline-block', maxWidth: '100%' }}>
+                {displaySubject}
+              </span>
+            </h1>
+          </div>
+
+          {/* Search Filtration System */}
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 flex items-center gap-4">
+            <div className="relative flex-1">
+              <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+              <input
+                type="text"
+                placeholder="Search in conversation..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all dark:text-white"
+              />
+            </div>
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700/50" />
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest px-2">
+              <span className="text-blue-500">
+                {emails.filter(e => 
+                  e.subject.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                  e.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  e.from.toLowerCase().includes(searchTerm.toLowerCase())
+                ).length}
+              </span>
+              <span>Matches</span>
+            </div>
+          </div>
+
           {/* Action Buttons */}
           <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex space-x-2 overflow-x-auto">
             <button
@@ -482,6 +540,167 @@ const TicketDetail: React.FC = () => {
             </button>
           </div>
 
+          {/* Email Thread Area */}
+          <div className="space-y-6">
+            {loading ? (
+              <div className="text-center py-12 text-gray-500">Loading...</div>
+            ) : emails.length === 0 ? (
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No unread emails found.
+                </p>
+              </div>
+            ) : (
+              emails.filter((email) => {
+                  const searchLower = searchTerm.toLowerCase();
+                  return (
+                    email.subject.toLowerCase().includes(searchLower) ||
+                    email.body.toLowerCase().includes(searchLower) ||
+                    email.from.toLowerCase().includes(searchLower) ||
+                    email.to.toLowerCase().includes(searchLower)
+                  );
+                }).length === 0 && searchTerm !== "" ? (
+                  <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No emails match your search "{searchTerm}".
+                    </p>
+                  </div>
+                ) : (
+                  emails
+                    .filter((email) => {
+                      const searchLower = searchTerm.toLowerCase();
+                      return (
+                        email.subject.toLowerCase().includes(searchLower) ||
+                        email.body.toLowerCase().includes(searchLower) ||
+                        email.from.toLowerCase().includes(searchLower) ||
+                        email.to.toLowerCase().includes(searchLower)
+                      );
+                    })
+                    .map((email, index) => (
+                  <div
+                    key={index}
+                    className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden"
+                  >
+                    {/* Email Header Area */}
+                    <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-800/50">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">From</span>
+                            <span className="text-[14px] font-bold text-blue-600 dark:text-blue-400">
+                              {email.from}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">To</span>
+                            <span className="text-[14px] font-medium text-slate-600 dark:text-slate-300">
+                              {email.to}
+                            </span>
+                          </div>
+                          {email.cc && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">Cc</span>
+                              <span className="text-[14px] font-medium text-slate-500 dark:text-slate-400">
+                                {email.cc}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {email.status && email.status !== 'received' && (
+                            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border ${
+                              email.status === 'sent' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50' : 
+                              email.status === 'forwarded' ? 'bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800/50' :
+                              'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/50'
+                            }`}>
+                              {email.status}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] bg-slate-100 dark:bg-slate-900/50 px-4 py-1.5 rounded-full border border-slate-200/50 dark:border-slate-700/50 whitespace-nowrap">
+                            {email.date}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">Subj</span>
+                        <span className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                          {email.subject}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Email Body Content */}
+                    <div className="p-8">
+                      <div
+                        className="email-body text-[15px] text-slate-800 dark:text-slate-200 leading-relaxed max-w-none overflow-x-auto"
+                        dangerouslySetInnerHTML={{
+                          __html: email.body as string,
+                        }}
+                      />
+                    </div>
+
+                    {/* Attachments Section */}
+                    {email.attachments && email.attachments.length > 0 && (
+                      <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
+                        <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                          <FaPaperclip className="mr-2" /> Attachments (
+                          {email.attachments.length})
+                        </h4>
+
+                        <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {email.attachments.map((att, i) => {
+                            const isImage = att.mimeType?.startsWith("image/");
+
+                            return (
+                              <li
+                                key={i}
+                                className="flex flex-col items-center justify-center p-2 bg-white dark:bg-gray-800 rounded shadow text-sm"
+                              >
+                                {isImage ? (
+                                  <img
+                                    src={`http://localhost:5000${att.path}`}
+                                    alt={att.filename}
+                                    className="w-24 h-24 object-cover rounded mb-2 border border-gray-300 dark:border-gray-600"
+                                  />
+                                ) : (
+                                  <div className="flex flex-col items-center mb-2">
+                                    <FaFileAlt
+                                      size={32}
+                                      className="text-gray-500 dark:text-gray-300 mb-1"
+                                    />
+                                  </div>
+                                )}
+
+                                <p className="font-medium text-center break-all">
+                                  {att.filename}
+                                </p>
+                                {att.size && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {(att.size / 1024).toFixed(1)} KB
+                                  </p>
+                                )}
+
+                                <a
+                                  href={`http://localhost:5000/api/emails/download/${att.storedName}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-1 text-blue-600 dark:text-blue-400 text-xs hover:underline"
+                                >
+                                  Download
+                                </a>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )
+            )}
+          </div>
+
           {/* Reply Form */}
           {isReplying && (
             <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
@@ -503,7 +722,7 @@ const TicketDetail: React.FC = () => {
                         To
                       </h4>
                       <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {emails[0]?.from || "No recipient"}
+                        {emails[0]?.from || requesterEmail || "No recipient"}
                       </p>
                     </div>
                   </div>
@@ -652,7 +871,7 @@ const TicketDetail: React.FC = () => {
                       From
                     </h4>
                     <p className="text-base font-semibold text-gray-900 dark:text-white">
-                      {emails[0]?.from || "No recipient"}
+                      {emails[0]?.from || requesterEmail || "No recipient"}
                     </p>
                   </div>
                 </div>
@@ -829,38 +1048,66 @@ const TicketDetail: React.FC = () => {
               emails.map((email, index) => (
                 <div
                   key={index}
-                  className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
+                  className="mb-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden"
                 >
-                  <div className="flex items-center mb-2 text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-semibold mr-2">From:</span>
-                    <span className="text-blue-600 dark:text-blue-400">
-                      {email.from}
-                    </span>
-                    <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                      {email.date}
-                    </span>
-                  </div>
-
-                  <div className="mb-2 text-sm">
-                    <strong>To:</strong> {email.to}
-                  </div>
-
-                  {email.cc && (
-                    <div className="mb-2 text-sm">
-                      <strong>Cc:</strong> {email.cc}
+                  {/* Email Header Area */}
+                  <div className="p-6 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-gray-800/50">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">From</span>
+                          <span className="text-[14px] font-bold text-blue-600 dark:text-blue-400">
+                            {email.from}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">To</span>
+                          <span className="text-[14px] font-medium text-slate-600 dark:text-slate-300">
+                            {email.to}
+                          </span>
+                        </div>
+                        {email.cc && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">Cc</span>
+                            <span className="text-[14px] font-medium text-slate-500 dark:text-slate-400">
+                              {email.cc}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {email.status && email.status !== 'received' && (
+                          <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border ${
+                            email.status === 'sent' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50' : 
+                            email.status === 'forwarded' ? 'bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800/50' :
+                            'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/20 dark:text-slate-400 dark:border-slate-800/50'
+                          }`}>
+                            {email.status}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] bg-slate-100 dark:bg-slate-900/50 px-4 py-1.5 rounded-full border border-slate-200/50 dark:border-slate-700/50 whitespace-nowrap">
+                          {email.date}
+                        </span>
+                      </div>
                     </div>
-                  )}
 
-                  <div className="mb-2 text-sm">
-                    <strong>Subject:</strong> {email.subject}
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[0.75rem] font-bold text-slate-400 uppercase tracking-widest w-12">Subj</span>
+                      <span className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                        {email.subject}
+                      </span>
+                    </div>
                   </div>
 
-                  <div
-                    className="email-body text-gray-800 dark:text-gray-200 leading-relaxed"
-                    dangerouslySetInnerHTML={{
-                      __html: email.body as string,
-                    }}
-                  />
+                  {/* Email Body Content */}
+                  <div className="p-8">
+                    <div
+                      className="email-body text-[15px] text-slate-800 dark:text-slate-200 leading-relaxed max-w-none overflow-x-auto"
+                      dangerouslySetInnerHTML={{
+                        __html: email.body as string,
+                      }}
+                    />
+                  </div>
 
                   {/*Attachments*/}
                   {/* {email.attachments && email.attachments.length > 0 && (
@@ -972,6 +1219,26 @@ const TicketDetail: React.FC = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             By {ticketData.resolutionDueDate}
           </p>
+          
+          {/* Requester Info */}
+          <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-[0.75rem] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4">
+              Requester
+            </h3>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 border border-white/10">
+                {author ? author.trim().charAt(0).toUpperCase() : '?'}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <p className="text-[17px] font-black text-gray-900 dark:text-white tracking-tight truncate leading-tight">
+                  {author || 'Unknown'}
+                </p>
+                <p className="text-[13px] font-bold text-blue-500 dark:text-blue-400 truncate hover:text-blue-600 transition-colors cursor-pointer">
+                  {requesterEmail || 'No email available'}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
             PROPERTIES

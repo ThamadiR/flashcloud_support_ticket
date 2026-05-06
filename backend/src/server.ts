@@ -10,9 +10,9 @@ import { registerRoutes } from './routes/routes';
 import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+  api_key:    process.env.CLOUDINARY_API_KEY    || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '',
 });
 
 const jwtSecret = process.env.JWT_SECRET || 'super_secret_key_123';
@@ -31,13 +31,15 @@ let server: Server;
     await pool.query('SELECT 1');
     console.log('MySQL connection OK');
 
+    // ── Start server ────────────────────────────────────────────────────────
+    server = app.listen(PORT, () => {
+      console.log(`${NODE_ENV} server listening on http://localhost:${PORT}`);
+    });
+
     // ── Initial email sync ──────────────────────────────────────────────────
-    try {
-      await fetchAndSaveLatestEmails();
-      console.log('Initial email sync completed');
-    } catch (err) {
-      console.error('Initial email sync failed:', err);
-    }
+    fetchAndSaveLatestEmails()
+      .then(() => console.log('Initial email sync completed'))
+      .catch((err) => console.error('Initial email sync failed:', err));
 
     // ── Recurring email sync (every 60 seconds) ─────────────────────────────
     setInterval(async () => {
@@ -49,10 +51,7 @@ let server: Server;
       }
     }, 60_000);
 
-    // ── Start server ────────────────────────────────────────────────────────
-    server = app.listen(PORT, () => {
-      console.log(`${NODE_ENV} server listening on http://localhost:${PORT}`);
-    });
+    // End of bootstrap
 
   } catch (err) {
     console.error('Unable to connect to MySQL on startup:', err);

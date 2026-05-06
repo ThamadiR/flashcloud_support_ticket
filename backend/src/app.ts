@@ -1,4 +1,4 @@
-// Restarting to apply new .env values
+// Restarting to apply changes and resolve potential hangs
 import express from 'express';
 import cors from 'cors';
 import path from 'path';

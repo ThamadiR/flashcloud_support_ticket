@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
     <footer className="bg-white rounded-lg shadow flex items-center justify-center p-4 sm:p-6 xl:p-8 dark:bg-gray-800 antialiased">
       <div className="flex justify-center w-full">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-0 text-center">
-          &copy; 2025{' '}
+          &copy; 2026{' '}
           <a
             href="https://iphonik.com/"
             className="hover:underline"

@@ -48,8 +48,6 @@ const Header: React.FC = () => {
   //const [collapsed, setCollapsed] = useState(false);
   const { isDrawerOpen, setIsDrawerOpen } = useDrawer();
 
-  const [showReports, setShowReports] = useState(false);
-
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   const initials = `${user?.fname?.charAt(0) || ""}${user?.lname?.charAt(0) || ""
@@ -60,7 +58,7 @@ const Header: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/");
+    window.location.href = "/login";
   };
 
   useEffect(() => {
@@ -265,12 +263,12 @@ const Header: React.FC = () => {
                 aria-labelledby="dropdown-menu"
               >
                 <li>
-                  <a
-                    onClick={() => navigate("/profile")}
+                  <Link
+                    to="/profile"
                     className="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-400 dark:hover:text-white cursor-pointer"
                   >
                     My profile
-                  </a>
+                  </Link>
                 </li>
               </ul>
               <ul
@@ -311,9 +309,9 @@ const Header: React.FC = () => {
             <li>
               <Link
                 to="/dashboard"
-                className="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
+                className="flex items-center p-2 text-[0.875rem] font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
               >
-                <LayoutDashboard className="w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                <LayoutDashboard className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
                               ${!isDrawerOpen
@@ -329,9 +327,9 @@ const Header: React.FC = () => {
             <li>
               <Link
                 to="/tickets"
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
-                <Ticket className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                <Ticket className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
                               ${!isDrawerOpen
@@ -347,9 +345,9 @@ const Header: React.FC = () => {
             <li>
               <Link
                 to="/contacts"
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
-                <Users className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                <Users className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
                               ${!isDrawerOpen
@@ -365,9 +363,9 @@ const Header: React.FC = () => {
             <li>
               <Link
                 to="/companies"
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
-                <Building2 className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                <Building2 className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
                               ${!isDrawerOpen
@@ -383,9 +381,9 @@ const Header: React.FC = () => {
             <li>
               <Link
                 to="/tenants"
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
-                <Key className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                <Key className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
                               ${!isDrawerOpen
@@ -401,9 +399,9 @@ const Header: React.FC = () => {
             <li>
               <Link
                 to="/servers"
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
-                <Server className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                <Server className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300 
                               ${!isDrawerOpen
@@ -422,13 +420,12 @@ const Header: React.FC = () => {
 
           <ul className="pt-5 mt-5 space-y-2 border-t border-gray-200 dark:border-gray-700">
             <li className="relative">
-              <button
-                type="button"
-                onClick={() => setShowAdminDropdown(!showAdminDropdown)}
-                className="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+              <Link
+                to="/users"
+                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
               >
                 {/* Icon */}
-                <Settings className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                <Users className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
 
                 {/* Text */}
                 <span
@@ -443,7 +440,7 @@ const Header: React.FC = () => {
                 </span>
 
 
-              </button>
+              </Link>
 
               {/* Dropdown Items */}
               {isDrawerOpen ? (
@@ -540,6 +537,7 @@ const Header: React.FC = () => {
           </button>
         </div>
       </aside>
+
     </div>
   );
 };

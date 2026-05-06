@@ -466,7 +466,7 @@ function Contacts({ token }: { token: string }) {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        <span className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
                           {contact.firstName} {contact.lastName}
                         </span>
                       </td>
@@ -534,49 +534,31 @@ function Contacts({ token }: { token: string }) {
                 </select>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
-                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
-                  <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
-                  <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
-                </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
 
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                    disabled
+                    className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
                   >
-                    <ChevronLeft size={16} />
-                  </button>
-
-                  <div className="flex items-center gap-1">
-                    {[...Array(totalPages)].map((_, i) => {
-                      const pg = i + 1;
-                      if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
-                        if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500">...</span>;
-                        return null;
-                      }
-                      return (
-                        <button
-                          key={pg}
-                          onClick={() => setCurrentPage(pg)}
-                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
-                        >
-                          {pg}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                  >
-                    <ChevronRight size={16} />
+                    {currentPage}
                   </button>
                 </div>
+
+                <button
+                  onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
             </div>
           )}

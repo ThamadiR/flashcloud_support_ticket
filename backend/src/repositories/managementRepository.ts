@@ -73,10 +73,12 @@ export class ManagementRepository {
   // ─── User ────────────────────────────────────────────────────────────────
 
   async findRequesterById(id: number): Promise<UserRow | null> {
+    console.log(`[DEBUG] findRequesterById: searching for userId=${id}`);
     const [rows] = await pool.execute<UserRow[]>(
       'SELECT `userId` AS id, `userName` AS username, `Email` AS email, `role` FROM `Management` WHERE `userId` = ?',
       [id]
     );
+    console.log(`[DEBUG] findRequesterById: found ${rows.length} rows`);
     return rows[0] ?? null;
   }
 
@@ -90,9 +92,11 @@ export class ManagementRepository {
   // ─── Companies ───────────────────────────────────────────────────────────
 
   async listCompanies(): Promise<CompanyRow[]> {
+    console.log('[DEBUG] listCompanies: executing SELECT * FROM companyList');
     const [rows] = await pool.execute<CompanyRow[]>(
       'SELECT * FROM `companyList` ORDER BY `id` DESC'
     );
+    console.log(`[DEBUG] listCompanies: DB returned ${rows.length} rows`);
     return rows;
   }
 

@@ -27,7 +27,7 @@ type CompanyRecord = {
 
 export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIProps) {
   const { isDark } = useTheme();
-  const { isDrawerOpen } = useDrawer();
+  const { isDrawerOpen, setIsUserManagementOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const isSidebarMinimized = !isDrawerOpen;
   const navigate = useNavigate();
@@ -677,7 +677,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     : companies.find((company) => company.id === editingCompanyId) || null;
   const isEditingCompany = editingCompanyId !== null;
 
-  const actionTooltipClass = `action-tooltip pointer-events-none absolute -top-9 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-bold shadow-xl opacity-0 transition-all duration-150 ease-out peer-hover:opacity-100 peer-focus-visible:opacity-100 ${isDark
+  const actionTooltipClass = `action-tooltip pointer-events-none absolute -top-9 left-1/2 z-40 -translate-x-1/2 whitespace-nowrap rounded-md px-2.5 py-1 text-[0.75rem] font-bold shadow-xl opacity-0 transition-all duration-150 ease-out peer-hover:opacity-100 peer-focus-visible:opacity-100 ${isDark
     ? 'bg-slate-950 text-sky-200 border border-sky-500/30 shadow-sky-500/10'
     : 'bg-slate-900 text-slate-100 border border-slate-800'
     }`;
@@ -935,26 +935,24 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                 root: {
                                   base: `absolute top-12 left-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}`
                                 },
+                                header: {
+                                  base: "flex justify-between items-center mb-2 px-2",
+                                  title: "text-sm font-semibold text-gray-700 dark:text-gray-200",
+                                  selectors: {
+                                    button: {
+                                      base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1"
+                                    }
+                                  }
+                                },
                                 footer: {
                                   base: "hidden"
-                                }
-                              },
-                              header: {
-                                root: {
-                                  base: "flex justify-between items-center mb-2 px-2",
-                                  title: "text-sm font-semibold text-gray-700 dark:text-gray-200"
-                                },
-                                selectors: {
-                                  button: {
-                                    base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1"
-                                  }
                                 }
                               },
                               views: {
                                 days: {
                                   header: {
                                     base: "grid grid-cols-7 mb-1",
-                                    title: "text-[11px] font-medium text-gray-400 text-center"
+                                    title: "text-[0.75rem] font-medium text-gray-400 text-center"
                                   },
                                   items: {
                                     base: "grid grid-cols-7",
@@ -1002,26 +1000,24 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                 root: {
                                   base: `absolute top-12 right-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}`
                                 },
+                                header: {
+                                  base: "flex justify-between items-center mb-2 px-2",
+                                  title: "text-sm font-semibold text-gray-700 dark:text-gray-200",
+                                  selectors: {
+                                    button: {
+                                      base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1"
+                                    }
+                                  }
+                                },
                                 footer: {
                                   base: "hidden"
-                                }
-                              },
-                              header: {
-                                root: {
-                                  base: "flex justify-between items-center mb-2 px-2",
-                                  title: "text-sm font-semibold text-gray-700 dark:text-gray-200"
-                                },
-                                selectors: {
-                                  button: {
-                                    base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1"
-                                  }
                                 }
                               },
                               views: {
                                 days: {
                                   header: {
                                     base: "grid grid-cols-7 mb-1",
-                                    title: "text-[11px] font-medium text-gray-400 text-center"
+                                    title: "text-[0.75rem] font-medium text-gray-400 text-center"
                                   },
                                   items: {
                                     base: "grid grid-cols-7",
@@ -1044,7 +1040,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                     {/* Company Name */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
+                        <span className="text-[0.75rem] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
                         <button
                           onClick={() => setTempFilters(prev => ({ ...prev, companyName: '' }))}
                           className="text-[10px] text-blue-500 hover:underline"
@@ -1069,7 +1065,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                     {/* Tenants Count */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Tenants Count</span>
+                        <span className="text-[0.75rem] font-bold uppercase tracking-wider text-gray-400">Tenants Count</span>
                         <button
                           onClick={() => setTempFilters(prev => ({ ...prev, tenantCount: '' }))}
                           className="text-[10px] text-blue-500 hover:underline"
@@ -1120,6 +1116,18 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
             <button
               type="button"
+              onClick={() => navigate('/users')}
+              className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
+                ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400'
+                }`}
+              title="User Management"
+            >
+              <Users size={15} className="text-blue-500" /> User Management
+            </button>
+
+            <button
+              type="button"
               onClick={openAddCompanyModal}
               className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
                 ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
@@ -1128,7 +1136,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
               title="Add"
               aria-label="Add"
             >
-              <Plus size={15} /> Add
+              <Plus size={15} className="text-emerald-500" /> Add
             </button>
 
             <button
@@ -1179,7 +1187,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('id', 'asc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'asc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'asc'
                               ? isDark
                                 ? 'bg-blue-500/20 text-blue-300'
                                 : 'bg-blue-100 text-blue-700'
@@ -1193,7 +1201,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('id', 'desc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'desc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'desc'
                               ? isDark
                                 ? 'bg-blue-500/20 text-blue-300'
                                 : 'bg-blue-100 text-blue-700'
@@ -1209,7 +1217,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                       )}
                     </div>
                   </th>
-                  <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                  <th className={`px-6 py-3 text-[0.75rem] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                     <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
                       <span>name</span>
                       <button
@@ -1233,7 +1241,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('name', 'asc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'asc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'asc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1243,7 +1251,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('name', 'desc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'desc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'name' && sortOrder === 'desc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1255,7 +1263,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                       )}
                     </div>
                   </th>
-                  <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                  <th className={`px-6 py-3 text-[0.75rem] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                     <div className="relative inline-flex items-center gap-2" ref={emailSortMenuRef}>
                       <span>email</span>
                       <button
@@ -1279,7 +1287,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('email', 'asc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'email' && sortOrder === 'asc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'email' && sortOrder === 'asc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1289,7 +1297,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('email', 'desc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'email' && sortOrder === 'desc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'email' && sortOrder === 'desc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1301,7 +1309,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                       )}
                     </div>
                   </th>
-                  <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                  <th className={`px-6 py-3 text-[0.75rem] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                     <div className="relative inline-flex items-center gap-2" ref={tenantCountSortMenuRef}>
                       <span>tenant_count</span>
                       <button
@@ -1325,7 +1333,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('tenantCount', 'asc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'asc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'asc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1335,7 +1343,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('tenantCount', 'desc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'desc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'tenantCount' && sortOrder === 'desc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1347,7 +1355,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                       )}
                     </div>
                   </th>
-                  <th className={`px-6 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                  <th className={`px-6 py-3 text-[0.75rem] font-semibold tracking-[0.12em] uppercase ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                     <div className="relative inline-flex items-center gap-2" ref={createdAtSortMenuRef}>
                       <span>created_at</span>
                       <button
@@ -1371,7 +1379,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('createdAt', 'asc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'asc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'asc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1381,7 +1389,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button
                             type="button"
                             onClick={() => applyColumnSort('createdAt', 'desc')}
-                            className={`w-full text-left px-2 py-1.5 rounded-md text-[11px] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'desc'
+                            className={`w-full text-left px-2 py-1.5 rounded-md text-[0.75rem] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'desc'
                               ? isDark ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                               : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
                               }`}
@@ -1396,7 +1404,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
 
 
-                  <th className={`px-4 py-3 text-[11px] font-semibold tracking-[0.12em] uppercase text-center ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
+                  <th className={`px-4 py-3 text-[0.75rem] font-semibold tracking-[0.12em] uppercase text-center ${isDark ? 'text-blue-200/70' : 'text-blue-600'}`}>
                     Actions
                   </th>
                 </tr>
@@ -1429,7 +1437,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                         }`}
                       style={{ padding: isSidebarMinimized ? '16px 24px' : '16px 16px' }}
                     >
-                      <span className={`font-semibold tracking-[0.01em] ${isDark ? 'text-gray-100' : 'text-gray-900'}`} style={{ fontSize: isSidebarMinimized ? '13px' : '13px' }}>
+                      <span className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`} style={{ fontSize: isSidebarMinimized ? '13px' : '13px' }}>
                         {company.name}
                       </span>
                     </td>
@@ -1552,7 +1560,23 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
                 {!loadingCompanies && pagedCompanies.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-gray-500 text-sm">No companies found in companyList table.</td>
+                    <td colSpan={8} className="text-center py-20">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className={`p-5 rounded-3xl ${isDark ? 'bg-slate-900/50 border border-slate-800' : 'bg-slate-50 border border-slate-100'}`}>
+                          <Search size={32} className={`${isDark ? 'text-slate-600' : 'text-slate-300'}`} />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className={`text-base font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            {searchTerm ? 'No matching results found' : 'No companies in record'}
+                          </h3>
+                          <p className={`text-sm max-w-xs mx-auto ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            {searchTerm 
+                              ? `We couldn't find any companies matching "${searchTerm}". Try adjusting your filters.`
+                              : 'There are currently no companies listed in the system.'}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -1562,7 +1586,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
         <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
           <div className="flex items-center gap-3">
-            <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+            <span className={`text-[0.75rem] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
             <select
               value={rowsPerPage}
               onChange={(e) => {
@@ -1577,49 +1601,31 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
-              <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
-              <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
-              <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
-            </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+            >
+              <ChevronLeft size={16} />
+            </button>
 
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                disabled
+                className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
               >
-                <ChevronLeft size={16} />
-              </button>
-
-              <div className="flex items-center gap-1">
-                {[...Array(totalPages)].map((_, i) => {
-                  const pg = i + 1;
-                  if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
-                    if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
-                    return null;
-                  }
-                  return (
-                    <button
-                      key={pg}
-                      onClick={() => setCurrentPage(pg)}
-                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
-                    >
-                      {pg}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages || totalPages === 0}
-                className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-              >
-                <ChevronRight size={16} />
+                {currentPage}
               </button>
             </div>
+
+            <button
+              onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -1676,7 +1682,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
             ) : (
               <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
                 <table className="min-w-full divide-y divide-white/10 text-left">
-                  <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                  <thead className="bg-black/20 text-[0.75rem] uppercase tracking-[0.24em] text-slate-400">
                     <tr>
                       <th className="px-5 py-4 font-semibold">
                         <div className="relative inline-flex items-center gap-2">
@@ -1684,8 +1690,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalServerIpSortMenuOpen(!isModalServerIpSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalServerIpSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('asc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('desc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('asc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setServerSortBy('ipAddress'); setServerSortOrder('desc'); setIsModalServerIpSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'ipAddress' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1696,8 +1702,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalServerLabelSortMenuOpen(!isModalServerLabelSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalServerLabelSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('asc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'label' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('desc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'label' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('asc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'label' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setServerSortBy('label'); setServerSortOrder('desc'); setIsModalServerLabelSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'label' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1708,8 +1714,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalServerTenantCountSortMenuOpen(!isModalServerTenantCountSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalServerTenantCountSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('asc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('desc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('asc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setServerSortBy('tenantCount'); setServerSortOrder('desc'); setIsModalServerTenantCountSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'tenantCount' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1720,8 +1726,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalServerCreatedAtSortMenuOpen(!isModalServerCreatedAtSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalServerCreatedAtSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('asc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('desc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('asc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setServerSortBy('createdAt'); setServerSortOrder('desc'); setIsModalServerCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${serverSortBy === 'createdAt' && serverSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1774,7 +1780,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                             <td colSpan={4} className="px-5 py-4 border-t border-white/5">
                               <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
-                                  <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Show</span>
+                                  <span className="text-[0.75rem] font-bold uppercase tracking-widest text-slate-500">Show</span>
                                   <select
                                     value={modalServerRowsPerPage}
                                     onChange={(e) => {
@@ -1802,6 +1808,16 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                     >
                                       <ChevronLeft size={16} />
                                     </button>
+
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        disabled
+                                        className="w-10 h-10 rounded-xl text-sm font-black transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                                      >
+                                        {modalServerPage}
+                                      </button>
+                                    </div>
+
                                     <button
                                       onClick={() => setModalServerPage(p => Math.min(totalPages, p + 1))}
                                       disabled={modalServerPage >= totalPages || totalPages === 0}
@@ -1878,7 +1894,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
             ) : (
               <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
                 <table className="min-w-full divide-y divide-white/10 text-left">
-                  <thead className="bg-black/20 text-[11px] uppercase tracking-[0.24em] text-slate-400">
+                  <thead className="bg-black/20 text-[0.75rem] uppercase tracking-[0.24em] text-slate-400">
                     <tr>
                       <th className="px-5 py-4 font-semibold">
                         <div className="relative inline-flex items-center gap-2">
@@ -1886,8 +1902,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalTenantNameSortMenuOpen(!isModalTenantNameSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalTenantNameSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('asc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('desc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('asc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('name'); setTenantSortOrder('desc'); setIsModalTenantNameSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'name' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1898,8 +1914,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalTenantDescSortMenuOpen(!isModalTenantDescSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalTenantDescSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('asc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('desc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('asc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('description'); setTenantSortOrder('desc'); setIsModalTenantDescSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'description' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1910,8 +1926,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalTenantSipSortMenuOpen(!isModalTenantSipSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalTenantSipSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('asc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('desc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('asc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('sipConfigsCount'); setTenantSortOrder('desc'); setIsModalTenantSipSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'sipConfigsCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1922,8 +1938,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalTenantLicenseSortMenuOpen(!isModalTenantLicenseSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalTenantLicenseSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('asc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('desc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('asc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('licenseCount'); setTenantSortOrder('desc'); setIsModalTenantLicenseSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'licenseCount' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1934,8 +1950,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           <button type="button" onClick={() => setIsModalTenantCreatedAtSortMenuOpen(!isModalTenantCreatedAtSortMenuOpen)} className="rounded-md p-1 hover:bg-white/10"><ArrowUpDown size={13} /></button>
                           {isModalTenantCreatedAtSortMenuOpen && (
                             <div className="absolute left-0 top-full z-30 mt-2 min-w-[92px] rounded-lg border border-white/10 bg-[#111318] p-1 shadow-xl">
-                              <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('asc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
-                              <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('desc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[11px] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('asc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'asc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>asc</button>
+                              <button type="button" onClick={() => { setTenantSortBy('createdAt'); setTenantSortOrder('desc'); setIsModalTenantCreatedAtSortMenuOpen(false); }} className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase ${tenantSortBy === 'createdAt' && tenantSortOrder === 'desc' ? 'bg-blue-500/20 text-blue-300' : 'text-gray-300 hover:bg-white/5'}`}>dsc</button>
                             </div>
                           )}
                         </div>
@@ -1991,7 +2007,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                             <td colSpan={5} className="px-5 py-4 border-t border-white/5">
                               <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
-                                  <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Show</span>
+                                  <span className="text-[0.75rem] font-bold uppercase tracking-widest text-slate-500">Show</span>
                                   <select
                                     value={modalTenantRowsPerPage}
                                     onChange={(e) => {
@@ -2007,34 +2023,41 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <div className="flex items-center gap-1 mr-4 px-3 py-1 rounded-full border border-white/5 bg-white/5">
-                                    <span className="text-[10px] font-bold text-slate-400">Page</span>
-                                    <span className="text-xs font-black text-cyan-400">{modalTenantPage}</span>
-                                    <span className="text-[10px] font-bold text-slate-500">of {totalPages || 1}</span>
-                                  </div>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => setModalTenantPage(p => Math.max(1, p - 1))}
+                                    disabled={modalTenantPage === 1}
+                                    className={`p-2 rounded-xl transition-all ${modalTenantPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                  >
+                                    <ChevronLeft size={16} />
+                                  </button>
+
                                   <div className="flex items-center gap-1">
                                     <button
-                                      onClick={() => setModalTenantPage(p => Math.max(1, p - 1))}
-                                      disabled={modalTenantPage === 1}
-                                      className={`p-2 rounded-xl transition-all ${modalTenantPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                      disabled
+                                      className="w-10 h-10 rounded-xl text-sm font-black transition-all bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
                                     >
-                                      <ChevronLeft size={16} />
-                                    </button>
-                                    <button
-                                      onClick={() => setModalTenantPage(p => Math.min(totalPages, p + 1))}
-                                      disabled={modalTenantPage >= totalPages || totalPages === 0}
-                                      className={`p-2 rounded-xl transition-all ${modalTenantPage >= totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
-                                    >
-                                      <ChevronRight size={16} />
+                                      {modalTenantPage}
                                     </button>
                                   </div>
+
+                                  <button
+                                    onClick={() => setModalTenantPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={modalTenantPage >= totalPages || totalPages === 0}
+                                    className={`p-2 rounded-xl transition-all ${modalTenantPage >= totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white/10 text-slate-400 hover:text-cyan-400'}`}
+                                  >
+                                    <ChevronRight size={16} />
+                                  </button>
                                 </div>
                               </div>
-                            </td>
-                          </tr>
-                        </>
-                      );
-                    })()}
-                  </tbody>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </>
+                  );
+                })()}
+              </tbody>
 
                 </table>
               </div>
@@ -2070,7 +2093,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
             <form className="space-y-4" onSubmit={handleCompanySubmit}>
               {!isEditingCompany && (
                 <div className={`mb-5 rounded-xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
-                  <div className="flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.2em]">
+                  <div className="flex items-center justify-between gap-2 text-[0.75rem] font-semibold uppercase tracking-[0.2em]">
                     <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Step {companyWizardStep} of {addCompanyWizardSteps.length}</span>
                     <span className={isDark ? 'text-blue-200' : 'text-blue-700'}>{addCompanyWizardSteps[companyWizardStep - 1]?.title}</span>
                   </div>
@@ -2093,7 +2116,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
               )}
 
               {isEditingCompany && (
-                <p className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                <p className={`text-[0.75rem] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                   Edit company details and tenant count below.
                 </p>
               )}

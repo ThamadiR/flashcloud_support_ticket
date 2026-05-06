@@ -92,7 +92,7 @@ function Dashboard() {
                   {loading ? "..." : summary.all}
                 </h5>
 
-                <p className="text-gray-600 dark:text-gray-400">All Tickets</p>
+                <p className="text-gray-600 dark:text-gray-400 text-[13px]">All Tickets</p>
               </div>
             </div>
             <Badge color="info" className="mt-4">
@@ -108,7 +108,7 @@ function Dashboard() {
                 <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {loading ? "..." : summary.pending}
                 </h5>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 text-[13px]">
                   Pending Tickets
                 </p>
               </div>
@@ -126,7 +126,7 @@ function Dashboard() {
                 <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
                   {loading ? "..." : summary.resolved}
                 </h5>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 text-[13px]">
                   Resolved Tickets
                 </p>
               </div>
@@ -148,19 +148,19 @@ function Dashboard() {
           {/* Ticket summary table */}
           <div className="overflow-x-auto no-scrollbar rounded-xl border border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 bg-white dark:bg-gray-900 shadow-sm">
 
-            <table className="w-full text-sm text-left text-gray-700 dark:text-gray-300">
+            <table className="w-full text-[13px] text-left text-gray-700 dark:text-gray-300">
               <thead className="bg-[#eeeeee] dark:bg-gray-800 rounded-t-xl">
                 <tr>
-                  <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
                     Group
                   </th>
-                  <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
                     All Tickets
                   </th>
-                  <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
                     Pending Tickets
                   </th>
-                  <th className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
                     Resolved Tickets
                   </th>
                 </tr>
@@ -190,7 +190,7 @@ function Dashboard() {
                       key={idx}
                       className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900"
                     >
-                      <td className="px-6 py-4 font-semibold">{group}</td>
+                      <td className="px-6 py-4 font-black tracking-tight">{group}</td>
                       <td className="px-6 py-4">{all}</td>
                       <td className="px-6 py-4 text-yellow-600 font-semibold">
                         {pending}
@@ -222,49 +222,31 @@ function Dashboard() {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center gap-1 mr-4 px-3 py-1 rounded-full border ${isDark ? 'border-white/5 bg-white/5' : 'border-gray-200 bg-white'}`}>
-                <span className={`text-[10px] font-bold ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>Page</span>
-                <span className={`text-xs font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{currentPage}</span>
-                <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>of {totalPages || 1}</span>
-              </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+              >
+                <ChevronLeft size={16} />
+              </button>
 
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                  disabled
+                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
                 >
-                  <ChevronLeft size={16} />
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {[...Array(totalPages)].map((_, i) => {
-                    const pg = i + 1;
-                    if (totalPages > 5 && pg !== 1 && pg !== totalPages && Math.abs(pg - currentPage) > 1) {
-                      if (pg === 2 || pg === totalPages - 1) return <span key={pg} className="px-1 text-slate-500 text-[10px]">...</span>;
-                      return null;
-                    }
-                    return (
-                      <button
-                        key={pg}
-                        onClick={() => setCurrentPage(pg)}
-                        className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${currentPage === pg ? (isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30') : (isDark ? 'text-slate-500 hover:bg-white/5 hover:text-slate-300' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600')}`}
-                      >
-                        {pg}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                >
-                  <ChevronRight size={16} />
+                  {currentPage}
                 </button>
               </div>
+
+              <button
+                onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+              >
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
 

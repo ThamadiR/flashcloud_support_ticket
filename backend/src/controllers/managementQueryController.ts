@@ -6,6 +6,7 @@ export class ManagementQueryController {
 
   listCompanies = async (req: any, res: any) => {
     try {
+      console.log(`[DEBUG] GET /api/companies hit by user ${req?.user?.id}`);
       const result = await this.managementService.listCompanies(req?.user?.id);
       return res.status(200).json(result);
     } catch (error: any) {

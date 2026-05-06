@@ -152,15 +152,6 @@ export const fetchAndSaveLatestEmails = () => {
                   ?.filter((a: any) => {
                     // Must have a filename to be considered an attachment
                     if (!a.filename) return false;
-
-                    // Exclude inline images (signatures, logos)
-                    if (
-                      a.contentDisposition === "inline" &&
-                      a.contentType?.startsWith("image/")
-                    ) {
-                      return false;
-                    }
-
                     return true;
                   })
                   .map((a: any) => {
