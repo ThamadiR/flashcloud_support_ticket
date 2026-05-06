@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import countryList from 'react-select-country-list';
 import Select from 'react-select';
+import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
   const { isDark } = useTheme();
@@ -45,13 +46,57 @@ const Profile: React.FC = () => {
 
   // Initialize with actual session data
   const [formData, setFormData] = useState({
-    firstName: storedUser?.fname || storedUser?.username || 'User',
-    lastName: storedUser?.lname || '',
+    firstName: storedUser?.firstName || storedUser?.userName?.split(' ')[0] || '',
+    lastName: storedUser?.lastName || storedUser?.userName?.split(' ')[1] || '',
     email: storedUser?.email || storedUser?.Email || '',
-    country: 'United States',
-    countryCode: 'US',
-    username: storedUser?.username || ''
+    username: storedUser?.username || storedUser?.userName || '',
+    country: storedUser?.country || 'United States',
+    countryCode: storedUser?.countryCode || 'US'
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/${storedUser.userId || storedUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update profile');
+      }
+
+      const result = await response.json();
+      
+      // Update local storage with new data
+      const updatedUser = {
+        ...storedUser,
+        userName: formData.username,
+        Email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        country: formData.country,
+        countryCode: formData.countryCode
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
@@ -72,17 +117,6 @@ const Profile: React.FC = () => {
     <div className={`transition-all duration-300 ${mainMarginClass} pt-20 pb-12 px-4 md:px-8`}>
       <div className={`max-w-3xl mx-auto rounded-3xl overflow-hidden shadow-2xl ${isDark ? 'bg-[#111318] border border-white/10' : 'bg-white border border-gray-200'}`}>
 
-        {/* Banner Section */}
-        <div className="relative h-48 md:h-56">
-          <img
-            src="/profile_banner_clouds_1778052124182.png"
-            alt="Banner"
-            className="w-full h-full object-cover"
-          />
-          <button className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-all">
-            <X size={20} />
-          </button>
-        </div>
 
         {/* Profile Info Overlay */}
         <div className="relative px-6 md:px-10 pb-8">
@@ -191,98 +225,99 @@ const Profile: React.FC = () => {
                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Verified 2 Jan, 2025</span>
               </div> */}
             </div>
-
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Country</label>
-              <div className="relative">
-                <Select
-                  options={options}
-                  value={options.find(opt => opt.label === formData.country)}
-                  onChange={(val: any) => {
-                    if (val) {
-                      setFormData({
-                        ...formData,
-                        country: val.label,
-                        countryCode: val.value
-                      });
-                    }
-                  }}
-                  placeholder="Select country..."
-                  classNamePrefix="react-select"
-                  styles={{
-                    control: (base) => ({
-                      ...base,
-                      backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : '#F9FAFB',
-                      borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
-                      borderRadius: '0.75rem',
-                      padding: '2px 8px',
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      color: isDark ? '#fff' : '#111827',
-                      boxShadow: 'none',
-                      '&:hover': {
-                        borderColor: isDark ? 'rgba(59,130,246,0.5)' : '#3B82F6',
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Country</label>
+                <div className="relative">
+                  <Select
+                    options={options}
+                    value={options.find(opt => opt.label === formData.country)}
+                    onChange={(val: any) => {
+                      if (val) {
+                        setFormData({ 
+                          ...formData, 
+                          country: val.label,
+                          countryCode: val.value
+                        });
                       }
-                    }),
-                    menu: (base) => ({
-                      ...base,
-                      backgroundColor: isDark ? '#1a1d23' : '#fff',
-                      border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E5E7EB',
-                      borderRadius: '0.75rem',
-                      overflow: 'hidden',
-                      zIndex: 50
-                    }),
-                    option: (base, state) => ({
-                      ...base,
-                      backgroundColor: state.isFocused
-                        ? (isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)')
-                        : 'transparent',
-                      color: isDark ? '#fff' : '#111827',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      '&:active': {
-                        backgroundColor: 'rgba(59,130,246,0.2)',
-                      }
-                    }),
-                    singleValue: (base) => ({
-                      ...base,
-                      color: isDark ? '#fff' : '#111827',
-                    }),
-                    input: (base) => ({
-                      ...base,
-                      color: isDark ? '#fff' : '#111827',
-                    }),
-                    placeholder: (base) => ({
-                      ...base,
-                      color: '#6B7280',
-                    })
-                  }}
-                  formatOptionLabel={(option: any) => (
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{getFlagEmoji(option.value)}</span>
-                      <span>{option.label}</span>
-                      <span className="ml-auto text-[10px] text-gray-500 font-bold uppercase tracking-widest">{option.value}</span>
-                    </div>
-                  )}
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 z-10">
-                  {/* <Globe size={16} /> */}
+                    }}
+                    placeholder="Select country..."
+                    classNamePrefix="react-select"
+                    styles={{
+                      control: (base) => ({
+                        ...base,
+                        backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : '#F9FAFB',
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
+                        borderRadius: '0.75rem',
+                        padding: '2px 8px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: isDark ? '#fff' : '#111827',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          borderColor: isDark ? 'rgba(59,130,246,0.5)' : '#3B82F6',
+                        }
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        backgroundColor: isDark ? '#1a1d23' : '#fff',
+                        border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E5E7EB',
+                        borderRadius: '0.75rem',
+                        overflow: 'hidden',
+                        zIndex: 50
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor: state.isFocused 
+                          ? (isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)') 
+                          : 'transparent',
+                        color: isDark ? '#fff' : '#111827',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        '&:active': {
+                          backgroundColor: 'rgba(59,130,246,0.2)',
+                        }
+                      }),
+                      singleValue: (base) => ({
+                        ...base,
+                        color: isDark ? '#fff' : '#111827',
+                      }),
+                      input: (base) => ({
+                        ...base,
+                        color: isDark ? '#fff' : '#111827',
+                      }),
+                      placeholder: (base) => ({
+                        ...base,
+                        color: '#6B7280',
+                      })
+                    }}
+                    formatOptionLabel={(option: any) => (
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{getFlagEmoji(option.value)}</span>
+                        <span>{option.label}</span>
+                        <span className="ml-auto text-[10px] text-gray-500 font-bold uppercase tracking-widest">{option.value}</span>
+                      </div>
+                    )}
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 z-10">
+                    {/* <Globe size={16} /> */}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Username</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className={`w-full px-4 py-3 rounded-xl border text-[13px] font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-400'}`}
-                  placeholder="Enter username"
-                />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <CheckCircle2 size={16} className="text-blue-500 fill-blue-500/10" />
+              <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Username</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    className={`w-full px-4 py-3 rounded-xl border text-[13px] font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-400'}`}
+                    placeholder="Enter username"
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    <CheckCircle2 size={16} className="text-blue-500 fill-blue-500/10" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -293,8 +328,17 @@ const Profile: React.FC = () => {
             <button className={`px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
               Cancel
             </button>
-            <button className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-lg shadow-blue-600/20 transition-all">
-              Save changes
+            <button 
+              onClick={handleSave}
+              disabled={isLoading}
+              className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : 'Save changes'}
             </button>
           </div>
 
