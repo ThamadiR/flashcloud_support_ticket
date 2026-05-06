@@ -29,7 +29,7 @@ const Profile: React.FC = () => {
   const [formData, setFormData] = useState({
     firstName: storedUser?.fname || storedUser?.username || 'User',
     lastName: storedUser?.lname || '',
-    email: storedUser?.email || '',
+    email: storedUser?.email || storedUser?.Email || '',
     country: 'United States',
     username: storedUser?.username || ''
   });
@@ -117,7 +117,7 @@ const Profile: React.FC = () => {
               </span>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-              {formData.email}
+              {formData.email || storedUser?.email || storedUser?.Email || 'No email provided'}
             </p>
           </div>
 
