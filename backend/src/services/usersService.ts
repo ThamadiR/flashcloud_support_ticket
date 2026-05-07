@@ -256,9 +256,9 @@ export class UsersService {
       throw new ApiError(400, 'Please provide a valid email address');
     }
 
-    const phoneRegex = /^[0-9]{10}$/;
-    if (contactNo !== undefined && contactNo !== '' && !phoneRegex.test(String(contactNo).replace(/\D/g, ''))) {
-      throw new ApiError(400, 'Contact number must consist of exactly 10 digits');
+    const phoneRegex = /^(\+\d+)?\d{9}$/;
+    if (contactNo !== undefined && contactNo !== '' && !phoneRegex.test(String(contactNo).replace(/\s/g, ''))) {
+      throw new ApiError(400, 'Contact number must be exactly 9 digits (excluding country code)');
     }
     if (password !== undefined && String(password).trim().length > 0 && String(password).length < 6) {
       throw new ApiError(400, 'Password must be at least 6 characters long');

@@ -93,8 +93,8 @@ const Tickets: React.FC = () => {
       if (!cancelledRef.cancelled) {
         const processed = (data.items || []).map((ticket) => {
           const initial = ticket.author && ticket.author.trim().length > 0
-              ? ticket.author.trim().charAt(0).toUpperCase()
-              : "?";
+            ? ticket.author.trim().charAt(0).toUpperCase()
+            : "?";
           const bgColor = getColorForInitial(initial);
           return { ...ticket, initial, bgColor };
         });
@@ -125,7 +125,7 @@ const Tickets: React.FC = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0B1120] text-slate-300' : 'bg-gray-50 text-gray-700'}`}>
       <main className={`p-4 ${mainMarginClass} h-auto pt-20 space-y-6 transition-all duration-300`}>
-        
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -136,7 +136,7 @@ const Tickets: React.FC = () => {
               Overview of all active and resolved support cases
             </p>
           </div>
-          
+
           {loading && (
             <div className="flex items-center gap-2 text-xs font-medium animate-pulse text-cyan-400">
               <div className="w-2 h-2 rounded-full bg-cyan-400" />
@@ -165,11 +165,10 @@ const Tickets: React.FC = () => {
             <Link
               key={ticket.id}
               to={`/ticket/${ticket.id}`}
-              className={`group block relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
-                isDark 
-                  ? 'bg-white/5 border-white/10 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10' 
+              className={`group block relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${isDark
+                  ? 'bg-white/5 border-white/10 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10'
                   : 'bg-white border-gray-200 hover:border-cyan-400 hover:shadow-xl'
-              }`}
+                }`}
             >
               <div className="p-5 flex items-center gap-5">
                 {/* Avatar */}
@@ -184,11 +183,11 @@ const Tickets: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      ticket.status.toLowerCase() === 'open' 
+                        (ticket.status?.toLowerCase() ?? '') === 'open'
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         : 'bg-slate-500/10 text-slate-400 border border-white/10'
-                    }`}>
-                      {ticket.status}
+                      }`}>
+                      {ticket.status ?? '—'}
                     </span>
                     <h3 className={`text-base font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {ticket.subject} <span className="opacity-30 font-normal ml-1">#{ticket.id}</span>
@@ -214,17 +213,16 @@ const Tickets: React.FC = () => {
                 {/* Priority & State */}
                 <div className="hidden md:flex flex-col items-end gap-2 shrink-0">
                   <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                    ticket.priority.toLowerCase() === 'urgent' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                    ticket.priority.toLowerCase() === 'high' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                    ticket.priority.toLowerCase() === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                    'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  }`}>
-                    {ticket.priority}
+                      (ticket.priority?.toLowerCase() ?? '') === 'urgent' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                      (ticket.priority?.toLowerCase() ?? '') === 'high' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                      (ticket.priority?.toLowerCase() ?? '') === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                      'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                    }`}>
+                    {ticket.priority ?? '—'}
                   </div>
-                  <div 
-                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1 px-2 rounded-lg transition-all ${
-                      isDark ? 'bg-white/5 text-slate-400 group-hover:text-white group-hover:bg-white/10' : 'bg-gray-100 text-gray-500 group-hover:text-gray-900 group-hover:bg-gray-200'
-                    }`}
+                  <div
+                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1 px-2 rounded-lg transition-all ${isDark ? 'bg-white/5 text-slate-400 group-hover:text-white group-hover:bg-white/10' : 'bg-gray-100 text-gray-500 group-hover:text-gray-900 group-hover:bg-gray-200'
+                      }`}
                   >
                     {ticket.state}
                     <ChevronRight className="w-3.5 h-3.5" />

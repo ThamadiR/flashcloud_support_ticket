@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import pool from './src/config/db';
-import cloudinary from './cloudinary';
+import cloudinary from './src/config/cloudinary';
 import { registerRoutes } from './src/routes/routes';
 
 const app = express();

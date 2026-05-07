@@ -191,29 +191,33 @@ function Dashboard() {
                     </td>
                   </tr>
                 ) : (
-                  pagedGroupData.map(({ group, all, pending, resolved }, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900"
-                    >
-                      <td className="px-6 py-4 font-black tracking-tight">{group}</td>
-                      <td className="px-6 py-4">
-                        <Link to="/tickets" className="hover:text-blue-500 hover:underline">
-                          {all}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 text-yellow-600 font-semibold">
-                        <Link to="/tickets?status=Pending" className="hover:underline">
-                          {pending}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 text-green-600 font-semibold">
-                        <Link to="/tickets?status=Resolved" className="hover:underline">
-                          {resolved}
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
+                  (pagedGroupData || []).map((item, idx) => {
+                    if (!item) return null;
+                    const { group, all, pending, resolved } = item;
+                    return (
+                      <tr
+                        key={idx}
+                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900"
+                      >
+                        <td className="px-6 py-4 font-black tracking-tight">{group}</td>
+                        <td className="px-6 py-4">
+                          <Link to="/tickets" className="hover:text-blue-500 hover:underline">
+                            {all}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 text-yellow-600 font-semibold">
+                          <Link to="/tickets?status=Pending" className="hover:underline">
+                            {pending}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 text-green-600 font-semibold">
+                          <Link to="/tickets?status=Resolved" className="hover:underline">
+                            {resolved}
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -14,14 +14,28 @@ async function main() {
   });
 
   try {
-    const tables = ['servers', 'tenants', 'sip_configs'];
+    const tables = ['companyList', 'servers', 'tenants', 'sip_configs'];
     for (const table of tables) {
-      console.log(`Fixing table: ${table}`);
-      // Delete any row with ID 0 first
-      await connection.query(`DELETE FROM \`${table}\` WHERE id = 0`);
-      // Add AUTO_INCREMENT
-      await connection.query(`ALTER TABLE \`${table}\` MODIFY COLUMN id INT AUTO_INCREMENT`);
-      console.log(`AUTO_INCREMENT added to ${table}.id`);
+      console.log(`Standardizing table: ${table}`);
+      
+      // Update existing NULL created_at to current time
+      await connection.query(`UPDATE \`${table}\` SET created_at = NOW() WHERE created_at IS NULL OR created_at = ''`);
+      
+      // Modify column to be DATETIME and NOT NULL with DEFAULT CURRENT_TIMESTAMP
+      // We use MODIFY because the column already exists
+      try {
+        await connection.query(`ALTER TABLE \`${table}\` MODIFY COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`);
+        console.log(`Column created_at standardized for ${table}`);
+      } catch (err: any) {
+        console.error(`Error standardizing ${table}:`, err.message);
+        // If it fails because it's a varchar, we might need to convert it first
+        if (err.message.includes('Incorrect datetime value')) {
+             console.log(`Attempting conversion for ${table}...`);
+             await connection.query(`ALTER TABLE \`${table}\` MODIFY COLUMN created_at VARCHAR(255)`);
+             await connection.query(`UPDATE \`${table}\` SET created_at = NOW() WHERE created_at NOT REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}'`);
+             await connection.query(`ALTER TABLE \`${table}\` MODIFY COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP`);
+        }
+      }
     }
   } finally {
     await connection.end();

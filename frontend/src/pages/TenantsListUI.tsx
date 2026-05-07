@@ -548,7 +548,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
 
 
                                 value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
-                                onSelectedDateChanged={(date: Date | null) => {
+                                onChange={(date: Date | null) => {
                                   if (date) {
 
                                     const yyyy = date.getFullYear();
@@ -576,7 +576,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
 
 
                                 value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
-                                onSelectedDateChanged={(date: Date | null) => {
+                                onChange={(date: Date | null) => {
                                   if (date) {
 
                                     const yyyy = date.getFullYear();
@@ -994,7 +994,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
           </div>
 
       {isAddTenantModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[15vh] backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>

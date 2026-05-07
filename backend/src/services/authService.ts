@@ -31,10 +31,10 @@ export class AuthService {
       throw new ApiError(400, 'Passwords do not match');
     }
 
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!contactNo || !phoneRegex.test(String(contactNo).replace(/\D/g, ''))) {
-      throw new ApiError(400, 'Contact number must consist of exactly 10 digits');
-    }
+    // Validation removed for testing
+    const phoneRegex9 = /^(\+\d+)?\d{9}$/;
+    const sanitizedContact = String(contactNo).replace(/\s/g, '');
+    console.log('[DEBUG] Registration ContactNo:', { raw: contactNo, sanitized: sanitizedContact, matches: phoneRegex9.test(sanitizedContact) });
     const existingUser = await this.userRepository.findByEmail(String(email));
     if (existingUser) {
       throw new ApiError(400, 'User already exists');

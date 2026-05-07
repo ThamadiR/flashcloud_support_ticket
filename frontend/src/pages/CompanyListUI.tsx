@@ -475,18 +475,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     return Object.keys(errors).length === 0;
   };
 
-  const handleWizardNext = () => {
-    if (!validateCompanyWizardStep(companyWizardStep)) {
-      return;
-    }
 
-    setCompanyWizardStep((prev) => Math.min(prev + 1, addCompanyWizardSteps.length));
-  };
 
-  const handleWizardBack = () => {
-    setFormErrors({});
-    setCompanyWizardStep((prev) => Math.max(prev - 1, 1));
-  };
+
 
   const handleCompanySubmit = async (event?: any) => {
     if (event && event.preventDefault) event.preventDefault();
@@ -542,6 +533,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       }
 
       const parsedTenantCount = Number(companyForm.tenantCount);
+      console.log('Creating company...', { name: companyForm.name, email: companyForm.email, tenantCount: parsedTenantCount });
       const companyResponse = await fetch(`${API_BASE_URL}/api/companies`, {
         method: 'POST',
         headers: {
@@ -557,6 +549,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       });
 
       if (!companyResponse.ok) {
+        console.error('Company creation failed:', companyResponse.status);
         if (companyResponse.status === 401) {
           toast.error('Session expired. Please log in again.');
           onUnauthorized();
@@ -568,6 +561,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
         return;
       }
 
+      console.log('Company created successfully');
+
       const companyPayload = await companyResponse.json().catch(() => ({}));
       const createdCompanyId = Number(companyPayload?.company?.id);
       if (!Number.isFinite(createdCompanyId) || createdCompanyId <= 0) {
@@ -575,6 +570,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
         throw new Error('Created company id missing in response');
       }
 
+      console.log('Creating server for companyId:', createdCompanyId);
       const serverResponse = await fetch(`${API_BASE_URL}/api/servers`, {
         method: 'POST',
         headers: {
@@ -589,11 +585,15 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       });
 
       if (!serverResponse.ok) {
+        console.error('Server creation failed:', serverResponse.status);
         const message = await getApiErrorMessage(serverResponse, 'Company was created, but server creation failed');
         toast.error(message);
         return;
       }
 
+      console.log('Server created successfully');
+
+      console.log('Creating tenant for companyId:', createdCompanyId);
       const tenantResponse = await fetch(`${API_BASE_URL}/api/tenants`, {
         method: 'POST',
         headers: {
@@ -608,10 +608,13 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       });
 
       if (!tenantResponse.ok) {
+        console.error('Tenant creation failed:', tenantResponse.status);
         const message = await getApiErrorMessage(tenantResponse, 'Company and server were created, but tenant creation failed');
         toast.error(message);
         return;
       }
+
+      console.log('Tenant created successfully');
 
       const tenantPayload = await tenantResponse.json().catch(() => ({}));
       const createdTenantId = Number(tenantPayload?.tenant?.id);
@@ -624,6 +627,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       const sipChannelCountValue = companyForm.sipChannelCount.trim();
       const licenseCountValue = companyForm.licenseCount.trim();
 
+      console.log('Creating SIP config for tenantId:', createdTenantId);
       const sipConfigResponse = await fetch(`${API_BASE_URL}/api/sip-configs`, {
         method: 'POST',
         headers: {
@@ -641,17 +645,25 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       });
 
       if (!sipConfigResponse.ok) {
+        console.error('SIP config creation failed:', sipConfigResponse.status);
         const message = await getApiErrorMessage(sipConfigResponse, 'Company, server, and tenant were created, but SIP config creation failed');
         toast.error(message);
         return;
       }
 
+      console.log('All components created successfully');
+
       await fetchCompanies();
       closeCompanyModal();
       toast.success('Company, server, tenant, and SIP config created');
-    } catch (error) {
-      console.error('Save company error:', error);
-      toast.error('Unable to save company');
+    } catch (error: any) {
+      console.error('Save company full error object:', error);
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.error('Network error or CORS issue detected');
+        toast.error('Network error: Unable to reach the server. Please check your connection or CORS settings.');
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Unable to save company');
+      }
     } finally {
       setIsSavingCompany(false);
     }
@@ -926,7 +938,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
                             value={tempFilters.fromDate ? new Date(tempFilters.fromDate) : undefined}
 
-                            onSelectedDateChanged={(date: Date | null) => {
+                            onChange={(date: Date | null) => {
                               if (date) {
 
                                 const yyyy = date.getFullYear();
@@ -991,7 +1003,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
 
                             value={tempFilters.toDate ? new Date(tempFilters.toDate) : undefined}
-                            onSelectedDateChanged={(date: Date | null) => {
+                            onChange={(date: Date | null) => {
                               if (date) {
 
                                 const yyyy = date.getFullYear();
@@ -1647,7 +1659,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       </div>
 
       {activeServerCompanyId !== null && (
-        <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
           <div className={`w-full max-w-4xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(139,92,246,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(139,92,246,0.15)]'
@@ -1859,7 +1871,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       )}
 
       {activeTenantCompanyId !== null && (
-        <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
           <div className={`w-full max-w-4xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(34,197,94,0.15)]'
@@ -2083,7 +2095,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       )}
 
       {isCompanyModalOpen && (
-        <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
           <div className={`w-full max-w-3xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(59,130,246,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(59,130,246,0.15)]'
@@ -2114,7 +2126,13 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                     <div key={s.step} className="flex items-center flex-1 last:flex-none">
                       <button 
                         type="button"
-                        onClick={() => setCompanyWizardStep(s.step)}
+                        onClick={() => {
+                          if (s.step <= companyWizardStep || validateCompanyWizardStep(companyWizardStep)) {
+                            setCompanyWizardStep(s.step);
+                          } else {
+                            toast.error('Please complete the current step first');
+                          }
+                        }}
                         className="flex flex-col items-center relative group"
                       >
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 border-2 ${
@@ -2129,7 +2147,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                         <span className={`absolute -bottom-7 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider transition-colors ${
                           companyWizardStep === s.step ? 'text-blue-500' : 'text-slate-500'
                         }`}>
-                          {s.title.split(': ')[1]}
+                          {s.title}
                         </span>
                       </button>
                       {s.step < 4 && (
@@ -2241,9 +2259,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           autoFocus
                           value={companyForm.name}
                           onChange={(event) => updateCompanyForm('name', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.name
-                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${formErrors.name
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
                           }`}
                           placeholder="Company name"
                         />
@@ -2256,9 +2274,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           type="email"
                           value={companyForm.email}
                           onChange={(event) => updateCompanyForm('email', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.email
-                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${formErrors.email
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
                           }`}
                           placeholder="email@example.com"
                         />
@@ -2271,9 +2289,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           rows={2}
                           value={companyForm.description}
                           onChange={(event) => updateCompanyForm('description', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${formErrors.description
-                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all resize-none border ${formErrors.description
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
                           }`}
                           placeholder="Brief description"
                         />
@@ -2294,9 +2312,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           type="text"
                           value={companyForm.serverIpAddress}
                           onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.serverIpAddress
-                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${formErrors.serverIpAddress
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
                           }`}
                           placeholder="192.168.0.1"
                         />
@@ -2309,7 +2327,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           type="text"
                           value={companyForm.serverLabel}
                           onChange={(event) => setCompanyForm(prev => ({ ...prev, serverLabel: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`}
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900'}`}
                           placeholder="Primary server"
                         />
                       </div>
@@ -2330,9 +2348,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                             type="number"
                             value={companyForm.tenantCount}
                             onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantCount
-                              ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                              : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                            className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${formErrors.tenantCount
+                              ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                              : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
                             }`}
                             placeholder="0"
                           />
@@ -2345,10 +2363,10 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                             type="text"
                             value={companyForm.tenantName}
                             onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantName
-                              ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                              : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
-                            }`}
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${formErrors.tenantName
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                          }`}
                             placeholder="Default tenant"
                           />
                           {formErrors.tenantName && <p className="mt-1 text-xs text-red-400">{formErrors.tenantName}</p>}
@@ -2361,7 +2379,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           rows={1}
                           value={companyForm.tenantDescription}
                           onChange={(event) => setCompanyForm(prev => ({ ...prev, tenantDescription: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`}
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all resize-none border ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900'}`}
                           placeholder="Tenant notes"
                         />
                       </div>
@@ -2381,9 +2399,9 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           type="text"
                           value={companyForm.sipProvider}
                           onChange={(event) => updateCompanyForm('sipProvider', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.sipProvider
-                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                          className={`mt-1 w-full rounded-lg px-4 py-2.5 text-sm outline-none transition-all border ${formErrors.sipProvider
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-white' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
                           }`}
                           placeholder="Twilio"
                         />
@@ -2392,15 +2410,15 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                       <div className="grid grid-cols-3 gap-2">
                         <div>
                           <Label className="text-[10px]">SIPs</Label>
-                          <input type="number" value={companyForm.sipCount} onChange={(e) => updateCompanyForm('sipCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`} />
+                          <input type="number" value={companyForm.sipCount} onChange={(e) => updateCompanyForm('sipCount', e.target.value)} className={`w-full rounded-lg px-3 py-2 text-xs outline-none transition-all border ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'}`} />
                         </div>
                         <div>
                           <Label className="text-[10px]">Channels</Label>
-                          <input type="number" value={companyForm.sipChannelCount} onChange={(e) => updateCompanyForm('sipChannelCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`} />
+                          <input type="number" value={companyForm.sipChannelCount} onChange={(e) => updateCompanyForm('sipChannelCount', e.target.value)} className={`w-full rounded-lg px-3 py-2 text-xs outline-none transition-all border ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'}`} />
                         </div>
                         <div>
                           <Label className="text-[10px]">Licenses</Label>
-                          <input type="number" value={companyForm.licenseCount} onChange={(e) => updateCompanyForm('licenseCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`} />
+                          <input type="number" value={companyForm.licenseCount} onChange={(e) => updateCompanyForm('licenseCount', e.target.value)} className={`w-full rounded-lg px-3 py-2 text-xs outline-none transition-all border ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'}`} />
                         </div>
                       </div>
                     </div>
@@ -2462,7 +2480,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                         disabled={isSavingCompany}
                         className="rounded-xl bg-blue-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all disabled:opacity-50 ml-auto"
                       >
-                        {isSavingCompany ? 'Saving...' : 'Create Company Bundle'}
+                        {isSavingCompany ? 'Saving...' : 'Create Company'}
                       </button>
                     )}
                   </div>

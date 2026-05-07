@@ -105,9 +105,9 @@ const Profile: React.FC = () => {
         throw new Error("User ID not found. Please log in again.");
       }
 
-      const phoneRegex = /^[0-9]{10}$/;
-      if (formData.contactNo && !phoneRegex.test(formData.contactNo.trim().replace(/\D/g, ''))) {
-        throw new Error('Contact number must consist of exactly 10 digits');
+      const phoneRegex = /^(\+\d+)?\d{9}$/;
+      if (formData.contactNo && !phoneRegex.test(formData.contactNo.trim().replace(/\s/g, ''))) {
+        throw new Error('Contact number must be exactly 9 digits (excluding country code)');
       }
 
       if (formData.password && formData.password !== formData.confirmPassword) {

@@ -175,11 +175,13 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
           return;
         }
 
+        console.log('[DEBUG] Fetching subsections for sectionId:', sectionId);
         const response = await fetch(`${API_BASE_URL}/api/customization-subsections?sectionId=${sectionId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
+          console.error('[DEBUG] Fetch subsections failed:', response.status);
           if (response.status === 401) {
             toast.error('Session expired. Please log in again.');
             onUnauthorized();
@@ -188,13 +190,14 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
         }
 
         const payload = await response.json();
+        console.log('[DEBUG] Fetched subsections:', payload.subsections?.length || 0);
         setCreateSubsections((payload.subsections || []).map((subsection: any) => ({
           id: Number(subsection.id),
           sectionId: subsection.sectionId === null || subsection.sectionId === undefined ? null : Number(subsection.sectionId),
           name: String(subsection.name || ''),
         })));
       } catch (loadError) {
-        console.error('Load customization subsections error:', loadError);
+        console.error('[DEBUG] Load customization subsections error:', loadError);
       }
     };
 

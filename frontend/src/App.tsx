@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { DrawerProvider } from './context/DrawerContext';
+import { SearchProvider } from './context/SearchContext';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -62,63 +63,59 @@ export default function App() {
   return (
     <ThemeProvider>
       <DrawerProvider>
-        <BrowserRouter>
-          <Toaster position="top-right" reverseOrder={false} />
-        <Routes>
-          <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
-          
-          <Route path="/login" element={
-            !token ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />
-          } />
-          
-          <Route path="/register" element={
-            !token ? <Register /> : <Navigate to="/dashboard" />
-          } />
-          
-          {/* Authenticated Routes with Header and Footer */}
-          <Route element={<AuthenticatedLayout token={token} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+        <SearchProvider>
+          <BrowserRouter>
+            <Toaster position="top-right" reverseOrder={false} />
+            <Routes>
+              <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
 
-            <Route path="/companies" element={<CompanyListUI token={token!} onUnauthorized={handleLogout} />} />
+              <Route path="/login" element={
+                !token ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />
+              } />
 
-            <Route path="/customizations" element={
-              <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
-            } />
+              <Route path="/register" element={
+                !token ? <Register /> : <Navigate to="/dashboard" />
+              } />
 
-            <Route path="/sip-configs" element={
-              <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
-            } />
+              {/* Authenticated Routes with Header and Footer */}
+              <Route element={<AuthenticatedLayout token={token} />}>
+                <Route path="/dashboard" element={<Dashboard />} />
 
-            <Route path="/servers" element={
-              <ServersListUI token={token!} onUnauthorized={handleLogout} />
-            } />
+                <Route path="/companies" element={<CompanyListUI token={token!} onUnauthorized={handleLogout} />} />
 
-            <Route path="/tenants" element={
-              <TenantsListUI token={token!} onUnauthorized={handleLogout} />
-            } />
+                <Route path="/customizations" element={
+                  <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
+                } />
 
-            <Route path="/contacts" element={
-              <Contacts token={token!} />
-            } />
+                <Route path="/sip-configs" element={
+                  <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
+                } />
 
-            <Route path="/users" element={
-              <UserListUI token={token!} onUnauthorized={handleLogout} />
-            } />
+                <Route path="/servers" element={
+                  <ServersListUI token={token!} onUnauthorized={handleLogout} />
+                } />
 
-            <Route path="/tickets" element={
-              <Tickets />
-            } />
+                <Route path="/tenants" element={
+                  <TenantsListUI token={token!} onUnauthorized={handleLogout} />
+                } />
 
-            <Route path="/ticket/:id" element={
-              <TicketDetail />
-            } />
+                <Route path="/contacts" element={
+                  <Contacts token={token!} />
+                } />
 
-            <Route path="/profile" element={
-              <Profile />
-            } />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+                <Route path="/users" element={
+                  <UserListUI token={token!} onUnauthorized={handleLogout} />
+                } />
+
+                <Route path="/tickets" element={<Tickets />} />
+
+                <Route path="/ticket/:id" element={<TicketDetail />} />
+
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </SearchProvider>
       </DrawerProvider>
     </ThemeProvider>
   );

@@ -48,9 +48,17 @@ const Header: React.FC = () => {
   //const [collapsed, setCollapsed] = useState(false);
   const { isDrawerOpen, setIsDrawerOpen } = useDrawer();
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = (() => {
+    try {
+      const item = localStorage.getItem("user");
+      if (!item || item === "undefined") return {};
+      return JSON.parse(item);
+    } catch {
+      return {};
+    }
+  })();
 
-  const initials = `${user?.fname?.charAt(0) || ""}${user?.lname?.charAt(0) || ""
+  const initials = `${user?.firstName?.charAt(0) || user?.fname?.charAt(0) || ""}${user?.lastName?.charAt(0) || user?.lname?.charAt(0) || ""
     }`.toUpperCase();
 
   const navigate = useNavigate();
@@ -62,11 +70,17 @@ const Header: React.FC = () => {
   };
 
   useEffect(() => {
-    new Dropdown(
-      document.getElementById("dropdown-menu"),
-      document.getElementById("user-menu-button")
-    );
+    try {
+      new Dropdown(
+        document.getElementById("dropdown-menu"),
+        document.getElementById("user-menu-button")
+      );
+    } catch {
+      // Flowbite Dropdown elements not present on this page, safe to ignore
+    }
   }, []);
+
+  const profileImage = user?.img || user?.avatarUrl;
 
   return (
     <div className="antialiased bg-gray-50 dark:bg-gray-900">
@@ -227,36 +241,56 @@ const Header: React.FC = () => {
 
             <button
               type="button"
-              className="flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+              className="flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600 overflow-hidden"
               id="user-menu-button"
               data-dropdown-toggle="dropdown-menu"
             >
               <span className="sr-only">Open user menu</span>
-              {/*<img
-                className="w-8 h-8 rounded-full"
-                src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/michael-gough.png"
-                alt="user photo"
-              />*/}
-              <div
-                className="w-8 h-8 flex items-center justify-center 
-                  bg-indigo-600 text-white rounded-full 
-                  font-semibold text-sm"
-              >
-                {initials}
-              </div>
+              {profileImage ? (
+                <img
+                  className="w-8 h-8 rounded-full object-cover"
+                  src={profileImage}
+                  alt={`${user?.firstName || user?.fname} ${user?.lastName || user?.lname}`}
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 flex items-center justify-center 
+                    bg-indigo-600 text-white rounded-full 
+                    font-semibold text-sm"
+                >
+                  {initials}
+                </div>
+              )}
             </button>
 
             <div
-              className="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600 rounded-xl"
+              className="hidden z-50 my-4 w-64 text-base list-none bg-white rounded-2xl divide-y divide-gray-100 shadow-2xl dark:bg-[#111318] dark:divide-white/10 border dark:border-white/10"
               id="dropdown-menu"
             >
-              <div className="py-3 px-4">
-                <span className="block text-sm font-semibold text-gray-900 dark:text-white">
-                  {user?.fname} {user?.lname}
-                </span>
-                <span className="block text-sm text-gray-900 truncate dark:text-white">
-                  {user?.email}
-                </span>
+              <div className="py-4 px-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-shrink-0">
+                    {profileImage ? (
+                      <img
+                        className="w-10 h-10 rounded-full object-cover border-2 border-indigo-500/20"
+                        src={profileImage}
+                        alt="User"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-full font-bold text-sm shadow-lg shadow-indigo-500/20">
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+                  <div className="overflow-hidden">
+                    <span className="block text-sm font-bold text-gray-900 dark:text-white truncate">
+                      {user?.firstName || user?.fname} {user?.lastName || user?.lname}
+                    </span>
+                    <span className="block text-xs font-medium text-gray-500 dark:text-slate-400 truncate">
+                      {user?.email}
+                    </span>
+                  </div>
+                </div>
               </div>
               <ul
                 className="py-1 text-gray-700 dark:text-gray-300"

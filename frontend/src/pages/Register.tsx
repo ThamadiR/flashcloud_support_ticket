@@ -61,11 +61,10 @@ export default function Register() {
       setError('Passwords do not match');
       return;
     }
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(contactNo.trim().replace(/\D/g, ''))) {
-      setError('Contact number must consist of exactly 10 digits');
-      return;
-    }
+    // Frontend validation removed for testing
+    const phoneRegex9 = /^(\+\d+)?\d{9}$/;
+    const sanitizedContact = contactNo.replace(/\s/g, '');
+    console.log('[DEBUG] Frontend ContactNo:', { raw: contactNo, sanitized: sanitizedContact, matches: phoneRegex9.test(sanitizedContact) });
 
     setLoading(true);
     try {

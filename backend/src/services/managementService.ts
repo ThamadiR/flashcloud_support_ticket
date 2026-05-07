@@ -693,7 +693,14 @@ if (hasSectionId) {
     if (hasSubsectionId) {
       const subsection = await this.repository.findCustomizationSubsectionById(subsectionId);
       if (!subsection) throw new ApiError(404, 'Customization subsection not found');
-      if (hasSectionId && subsection.sectionId !== sectionId) {
+      if (hasSectionId && Number(subsection.section_id) !== Number(sectionId)) {
+        console.log('[DEBUG] Section validation failed:', {
+          subsection_id: subsection.id,
+          subsection_section_id: subsection.section_id,
+          subsection_section_id_type: typeof subsection.section_id,
+          provided_section_id: sectionId,
+          provided_section_id_type: typeof sectionId
+        });
         throw new ApiError(400, 'Selected subsection does not belong to selected section');
       }
     }
@@ -743,7 +750,12 @@ if (hasSectionId) {
     if (hasSubsectionId) {
       const subsection = await this.repository.findCustomizationSubsectionById(subsectionId);
       if (!subsection) throw new ApiError(404, 'Customization subsection not found');
-      if (hasSectionId && subsection.sectionId !== sectionId) {
+      if (hasSectionId && Number(subsection.section_id) !== Number(sectionId)) {
+        console.log('[DEBUG] Update Section validation failed:', {
+          subsection_id: subsection.id,
+          subsection_section_id: subsection.section_id,
+          provided_section_id: sectionId
+        });
         throw new ApiError(400, 'Selected subsection does not belong to selected section');
       }
     }
