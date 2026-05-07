@@ -99,12 +99,14 @@ export async function forwardEmail(
   attachments: any[] = [],
   originalFrom?: string,
   originalDate?: string,
-  originalTo?: string
+  originalTo?: string,
+  cc?: string
 ) {
   try {
-    const subject = originalSubject.startsWith("Fwd:")
-      ? originalSubject
-      : `Fwd: ${originalSubject}`;
+    const safeOriginalSubject = originalSubject || "";
+    const subject = safeOriginalSubject.startsWith("Fwd:")
+      ? safeOriginalSubject
+      : `Fwd: ${safeOriginalSubject}`;
 
     const combinedMessage = `
       <p>${forwardMessage || "Forwarded message:"}</p>
@@ -117,13 +119,20 @@ export async function forwardEmail(
       <blockquote>${originalBody}</blockquote>
     `;
 
-    const mailOptions = {
+    const mailOptions: any = {
       from: process.env.EMAIL_USER,
-      to,
       subject,
       html: combinedMessage,
       attachments,
     };
+    
+    if (to && to.trim() !== "") {
+      mailOptions.to = to;
+    }
+    
+    if (cc) {
+      mailOptions.cc = cc;
+    }
 
     const info = await transporter.sendMail(mailOptions);
     console.log("Forwarded email sent:", info.response);

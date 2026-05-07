@@ -111,6 +111,7 @@ export async function forwardEmailController(req: Request, res: Response) {
       originalFrom,
       originalDate,
       originalTo,
+      cc,
     } = req.body;
     const files =
       (req as Request & { files?: { originalname: string; path: string }[] })
@@ -129,11 +130,13 @@ export async function forwardEmailController(req: Request, res: Response) {
       attachments,
       originalFrom,
       originalDate,
-      originalTo
+      originalTo,
+      cc
     );
 
     // Try to link this forward action to a ticket by ID or subject
-    const cleanSubj = subject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
+    const safeSubject = subject || "";
+    const cleanSubj = safeSubject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
     const [ticketRows]: any = await pool.query(
       "SELECT id FROM tbl_ticket_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
       [Number(req.body.ticketId) || 0, cleanSubj, `%${cleanSubj}%`]
@@ -146,8 +149,8 @@ export async function forwardEmailController(req: Request, res: Response) {
         [
           ticketId,
           process.env.EMAIL_USER || "support@flashcloud.com",
-          to,
-          subject,
+          to || "",
+          safeSubject,
           forwardMessage,
         ]
       );

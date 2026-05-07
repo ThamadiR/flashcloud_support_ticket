@@ -375,12 +375,18 @@ const TicketDetail: React.FC = () => {
     // Build form data to include attachments
     const formData = new FormData();
     formData.append("to", forwardRecipients.to);
-    formData.append("subject", originalEmail.subject);
-    formData.append("originalBody", originalEmail.body);
+    formData.append("subject", originalEmail.subject || "");
+    formData.append("originalBody", originalEmail.body || "");
     formData.append("forwardMessage", forwardContent);
-    formData.append("originalFrom", originalEmail.from);
-    formData.append("originalDate", originalEmail.date);
-    formData.append("originalTo", originalEmail.to);
+    formData.append("originalFrom", originalEmail.from || "");
+    formData.append("originalDate", originalEmail.date || "");
+    formData.append("originalTo", originalEmail.to || "");
+    if (forwardRecipients.cc) {
+      formData.append("cc", forwardRecipients.cc);
+    }
+    if (ticketData.id) {
+      formData.append("ticketId", ticketData.id.toString());
+    }
 
     // Append attachments (if any selected)
     if (attachments && attachments.length > 0) {
