@@ -38,6 +38,7 @@ export const registerRoutes = (
   app.get('/api/users', authenticate, usersAdminController.listUsers);
   app.get('/api/users/export', authenticate, usersAdminController.exportUsers);
   app.patch('/api/users/:id/role', authenticate, usersAdminController.updateRole);
+  app.get('/api/users/:id', authenticate, usersProfileController.getUser);
   app.put('/api/users/:id', authenticate, usersProfileController.updateUser);
   app.delete('/api/users/:id', authenticate, usersAdminController.deleteUser);
   app.get('/api/users/assignees', usersAdminController.getAssignees);

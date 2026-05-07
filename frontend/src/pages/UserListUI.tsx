@@ -356,10 +356,10 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
                     </td>
                     <td className={`px-6 py-4 transition-colors ${isDark ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]` : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50`}`}>
                       <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-inner ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shadow-inner ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-700'}`}>
                           {item.username?.charAt(0).toUpperCase()}
                         </div>
-                        <span className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{item.username}</span>
+                        <span className={`font-black tracking-tight ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`} style={{ fontSize: '16px' }}>{item.username}</span>
                       </div>
                     </td>
                     <td className={`px-6 py-4 transition-colors ${isDark ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]` : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50`}`}>
@@ -469,7 +469,7 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
 
       {/* Add/Edit User Modals */}
       {(isAddUserModalOpen || isEditUserModalOpen) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/80 p-4 pt-[15vh] backdrop-blur-xl animate-in fade-in duration-300">
           <div className={`w-full max-w-lg rounded-[2.5rem] border p-8 shadow-2xl transform transition-all scale-in duration-300 ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">

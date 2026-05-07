@@ -1631,7 +1631,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       </div>
 
       {activeServerCompanyId !== null && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
           <div className={`w-full max-w-4xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(139,92,246,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(139,92,246,0.15)]'
@@ -1843,7 +1843,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       )}
 
       {activeTenantCompanyId !== null && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
           <div className={`w-full max-w-4xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(34,197,94,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(34,197,94,0.15)]'
@@ -2067,7 +2067,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       )}
 
       {isCompanyModalOpen && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
+        <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
           <div className={`w-full max-w-2xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(59,130,246,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(59,130,246,0.15)]'
@@ -2091,29 +2091,6 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
             </div>
 
             <form className="space-y-4" onSubmit={handleCompanySubmit}>
-              {!isEditingCompany && (
-                <div className={`mb-5 rounded-xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50'}`}>
-                  <div className="flex items-center justify-between gap-2 text-[0.75rem] font-semibold uppercase tracking-[0.2em]">
-                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>Step {companyWizardStep} of {addCompanyWizardSteps.length}</span>
-                    <span className={isDark ? 'text-blue-200' : 'text-blue-700'}>{addCompanyWizardSteps[companyWizardStep - 1]?.title}</span>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    {addCompanyWizardSteps.map((step) => (
-                      <div
-                        key={step.step}
-                        className={`h-2 flex-1 rounded-full transition-colors ${companyWizardStep >= step.step
-                          ? isDark
-                            ? 'bg-blue-500/80'
-                            : 'bg-blue-500'
-                          : isDark
-                            ? 'bg-white/10'
-                            : 'bg-gray-200'
-                          }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {isEditingCompany && (
                 <p className={`text-[0.75rem] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
@@ -2200,73 +2177,28 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                   </div>
                 </>
               ) : (
-                <>
-                  {companyWizardStep === 1 && (
-                    <div>
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div>
-                          <Label htmlFor="companyName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name *</Label>
-                          <input
-                            id="companyName"
-                            type="text"
-                            autoFocus
-                            value={companyForm.name}
-                            onChange={(event) => updateCompanyForm('name', event.target.value)}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.name
-                              ? isDark
-                                ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                                : 'border-red-500 bg-red-50 text-gray-900'
-                              : isDark
-                                ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                              }`}
-                            placeholder="Company name"
-                          />
-                          {formErrors.name && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.name}</p>}
-                        </div>
-
-                        <div>
-                          <Label htmlFor="companyTenantCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Count *</Label>
-                          <input
-                            id="companyTenantCount"
-                            type="number"
-                            value={companyForm.tenantCount}
-                            onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantCount
-                              ? isDark
-                                ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                                : 'border-red-500 bg-red-50 text-gray-900'
-                              : isDark
-                                ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                                : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                              }`}
-                            placeholder="0"
-                          />
-                          {formErrors.tenantCount && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantCount}</p>}
-                        </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label htmlFor="companyDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description *</Label>
-                        <textarea
-                          id="companyDescription"
-                          rows={4}
-                          value={companyForm.description}
-                          onChange={(event) => updateCompanyForm('description', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${formErrors.description
-                            ? isDark
-                              ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                              : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                            }`}
-                          placeholder="Company description"
+                <div className="grid gap-6 md:grid-cols-2">
+                  {/* Section 1: Company Details */}
+                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">Company Details</h5>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="companyName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name *</Label>
+                        <input
+                          id="companyName"
+                          type="text"
+                          autoFocus
+                          value={companyForm.name}
+                          onChange={(event) => updateCompanyForm('name', event.target.value)}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.name
+                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
+                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                          }`}
+                          placeholder="Company name"
                         />
-                        {formErrors.description && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.description}</p>}
+                        {formErrors.name && <p className="mt-1 text-xs text-red-400">{formErrors.name}</p>}
                       </div>
-
-                      <div className="mt-4">
+                      <div>
                         <Label htmlFor="companyEmail" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email *</Label>
                         <input
                           id="companyEmail"
@@ -2274,183 +2206,136 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           value={companyForm.email}
                           onChange={(event) => updateCompanyForm('email', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.email
-                            ? isDark
-                              ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                              : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                            }`}
-                          placeholder="company@example.com"
+                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
+                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                          }`}
+                          placeholder="email@example.com"
                         />
-                        {formErrors.email && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.email}</p>}
+                        {formErrors.email && <p className="mt-1 text-xs text-red-400">{formErrors.email}</p>}
+                      </div>
+                      <div>
+                        <Label htmlFor="companyDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Description *</Label>
+                        <textarea
+                          id="companyDescription"
+                          rows={2}
+                          value={companyForm.description}
+                          onChange={(event) => updateCompanyForm('description', event.target.value)}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${formErrors.description
+                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
+                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                          }`}
+                          placeholder="Brief description"
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
 
-                  {companyWizardStep === 2 && (
-                    <div>
-                      <Label htmlFor="serverIpAddress" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server IP Address *</Label>
-                      <input
-                        id="serverIpAddress"
-                        type="text"
-                        autoFocus
-                        value={companyForm.serverIpAddress}
-                        onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.serverIpAddress
-                          ? isDark
-                            ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                            : 'border-red-500 bg-red-50 text-gray-900'
-                          : isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
+                  {/* Section 2: Server Details */}
+                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Server Details</h5>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="serverIpAddress" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server IP *</Label>
+                        <input
+                          id="serverIpAddress"
+                          type="text"
+                          value={companyForm.serverIpAddress}
+                          onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.serverIpAddress
+                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
+                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
                           }`}
-                        placeholder="192.168.0.10"
-                      />
-                      {formErrors.serverIpAddress && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.serverIpAddress}</p>}
-
-                      <div className="mt-4">
+                          placeholder="192.168.0.1"
+                        />
+                      </div>
+                      <div>
                         <Label htmlFor="serverLabel" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server Label</Label>
                         <input
                           id="serverLabel"
                           type="text"
                           value={companyForm.serverLabel}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, serverLabel: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                            }`}
+                          onChange={(event) => setCompanyForm(prev => ({ ...prev, serverLabel: event.target.value }))}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
                           placeholder="Primary server"
                         />
                       </div>
                     </div>
-                  )}
+                  </div>
 
-                  {companyWizardStep === 3 && (
-                    <div>
-                      <Label htmlFor="tenantName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Name *</Label>
-                      <input
-                        id="tenantName"
-                        type="text"
-                        autoFocus
-                        value={companyForm.tenantName}
-                        onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
-                        className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantName
-                          ? isDark
-                            ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                            : 'border-red-500 bg-red-50 text-gray-900'
-                          : isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                          }`}
-                        placeholder="Tenant name"
-                      />
-                      {formErrors.tenantName && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.tenantName}</p>}
-
-                      <div className="mt-4">
+                  {/* Section 3: Tenant Details */}
+                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">Tenant Details</h5>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="companyTenantCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Count *</Label>
+                          <input
+                            id="companyTenantCount"
+                            type="number"
+                            value={companyForm.tenantCount}
+                            onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
+                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="tenantName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Name *</Label>
+                          <input
+                            id="tenantName"
+                            type="text"
+                            value={companyForm.tenantName}
+                            onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
+                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                            placeholder="Default tenant"
+                          />
+                        </div>
+                      </div>
+                      <div>
                         <Label htmlFor="tenantDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Description</Label>
                         <textarea
                           id="tenantDescription"
-                          rows={4}
+                          rows={1}
                           value={companyForm.tenantDescription}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, tenantDescription: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                            }`}
-                          placeholder="Tenant description"
+                          onChange={(event) => setCompanyForm(prev => ({ ...prev, tenantDescription: event.target.value }))}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                          placeholder="Tenant notes"
                         />
                       </div>
                     </div>
-                  )}
+                  </div>
 
-                  {companyWizardStep === 4 && (
-                    <div>
+                  {/* Section 4: SIP Details */}
+                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">SIP Details</h5>
+                    <div className="space-y-4">
                       <div>
                         <Label htmlFor="sipProvider" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Provider *</Label>
                         <input
                           id="sipProvider"
                           type="text"
-                          autoFocus
                           value={companyForm.sipProvider}
                           onChange={(event) => updateCompanyForm('sipProvider', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.sipProvider
-                            ? isDark
-                              ? 'border-red-500/50 bg-red-500/10 text-gray-200'
-                              : 'border-red-500 bg-red-50 text-gray-900'
-                            : isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                            }`}
-                          placeholder="Twilio SIP"
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                          placeholder="Twilio"
                         />
-                        {formErrors.sipProvider && <p className={`mt-1 text-xs ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formErrors.sipProvider}</p>}
                       </div>
-
-                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <Label htmlFor="sipCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Count</Label>
-                          <input
-                            id="sipCount"
-                            type="number"
-                            value={companyForm.sipCount}
-                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipCount: event.target.value }))}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                              }`}
-                            placeholder="0"
-                          />
+                          <Label className="text-[10px]">SIPs</Label>
+                          <input type="number" value={companyForm.sipCount} onChange={(e) => updateCompanyForm('sipCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`} />
                         </div>
-
                         <div>
-                          <Label htmlFor="sipChannelCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Channel Count</Label>
-                          <input
-                            id="sipChannelCount"
-                            type="number"
-                            value={companyForm.sipChannelCount}
-                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipChannelCount: event.target.value }))}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                              }`}
-                            placeholder="0"
-                          />
+                          <Label className="text-[10px]">Channels</Label>
+                          <input type="number" value={companyForm.sipChannelCount} onChange={(e) => updateCompanyForm('sipChannelCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`} />
                         </div>
-
                         <div>
-                          <Label htmlFor="licenseCount" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>License Count</Label>
-                          <input
-                            id="licenseCount"
-                            type="number"
-                            value={companyForm.licenseCount}
-                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, licenseCount: event.target.value }))}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark
-                              ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                              : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                              }`}
-                            placeholder="0"
-                          />
+                          <Label className="text-[10px]">Licenses</Label>
+                          <input type="number" value={companyForm.licenseCount} onChange={(e) => updateCompanyForm('licenseCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`} />
                         </div>
-                      </div>
-
-                      <div className="mt-4">
-                        <Label htmlFor="sipDescription" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>SIP Description</Label>
-                        <textarea
-                          id="sipDescription"
-                          rows={4}
-                          value={companyForm.sipDescription}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, sipDescription: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark
-                            ? 'bg-[#09090B] border-white/10 text-gray-200 focus:border-blue-500/50'
-                            : 'bg-white border-gray-300 text-gray-900 focus:border-blue-400'
-                            }`}
-                          placeholder="SIP config description"
-                        />
                       </div>
                     </div>
-                  )}
-                </>
+                  </div>
+                </div>
               )}
 
               <div className="pt-2 flex items-center justify-end gap-2">
@@ -2477,44 +2362,13 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                     Save Changes
                   </button>
                 ) : (
-                  <>
-                    <div className="flex items-center gap-4">
-                      {companyWizardStep > 1 && (
-                        <button
-                          type="button"
-                          onClick={handleWizardBack}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition text-3xl ${isDark
-                            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-gray-900'
-                            }`}
-                        >
-                          ←
-                        </button>
-                      )}
-                      {companyWizardStep < addCompanyWizardSteps.length ? (
-                        <button
-                          type="button"
-                          onClick={handleWizardNext}
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition text-3xl ${isDark
-                            ? 'bg-blue-600 text-blue-200 hover:bg-blue-500 hover:text-white'
-                            : 'bg-blue-400 text-white hover:bg-blue-500'
-                            }`}
-                        >
-                          →
-                        </button>
-                      ) : (
-                        <button
-                          type="submit"
-                          className={`px-4 py-2 rounded-lg text-sm font-semibold ${isDark
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-green-600 text-white hover:bg-green-700'
-                            }`}
-                        >
-                          Add Company Bundle
-                        </button>
-                      )}
-                    </div>
-                  </>
+                  <button
+                    type="submit"
+                    disabled={isSavingCompany}
+                    className="rounded-xl bg-blue-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all disabled:opacity-50"
+                  >
+                    {isSavingCompany ? 'Saving...' : 'Create Company Bundle'}
+                  </button>
                 )}
               </div>
             </form>

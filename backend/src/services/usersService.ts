@@ -16,7 +16,7 @@ export class UsersService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cloudinary: any,
-  ) {}
+  ) { }
 
   async getRequesterUser(requesterIdRaw: unknown) {
     const requesterId = Number(requesterIdRaw);
@@ -37,6 +37,31 @@ export class UsersService {
     return { ...requester, role: requesterRole };
   }
 
+  async getUserProfile(requesterIdRaw: unknown, targetUserIdRaw: unknown) {
+    const requester = await this.getRequesterUser(requesterIdRaw);
+    const targetUserId = parseInt(String(targetUserIdRaw), 10);
+    if (!Number.isFinite(targetUserId)) {
+      throw new ApiError(400, 'Invalid user id');
+    }
+
+    const requesterIsAdmin = normalizeUserRole(requester.role) === USER_ROLES.ADMIN;
+    if (!requesterIsAdmin && requester.id !== targetUserId) {
+      throw new ApiError(403, 'Forbidden: You can only view your own profile');
+    }
+
+    const userRaw = await this.userRepository.findByIdWithProfileFields(targetUserId) as any;
+    if (!userRaw) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    return {
+      ...userRaw,
+      role: resolveStoredRole(userRaw),
+      img: normalizeImageUrl(userRaw.img) || null,
+      avatarUrl: normalizeImageUrl(userRaw.img) || null,
+    };
+  }
+
   async listUsers(requesterIdRaw: unknown, query: any) {
     const requester = await this.getRequesterUser(requesterIdRaw);
     const requesterIsAdmin = normalizeUserRole(requester.role) === USER_ROLES.ADMIN;
@@ -48,11 +73,11 @@ export class UsersService {
       const selfUserRaw = await this.userRepository.findByIdWithProfileFields(requester.id) as any;
       const users = selfUserRaw
         ? [{
-            ...selfUserRaw,
-            role: resolveStoredRole(selfUserRaw),
-            img: normalizeImageUrl(selfUserRaw.img) || null,
-            avatarUrl: normalizeImageUrl(selfUserRaw.img) || null,
-          }]
+          ...selfUserRaw,
+          role: resolveStoredRole(selfUserRaw),
+          img: normalizeImageUrl(selfUserRaw.img) || null,
+          avatarUrl: normalizeImageUrl(selfUserRaw.img) || null,
+        }]
         : [];
 
       return {
@@ -219,16 +244,16 @@ export class UsersService {
       throw new ApiError(403, 'Forbidden: You can only edit your own profile');
     }
 
-    const { username, email, contactNo, password, img, avatarUrl } = payload || {};
+    const { username, email, contactNo, password, img, avatarUrl, firstName, lastName, country, countryCode } = payload || {};
     let resolvedImageUrl = normalizeImageUrl(img !== undefined ? img : avatarUrl);
 
     if (username && String(username).trim().length < 3) {
       throw new ApiError(400, 'Username must be at least 3 characters long');
     }
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (email && !emailRegex.test(String(email))) {
-      throw new ApiError(400, 'Please provide a valid @gmail.com address');
+      throw new ApiError(400, 'Please provide a valid email address');
     }
 
     const phoneRegex = /^\+[0-9]{1,4}[0-9]{9}$/;
@@ -240,23 +265,41 @@ export class UsersService {
       throw new ApiError(400, 'Password must be at least 6 characters long');
     }
 
+    console.log('Update user profile image path:', {
+      hasImg: !!img,
+      hasAvatarUrl: !!avatarUrl,
+      isLegacy: resolvedImageUrl ? isLegacyDataImage(resolvedImageUrl) : false,
+      resolvedImageUrl: resolvedImageUrl ? (resolvedImageUrl.startsWith('data:') ? 'data:image/...' : resolvedImageUrl) : 'null'
+    });
+
     if (resolvedImageUrl !== undefined && resolvedImageUrl !== null && isLegacyDataImage(resolvedImageUrl)) {
-      const uploaded = await this.cloudinary.uploader.upload(resolvedImageUrl, {
-        folder: 'user-management',
-        resource_type: 'image',
-      });
-      resolvedImageUrl = uploaded.secure_url;
+      console.log('Attempting Cloudinary upload...');
+      try {
+        const uploaded = await this.cloudinary.uploader.upload(resolvedImageUrl, {
+          folder: 'user-management',
+          resource_type: 'image',
+        });
+        console.log('Cloudinary upload success:', uploaded.secure_url);
+        resolvedImageUrl = uploaded.secure_url;
+      } catch (cloudinaryError: any) {
+        console.error('Cloudinary upload error:', cloudinaryError);
+        throw new ApiError(500, 'Image upload failed: ' + (cloudinaryError.message || 'Unknown error'));
+      }
     }
 
-    if (resolvedImageUrl !== undefined && resolvedImageUrl !== null && !isValidImageUrl(resolvedImageUrl)) {
-      throw new ApiError(400, 'Image URL must be a valid http/https URL');
+    if (resolvedImageUrl !== undefined && resolvedImageUrl !== null &&
+      !isValidImageUrl(resolvedImageUrl) &&
+      !isLegacyDataImage(resolvedImageUrl) &&
+      !resolvedImageUrl.startsWith('/')) {
+      throw new ApiError(400, 'Image URL must be a valid http/https URL, a base64 string, or a local default path');
     }
 
-    const updateData: any = {
-      username,
-      email,
-      contactNo: contactNo !== undefined ? String(contactNo).trim() : undefined,
-    };
+    const updateData: any = {};
+    if (username !== undefined) updateData.userName = username;
+    if (email !== undefined) updateData.email = email;
+    if (contactNo !== undefined) updateData.contactNo = String(contactNo).trim();
+    if (firstName !== undefined) updateData.name = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
 
     if (resolvedImageUrl !== undefined) {
       updateData.img = resolvedImageUrl;
@@ -284,6 +327,8 @@ export class UsersService {
         role: resolveStoredRole(updatedUser),
         img: normalizeImageUrl(updatedUser.img) || null,
         avatarUrl: normalizeImageUrl(updatedUser.img) || null,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
       },
     };
   }

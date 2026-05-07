@@ -205,23 +205,8 @@ function Dashboard() {
             </table>
           </div>
 
-          <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'} rounded-2xl mt-4`}>
-            <div className="flex items-center gap-3">
-              <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
-              >
-                {[5, 10, 20, 50].map(size => (
-                  <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
-                ))}
-              </select>
-            </div>
-
+          {/* Pagination
+          <div className="flex justify-center mt-8">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
@@ -248,8 +233,7 @@ function Dashboard() {
                 <ChevronRight size={16} />
               </button>
             </div>
-          </div>
-
+          </div> */}
         </main>
       </div>
   );

@@ -2,10 +2,10 @@ import pool from '../config/db';
 import { RowDataPacket } from 'mysql2';
 
 interface ManagementRow extends RowDataPacket {
-  userId:   number;
+  userId: number;
   userName: string;
-  Email:    string;
-  role:     string;
+  Email: string;
+  role: string;
 }
 
 export class UserRepository {
@@ -19,16 +19,24 @@ export class UserRepository {
   }
 
   async findById(id: number) {
-    const [rows] = await pool.execute<RowDataPacket[]>(
-      'SELECT `userId` AS id, `userName` AS username, `Email` AS email, `contactNo`, `role`, `img`, `password` FROM `Management` WHERE `userId` = ?',
+    const [rows]: any = await pool.execute(
+      'SELECT `userId` AS id, `userName` AS username, `email`, `contactNo`, `role`, `img`, `password`, `name` AS firstName, `lastName` FROM `Management` WHERE `userId` = ?',
       [id]
     );
-    return rows[0] ?? null;
+    return rows[0] || null;
+  }
+
+  async findByUsername(username: string) {
+    const [rows]: any = await pool.execute(
+      'SELECT `userId` AS id, `userName` AS username, `email`, `contactNo`, `role`, `img`, `password`, `name` AS firstName, `lastName` FROM `Management` WHERE `userName` = ?',
+      [username]
+    );
+    return rows[0] || null;
   }
 
   async findByIdWithBasicFields(id: number) {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT \`userId\` AS id, \`userName\` AS username, \`Email\` AS email, \`role\`
+      `SELECT \`userId\` AS id, \`userName\` AS username, \`email\`, \`role\`
        FROM \`Management\`
        WHERE \`userId\` = ?`,
       [id]
@@ -37,7 +45,7 @@ export class UserRepository {
   }
   async findByIdWithProfileFields(id: number) {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT \`userId\` AS id, \`userName\` AS username, \`Email\` AS email, \`contactNo\`, \`role\`, \`img\`
+      `SELECT \`userId\` AS id, \`userName\` AS username, \`email\`, \`contactNo\`, \`role\`, \`img\`, \`name\` AS firstName, \`lastName\`
        FROM \`Management\`
        WHERE \`userId\` = ?`,
       [id]
@@ -57,28 +65,28 @@ export class UserRepository {
     const columns = keys.map(k => `\`${k}\``).join(', ');
     const placeholders = keys.map(() => '?').join(', ');
     const values = Object.values(data);
-    
+
     await pool.execute(
       `INSERT INTO \`Management\` (${columns}) VALUES (${placeholders})`,
       values
     );
-    
+
     return data;
   }
 
   async updateUser(id: number, data: any) {
     const keys = Object.keys(data);
     if (keys.length === 0) return this.findById(id);
-    
+
     const setClause = keys.map(k => `\`${k}\` = ?`).join(', ');
     const values = Object.values(data);
     values.push(id);
-    
+
     await pool.execute(
       `UPDATE \`Management\` SET ${setClause} WHERE \`userId\` = ?`,
       values
     );
-    
+
     return this.findById(id);
   }
 

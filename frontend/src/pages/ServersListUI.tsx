@@ -1067,7 +1067,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
           {/* Add Server Modal */}
           {isAddServerModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[15vh] backdrop-blur-sm">
               <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
@@ -1090,104 +1090,75 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                   </button>
                 </div>
 
-                <div className={`mb-6 rounded-2xl border px-4 py-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'}`}>
-                  <div className="flex items-center justify-between gap-2 text-[0.75rem] font-bold uppercase tracking-[0.2em]">
-                    <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>Step {addServerStep} of {addServerWizardSteps.length}</span>
-                    <span className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>{addServerWizardSteps[addServerStep - 1]?.title}</span>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    {addServerWizardSteps.map((step) => (
-                      <div
-                        key={step.step}
-                        className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                          addServerStep >= step.step 
-                            ? isDark ? 'bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,0.4)]' : 'bg-cyan-600' 
-                            : isDark ? 'bg-white/10' : 'bg-gray-200'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
                 <div className="space-y-4">
-                  {addServerStep === 1 && (
-                    <div>
-                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Company ID</label>
-                      <input
-                        type="number"
-                        autoFocus
-                        value={addServerForm.companyId}
-                        onChange={(e) => setAddServerForm({ ...addServerForm, companyId: e.target.value })}
-                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                          addServerErrors.companyId
-                            ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
-                            : isDark 
-                              ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                              : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                        }`}
-                        placeholder="Enter company ID"
-                      />
-                      {addServerErrors.companyId && <p className="mt-2 text-xs text-rose-400">{addServerErrors.companyId}</p>}
-                    </div>
-                  )}
-
-                  {addServerStep === 2 && (
-                    <div>
-                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
-                      <input
-                        type="text"
-                        autoFocus
-                        value={addServerForm.ipAddress}
-                        onChange={(e) => setAddServerForm({ ...addServerForm, ipAddress: e.target.value })}
-                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                          addServerErrors.ipAddress
-                            ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
-                            : isDark 
-                              ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                              : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                        }`}
-                        placeholder="e.g. 192.168.1.1"
-                      />
-                      {addServerErrors.ipAddress && <p className="mt-2 text-xs text-rose-400">{addServerErrors.ipAddress}</p>}
-                    </div>
-                  )}
-
-                  {addServerStep === 3 && (
-                    <div>
-                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
-                      <input
-                        type="text"
-                        autoFocus
-                        value={addServerForm.label}
-                        onChange={(e) => setAddServerForm({ ...addServerForm, label: e.target.value })}
-                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                          isDark 
+                  <div>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Company ID</label>
+                    <input
+                      type="number"
+                      autoFocus
+                      value={addServerForm.companyId}
+                      onChange={(e) => setAddServerForm({ ...addServerForm, companyId: e.target.value })}
+                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                        addServerErrors.companyId
+                          ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
+                          : isDark 
                             ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
                             : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                        }`}
-                        placeholder="e.g. Production Server"
-                      />
-                    </div>
-                  )}
+                      }`}
+                      placeholder="Enter company ID"
+                    />
+                    {addServerErrors.companyId && <p className="mt-2 text-xs text-rose-400">{addServerErrors.companyId}</p>}
+                  </div>
+
+                  <div>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
+                    <input
+                      type="text"
+                      value={addServerForm.ipAddress}
+                      onChange={(e) => setAddServerForm({ ...addServerForm, ipAddress: e.target.value })}
+                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                        addServerErrors.ipAddress
+                          ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
+                          : isDark 
+                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                      }`}
+                      placeholder="e.g. 192.168.1.1"
+                    />
+                    {addServerErrors.ipAddress && <p className="mt-2 text-xs text-rose-400">{addServerErrors.ipAddress}</p>}
+                  </div>
+
+                  <div>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
+                    <input
+                      type="text"
+                      value={addServerForm.label}
+                      onChange={(e) => setAddServerForm({ ...addServerForm, label: e.target.value })}
+                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
+                        isDark 
+                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
+                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                      }`}
+                      placeholder="e.g. Production Server"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-6">
-                  {addServerStep > 1 && (
-                    <button
-                      type="button"
-                      onClick={handleAddServerBack}
-                      className={`h-[42px] rounded-xl border px-6 text-sm font-medium transition-all ${
-                        isDark 
-                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                    >
-                      Back
-                    </button>
-                  )}
                   <button
                     type="button"
-                    onClick={addServerStep === addServerWizardSteps.length ? handleCreateServer : handleAddServerNext}
+                    onClick={closeAddServerModal}
+                    className={`h-[42px] rounded-xl border px-6 text-sm font-medium transition-all ${
+                      isDark 
+                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateServer}
                     disabled={isCreatingServer}
                     className={`h-[42px] rounded-xl border px-6 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                       isDark 
@@ -1195,7 +1166,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm'
                     }`}
                   >
-                    {isCreatingServer ? 'Saving...' : addServerStep === addServerWizardSteps.length ? 'Create Server' : 'Next'}
+                    {isCreatingServer ? 'Saving...' : 'Create Server'}
                   </button>
                 </div>
               </div>
@@ -1204,7 +1175,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
           {/* Edit Server Modal */}
           {isEditServerModalOpen && editingServer && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[15vh] backdrop-blur-sm">
               <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>

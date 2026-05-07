@@ -994,7 +994,7 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
           </div>
 
       {isAddTenantModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[15vh] backdrop-blur-sm">
           <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -1015,77 +1015,51 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
               </button>
             </div>
 
-            <div className={`mb-6 rounded-2xl border p-4 ${isDark ? 'border-white/10 bg-white/5' : 'border-gray-100 bg-gray-50'}`}>
-              <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.2em]">
-                <span className={isDark ? 'text-slate-500' : 'text-gray-400'}>Step {addTenantStep} of {addTenantWizardSteps.length}</span>
-                <span className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>{addTenantWizardSteps[addTenantStep - 1]?.title}</span>
-              </div>
-              <div className="mt-3 flex gap-1.5">
-                {addTenantWizardSteps.map((step) => (
-                  <div
-                    key={step.step}
-                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${addTenantStep >= step.step
-                        ? isDark ? 'bg-cyan-500/60' : 'bg-cyan-500'
-                        : isDark ? 'bg-white/10' : 'bg-gray-200'
-                      }`}
-                  />
-                ))}
-              </div>
-            </div>
-
             <div className="space-y-4">
-              {addTenantStep === 1 && (
-                <div className="space-y-2">
-                  <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Company ID *</label>
-                  <input
-                    type="number"
-                    autoFocus
-                    value={addTenantForm.companyId}
-                    onChange={(e) => setAddTenantForm({ ...addTenantForm, companyId: e.target.value })}
-                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                        ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                        : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
-                      }`}
-                    placeholder="Enter company id"
-                  />
-                  {addTenantErrors.companyId && <p className="text-xs text-rose-400">{addTenantErrors.companyId}</p>}
-                </div>
-              )}
+              <div className="space-y-2">
+                <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Company ID *</label>
+                <input
+                  type="number"
+                  autoFocus
+                  value={addTenantForm.companyId}
+                  onChange={(e) => setAddTenantForm({ ...addTenantForm, companyId: e.target.value })}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                      ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
+                    }`}
+                  placeholder="Enter company id"
+                />
+                {addTenantErrors.companyId && <p className="text-xs text-rose-400">{addTenantErrors.companyId}</p>}
+              </div>
 
-              {addTenantStep === 2 && (
-                <div className="space-y-2">
-                  <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Tenant Name *</label>
-                  <input
-                    type="text"
-                    autoFocus
-                    value={addTenantForm.name}
-                    onChange={(e) => setAddTenantForm({ ...addTenantForm, name: e.target.value })}
-                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                        ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                        : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
-                      }`}
-                    placeholder="Enter tenant name"
-                  />
-                  {addTenantErrors.name && <p className="text-xs text-rose-400">{addTenantErrors.name}</p>}
-                </div>
-              )}
+              <div className="space-y-2">
+                <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Tenant Name *</label>
+                <input
+                  type="text"
+                  value={addTenantForm.name}
+                  onChange={(e) => setAddTenantForm({ ...addTenantForm, name: e.target.value })}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                      ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
+                    }`}
+                  placeholder="Enter tenant name"
+                />
+                {addTenantErrors.name && <p className="text-xs text-rose-400">{addTenantErrors.name}</p>}
+              </div>
 
-              {addTenantStep === 3 && (
-                <div className="space-y-2">
-                  <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Description</label>
-                  <textarea
-                    rows={4}
-                    autoFocus
-                    value={addTenantForm.description}
-                    onChange={(e) => setAddTenantForm({ ...addTenantForm, description: e.target.value })}
-                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all resize-none ${isDark
-                        ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                        : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
-                      }`}
-                    placeholder="Enter tenant description"
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Description</label>
+                <textarea
+                  rows={4}
+                  value={addTenantForm.description}
+                  onChange={(e) => setAddTenantForm({ ...addTenantForm, description: e.target.value })}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all resize-none ${isDark
+                      ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
+                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
+                    }`}
+                  placeholder="Enter tenant description"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-6">
@@ -1100,43 +1074,17 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                 Cancel
               </button>
 
-              {addTenantStep > 1 && (
-                <button
-                  type="button"
-                  onClick={handleAddTenantBack}
-                  className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${isDark
-                      ? 'text-slate-400 hover:bg-white/5 hover:text-white border border-white/10'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200'
-                    }`}
-                >
-                  Back
-                </button>
-              )}
-
-              {addTenantStep < addTenantWizardSteps.length ? (
-                <button
-                  type="button"
-                  onClick={handleAddTenantNext}
-                  className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${isDark
-                      ? 'bg-cyan-600 text-white hover:bg-cyan-500'
-                      : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-600/20'
-                    }`}
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleCreateTenant}
-                  disabled={isCreatingTenant}
-                  className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${isDark
-                      ? 'bg-blue-600 text-white hover:bg-blue-500'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/20'
-                    } disabled:opacity-50`}
-                >
-                  {isCreatingTenant ? 'Saving...' : 'Save Tenant'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleCreateTenant}
+                disabled={isCreatingTenant}
+                className={`rounded-xl px-6 py-2.5 text-sm font-bold transition-all ${isDark
+                    ? 'bg-blue-600 text-white hover:bg-blue-500'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/20'
+                  } disabled:opacity-50`}
+              >
+                {isCreatingTenant ? 'Saving...' : 'Save Tenant'}
+              </button>
             </div>
           </div>
         </div>

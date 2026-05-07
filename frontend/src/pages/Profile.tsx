@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useDrawer } from '../context/DrawerContext';
 import {
@@ -11,32 +10,15 @@ import {
   ShoppingCart,
   X,
   Camera,
-  Verified
+  Verified,
+  Ticket
 } from 'lucide-react';
-import countryList from 'react-select-country-list';
-import Select from 'react-select';
 import toast from 'react-hot-toast';
-
 const Profile: React.FC = () => {
   const { isDark } = useTheme();
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
 
-  const getFlagEmoji = (countryCode: string) => {
-    if (!countryCode) return '🏳️';
-    const codePoints = countryCode
-      .toUpperCase()
-      .split('')
-      .map(char => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
-  interface CountryOption {
-    label: string;
-    value: string;
-  }
-
-  const options = useMemo<CountryOption[]>(() => countryList().getData(), []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState('/profile_avatar_user_1778052147481.png');
@@ -44,49 +26,99 @@ const Profile: React.FC = () => {
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userRole = (storedUser?.role || 'Non-Admin').toUpperCase();
 
-  // Initialize with actual session data
   const [formData, setFormData] = useState({
-    firstName: storedUser?.firstName || storedUser?.userName?.split(' ')[0] || '',
+    firstName: storedUser?.firstName || storedUser?.name || storedUser?.userName?.split(' ')[0] || '',
     lastName: storedUser?.lastName || storedUser?.userName?.split(' ')[1] || '',
     email: storedUser?.email || storedUser?.Email || '',
     username: storedUser?.username || storedUser?.userName || '',
-    country: storedUser?.country || 'United States',
-    countryCode: storedUser?.countryCode || 'US'
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const userId = storedUser.id || storedUser.userId;
+        if (!userId || userId === 'undefined') {
+          console.warn("No valid user ID found in session");
+          return;
+        }
+
+        const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+
+        if (response.ok) {
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Server returned non-JSON response");
+          }
+          const data = await response.json();
+          const user = data.user || data;
+          setFormData({
+            firstName: user.firstName || user.name || '',
+            lastName: user.lastName || '',
+            email: user.email || user.Email || '',
+            username: user.username || user.userName || '',
+          });
+          if (user.img || user.avatarUrl) {
+            setProfileImage(user.img || user.avatarUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${storedUser.userId || storedUser.id}`, {
+      const userId = storedUser.id || storedUser.userId;
+      if (!userId || userId === 'undefined') {
+        throw new Error("User ID not found. Please log in again.");
+      }
+
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        img: profileImage
+      };
+      const payloadSize = new Blob([JSON.stringify(payload)]).size;
+      console.log(`Sending profile update, payload size: ${payloadSize} bytes (${(payloadSize / 1024 / 1024).toFixed(2)} MB)`);
+
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update profile');
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update profile');
+        }
+        throw new Error(`Server error: ${response.status}`);
       }
 
       const result = await response.json();
-      
+
       // Update local storage with new data
       const updatedUser = {
         ...storedUser,
         userName: formData.username,
         Email: formData.email,
         firstName: formData.firstName,
-        lastName: formData.lastName,
-        country: formData.country,
-        countryCode: formData.countryCode
+        lastName: formData.lastName
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
@@ -107,7 +139,37 @@ const Profile: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          // Max dimensions for profile pic
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Compress to JPEG with 0.8 quality
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setProfileImage(dataUrl);
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -116,11 +178,9 @@ const Profile: React.FC = () => {
   return (
     <div className={`transition-all duration-300 ${mainMarginClass} pt-20 pb-12 px-4 md:px-8`}>
       <div className={`max-w-3xl mx-auto rounded-3xl overflow-hidden shadow-2xl ${isDark ? 'bg-[#111318] border border-white/10' : 'bg-white border border-gray-200'}`}>
-
-
         {/* Profile Info Overlay */}
-        <div className="relative px-6 md:px-10 pb-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between -mt-12 md:-mt-16 mb-8 gap-4">
+        <div className="relative px-6 md:px-10 pb-8 pt-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div className="relative">
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-[#111318] overflow-hidden shadow-xl bg-[#1a1d23]">
                 <img
@@ -148,12 +208,9 @@ const Profile: React.FC = () => {
             </div>
 
             <div className="flex gap-3">
-              <button className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isDark ? 'bg-white/5 text-white hover:bg-white/10 border border-white/10' : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200'}`}>
-                <Archive size={16} />
-                Archive
-              </button>
-              <button className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isDark ? 'bg-white/5 text-white hover:bg-white/10 border border-white/10' : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200'}`}>
-                View orders
+              <button className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${isDark ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20' : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'}`}>
+                <Ticket size={18} />
+                View My Tickets
               </button>
             </div>
           </div>
@@ -164,30 +221,23 @@ const Profile: React.FC = () => {
               <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
                 @{formData.username || 'username'}
               </h1>
-              <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase tracking-widest border border-blue-500/20 flex items-center gap-1">
+              <div className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase tracking-widest border border-blue-500/20 flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                 {userRole === 'ADMIN' ? 'Admin' : 'Non-Admin'}
-              </span>
+              </div>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
               {formData.email || storedUser?.email || storedUser?.Email || 'No email provided'}
             </p>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10 py-6 border-y border-white/5">
-            <StatItem label="First seen" value="1 Mar, 2025" isDark={isDark} />
-            <StatItem label="First purchase" value="4 Mar, 2025" isDark={isDark} />
-            <StatItem label="Revenue" value="$118.00" isDark={isDark} />
-            <StatItem label="MRR" value="$0.00" isDark={isDark} />
-          </div>
 
           {/* Edit Form */}
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Name</label>
-                <div className="flex gap-3">
+                <div className="md:col-span-2 flex gap-3">
                   <input
                     type="text"
                     value={formData.firstName}
@@ -204,110 +254,27 @@ const Profile: React.FC = () => {
                   />
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Email address</label>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Mail size={16} />
-                </div>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`w-full pl-12 pr-4 py-3 rounded-xl border text-[13px] font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-400'}`}
-                  placeholder="Email"
-                />
-              </div>
-              {/* <div className="flex items-center gap-2 mt-2 ml-1">
-                <Verified size={14} className="text-blue-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">Verified 2 Jan, 2025</span>
-              </div> */}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Country</label>
-                <div className="relative">
-                  <Select
-                    options={options}
-                    value={options.find(opt => opt.label === formData.country)}
-                    onChange={(val: any) => {
-                      if (val) {
-                        setFormData({ 
-                          ...formData, 
-                          country: val.label,
-                          countryCode: val.value
-                        });
-                      }
-                    }}
-                    placeholder="Select country..."
-                    classNamePrefix="react-select"
-                    styles={{
-                      control: (base) => ({
-                        ...base,
-                        backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : '#F9FAFB',
-                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
-                        borderRadius: '0.75rem',
-                        padding: '2px 8px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: isDark ? '#fff' : '#111827',
-                        boxShadow: 'none',
-                        '&:hover': {
-                          borderColor: isDark ? 'rgba(59,130,246,0.5)' : '#3B82F6',
-                        }
-                      }),
-                      menu: (base) => ({
-                        ...base,
-                        backgroundColor: isDark ? '#1a1d23' : '#fff',
-                        border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E5E7EB',
-                        borderRadius: '0.75rem',
-                        overflow: 'hidden',
-                        zIndex: 50
-                      }),
-                      option: (base, state) => ({
-                        ...base,
-                        backgroundColor: state.isFocused 
-                          ? (isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.05)') 
-                          : 'transparent',
-                        color: isDark ? '#fff' : '#111827',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        '&:active': {
-                          backgroundColor: 'rgba(59,130,246,0.2)',
-                        }
-                      }),
-                      singleValue: (base) => ({
-                        ...base,
-                        color: isDark ? '#fff' : '#111827',
-                      }),
-                      input: (base) => ({
-                        ...base,
-                        color: isDark ? '#fff' : '#111827',
-                      }),
-                      placeholder: (base) => ({
-                        ...base,
-                        color: '#6B7280',
-                      })
-                    }}
-                    formatOptionLabel={(option: any) => (
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{getFlagEmoji(option.value)}</span>
-                        <span>{option.label}</span>
-                        <span className="ml-auto text-[10px] text-gray-500 font-bold uppercase tracking-widest">{option.value}</span>
-                      </div>
-                    )}
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 z-10">
-                    {/* <Globe size={16} /> */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Email address</label>
+                <div className="md:col-span-2 relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                    <Mail size={16} />
                   </div>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className={`w-full pl-12 pr-4 py-3 rounded-xl border text-[13px] font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-400'}`}
+                    placeholder="Enter email address"
+                  />
                 </div>
               </div>
 
-              <div className="space-y-2">
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <label className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Username</label>
-                <div className="relative">
+                <div className="md:col-span-2 relative">
                   <input
                     type="text"
                     value={formData.username}
@@ -328,7 +295,7 @@ const Profile: React.FC = () => {
             <button className={`px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleSave}
               disabled={isLoading}
               className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -341,18 +308,10 @@ const Profile: React.FC = () => {
               ) : 'Save changes'}
             </button>
           </div>
-
         </div>
       </div>
     </div>
   );
 };
-
-const StatItem = ({ label, value, isDark }: { label: string, value: string, isDark: boolean }) => (
-  <div className="space-y-1">
-    <p className="text-[11px] font-bold text-gray-500 dark:text-gray-500 uppercase tracking-widest">{label}</p>
-    <p className={`text-lg font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{value}</p>
-  </div>
-);
 
 export default Profile;
