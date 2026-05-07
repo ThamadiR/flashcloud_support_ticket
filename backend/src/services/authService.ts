@@ -31,11 +31,10 @@ export class AuthService {
       throw new ApiError(400, 'Passwords do not match');
     }
 
-    const phoneRegex = /^\+[0-9]{1,4}[0-9]{9}$/;
-    if (!contactNo || !phoneRegex.test(String(contactNo).trim())) {
-      throw new ApiError(400, 'Contact number must include a valid country code and exactly 9 digits');
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!contactNo || !phoneRegex.test(String(contactNo).replace(/\D/g, ''))) {
+      throw new ApiError(400, 'Contact number must consist of exactly 10 digits');
     }
-
     const existingUser = await this.userRepository.findByEmail(String(email));
     if (existingUser) {
       throw new ApiError(400, 'User already exists');

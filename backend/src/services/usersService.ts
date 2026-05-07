@@ -256,11 +256,10 @@ export class UsersService {
       throw new ApiError(400, 'Please provide a valid email address');
     }
 
-    const phoneRegex = /^\+[0-9]{1,4}[0-9]{9}$/;
-    if (contactNo !== undefined && !phoneRegex.test(String(contactNo).trim())) {
-      throw new ApiError(400, 'Contact number must include a valid country code and exactly 9 digits');
+    const phoneRegex = /^[0-9]{10}$/;
+    if (contactNo !== undefined && contactNo !== '' && !phoneRegex.test(String(contactNo).replace(/\D/g, ''))) {
+      throw new ApiError(400, 'Contact number must consist of exactly 10 digits');
     }
-
     if (password !== undefined && String(password).trim().length > 0 && String(password).length < 6) {
       throw new ApiError(400, 'Password must be at least 6 characters long');
     }
@@ -298,8 +297,10 @@ export class UsersService {
     if (username !== undefined) updateData.userName = username;
     if (email !== undefined) updateData.email = email;
     if (contactNo !== undefined) updateData.contactNo = String(contactNo).trim();
-    if (firstName !== undefined) updateData.name = firstName;
+    if (firstName !== undefined) updateData.firstName = firstName;
     if (lastName !== undefined) updateData.lastName = lastName;
+    if (country !== undefined) updateData.country = country;
+    if (countryCode !== undefined) updateData.countryCode = countryCode;
 
     if (resolvedImageUrl !== undefined) {
       updateData.img = resolvedImageUrl;
@@ -329,6 +330,8 @@ export class UsersService {
         avatarUrl: normalizeImageUrl(updatedUser.img) || null,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
+        country: updatedUser.country,
+        countryCode: updatedUser.countryCode,
       },
     };
   }

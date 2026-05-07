@@ -20,7 +20,7 @@ export class UserRepository {
 
   async findById(id: number) {
     const [rows]: any = await pool.execute(
-      'SELECT `userId` AS id, `userName` AS username, `email`, `contactNo`, `role`, `img`, `password`, `name` AS firstName, `lastName` FROM `Management` WHERE `userId` = ?',
+      'SELECT `userId` AS id, `userName` AS username, `email`, `contactNo`, `role`, `img`, `password`, `firstName`, `lastName`, `country`, `countryCode` FROM `Management` WHERE `userId` = ?',
       [id]
     );
     return rows[0] || null;
@@ -28,7 +28,7 @@ export class UserRepository {
 
   async findByUsername(username: string) {
     const [rows]: any = await pool.execute(
-      'SELECT `userId` AS id, `userName` AS username, `email`, `contactNo`, `role`, `img`, `password`, `name` AS firstName, `lastName` FROM `Management` WHERE `userName` = ?',
+      'SELECT `userId` AS id, `userName` AS username, `email`, `contactNo`, `role`, `img`, `password`, `firstName`, `lastName`, `country`, `countryCode` FROM `Management` WHERE `userName` = ?',
       [username]
     );
     return rows[0] || null;
@@ -45,7 +45,7 @@ export class UserRepository {
   }
   async findByIdWithProfileFields(id: number) {
     const [rows] = await pool.execute<RowDataPacket[]>(
-      `SELECT \`userId\` AS id, \`userName\` AS username, \`email\`, \`contactNo\`, \`role\`, \`img\`, \`name\` AS firstName, \`lastName\`
+      `SELECT \`userId\` AS id, \`userName\` AS username, \`email\`, \`contactNo\`, \`role\`, \`img\`, \`firstName\`, \`lastName\`, \`country\`, \`countryCode\`
        FROM \`Management\`
        WHERE \`userId\` = ?`,
       [id]

@@ -10,4 +10,4 @@ export default defineConfig({
     host: true,
   }
 })
-// Trigger restart
+// Trigger restart and clear cache

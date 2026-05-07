@@ -61,9 +61,9 @@ export default function Register() {
       setError('Passwords do not match');
       return;
     }
-    const phoneRegex = /^\+[0-9]{1,4}[0-9]{9}$/;
-    if (!phoneRegex.test(contactNo.trim())) {
-      setError('Use valid number with country code and exactly 9 digits');
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(contactNo.trim().replace(/\D/g, ''))) {
+      setError('Contact number must consist of exactly 10 digits');
       return;
     }
 
