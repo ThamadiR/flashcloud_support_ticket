@@ -27,26 +27,37 @@ export type PaginatedTickets = {
 export async function getTickets(
   page = 1,
   pageSize = 6,
-  search = ""
+  search = "",
+  status = ""
 ): Promise<PaginatedTickets> {
   const limit = pageSize;
   const offset = (page - 1) * pageSize;
 
-  // Search condition
-  const searchCondition = search
-    ? `WHERE subject LIKE ? OR author LIKE ? OR company LIKE ?`
-    : "";
+  // Search and status conditions
+  let whereClauses = [];
+  let params = [];
 
-  const searchValue = `%${search}%`;
+  if (search) {
+    whereClauses.push(`(subject LIKE ? OR author LIKE ? OR company LIKE ?)`);
+    const searchValue = `%${search}%`;
+    params.push(searchValue, searchValue, searchValue);
+  }
+
+  if (status) {
+    whereClauses.push(`state = ?`);
+    params.push(status);
+  }
+
+  const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
   // Total count
   const [countRows] = await pool.query<RowDataPacket[]>(
-    `SELECT COUNT(*) AS total FROM tbl_ticket_det ${searchCondition}`,
-    search ? [searchValue, searchValue, searchValue] : []
+    `SELECT COUNT(*) AS total FROM tbl_ticket_det ${whereClause}`,
+    params
   );
   const total = Number((countRows[0] as any)?.total ?? 0);
 
-  // Items (compute fields to match your frontend)
+  // Items
   const [rows] = await pool.query<RowDataPacket[]>(
     `
     SELECT
@@ -58,20 +69,15 @@ export async function getTickets(
       priority,
       group_type,
       state,
-      -- days since created
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS daysAgo,
-      -- overdue days (0 if not overdue yet)
       GREATEST(TIMESTAMPDIFF(DAY, due_at, NOW()), 0) AS overdueBy,
-      -- initial from author's first non-empty char
       UPPER(LEFT(TRIM(author), 1)) AS initial
     FROM tbl_ticket_det
-    ${searchCondition}
+    ${whereClause}
     ORDER BY created_at DESC
     LIMIT ? OFFSET ?;
     `,
-    search
-      ? [searchValue, searchValue, searchValue, limit, offset]
-      : [limit, offset]
+    [...params, limit, offset]
   );
 
   const items = rows as unknown as Ticket[];

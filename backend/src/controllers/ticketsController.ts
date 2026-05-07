@@ -16,11 +16,13 @@ export async function list(req: Request, res: Response) {
     const page = Number(req.query.page ?? 1);
     const pageSize = Number(req.query.pageSize ?? 6);
     const search = (req.query.search as string) ?? "";
+    const status = (req.query.status as string) ?? "";
 
     const data = await getTickets(
       Number.isFinite(page) && page > 0 ? page : 1,
       Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 6,
-      search
+      search,
+      status
     );
 
     res.json(data);

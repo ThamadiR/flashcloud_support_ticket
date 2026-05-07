@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from 'react-hot-toast';
 import { useDrawer } from "../context/DrawerContext";
+import { useTheme } from "../context/ThemeContext";
 
 import {
   FaReply,
@@ -56,6 +57,7 @@ interface TicketData {
 
 const TicketDetail: React.FC = () => {
   const { isDrawerOpen } = useDrawer();
+  const { isDark } = useTheme();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const { id } = useParams<{ id: string }>();
   const [isReplying, setIsReplying] = useState(false);

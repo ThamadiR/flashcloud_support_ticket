@@ -62,19 +62,28 @@ const Tickets: React.FC = () => {
   const { searchTerm } = useSearch();
   const { isDrawerOpen } = useDrawer();
   const { isDark } = useTheme();
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    setStatusFilter(status);
+  }, []);
 
   const fetchTickets = async (
     currentPage: number,
     searchTerm: string,
+    statusFilter: string | null,
     cancelledRef: { cancelled: boolean }
   ) => {
     setLoading(true);
     setError(null);
 
     try {
-      const query = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "";
+      const searchQuery = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "";
+      const statusQuery = statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "";
       const res = await fetch(
-        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${query}`
+        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${searchQuery}${statusQuery}`
       );
 
 
@@ -106,9 +115,9 @@ const Tickets: React.FC = () => {
 
   useEffect(() => {
     const cancelledRef = { cancelled: false };
-    fetchTickets(currentPage, searchTerm, cancelledRef);
+    fetchTickets(currentPage, searchTerm, statusFilter, cancelledRef);
     return () => { cancelledRef.cancelled = true; };
-  }, [currentPage, searchTerm, rowsPerPage]);
+  }, [currentPage, searchTerm, rowsPerPage, statusFilter]);
 
 
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
@@ -153,9 +162,10 @@ const Tickets: React.FC = () => {
         {/* Tickets Grid */}
         <div className="grid grid-cols-1 gap-4">
           {items.map((ticket) => (
-            <div
+            <Link
               key={ticket.id}
-              className={`group relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
+              to={`/ticket/${ticket.id}`}
+              className={`group block relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${
                 isDark 
                   ? 'bg-white/5 border-white/10 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10' 
                   : 'bg-white border-gray-200 hover:border-cyan-400 hover:shadow-xl'
@@ -211,18 +221,17 @@ const Tickets: React.FC = () => {
                   }`}>
                     {ticket.priority}
                   </div>
-                  <Link 
-                    to={`/ticket/${ticket.id}`}
+                  <div 
                     className={`flex items-center gap-1 text-[0.75rem] font-bold py-1 px-2 rounded-lg transition-all ${
-                      isDark ? 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10' : 'bg-gray-100 text-gray-500 hover:text-gray-900 hover:bg-gray-200'
+                      isDark ? 'bg-white/5 text-slate-400 group-hover:text-white group-hover:bg-white/10' : 'bg-gray-100 text-gray-500 group-hover:text-gray-900 group-hover:bg-gray-200'
                     }`}
                   >
                     {ticket.state}
                     <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
