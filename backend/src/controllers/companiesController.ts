@@ -5,6 +5,7 @@ import {
   getContactsByCompanyId,
   updateCompanyById,
   deleteCompanyById,
+  NewCompanyInput,
 } from "../models/companiesModel.js";
 
 export async function list(req: Request, res: Response) {
@@ -19,33 +20,27 @@ export async function list(req: Request, res: Response) {
 
 export async function create(req: Request, res: Response) {
   try {
-    const { companyName, name, phone, email, address } = req.body;
-
-    // Support either 'name' or 'companyName' in body
+    const { name, companyName, description, email, tenantCount } = req.body;
     const finalName = name ?? companyName;
 
     if (!finalName || String(finalName).trim().length === 0) {
       return res.status(400).json({ error: "Company name is required" });
     }
 
-    const companyInput: {
-      name: string;
-      phone?: string;
-      email?: string;
-      address?: string;
-    } = {
+    const companyInput: NewCompanyInput = {
       name: String(finalName).trim(),
+      description: description ? String(description).trim() : undefined,
+      email: email ? String(email).trim() : undefined,
+      tenant_count: tenantCount !== undefined ? Number(tenantCount) : undefined,
     };
-    if (phone) companyInput.phone = String(phone);
-    if (email) companyInput.email = String(email);
-    if (address) companyInput.address = String(address);
 
     const created = await createCompany(companyInput);
-
-    res.status(201).json(created);
+    res.status(201).json({
+      message: "Company created successfully",
+      company: created
+    });
   } catch (err: any) {
     console.error("Error creating company:", err?.message || err);
-    // Duplicate name error
     if (err?.code === "ER_DUP_ENTRY") {
       return res.status(409).json({ error: "Company name already exists" });
     }
@@ -71,9 +66,10 @@ export async function getContactsByCompany(req: Request, res: Response) {
 export async function updateCompany(req: Request, res: Response) {
   try {
     const id = Number(req.params.id);
-    const { companyName, phone, email, address } = req.body;
+    const { name, companyName, description, email, tenantCount } = req.body;
+    const finalName = name ?? companyName;
 
-    await updateCompanyById(id, companyName, phone, email, address);
+    await updateCompanyById(id, finalName, description, email, tenantCount);
     res.json({ message: "Company updated successfully" });
   } catch (err) {
     console.error(err);

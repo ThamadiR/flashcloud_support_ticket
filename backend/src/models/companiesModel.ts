@@ -13,9 +13,9 @@ export type Company = {
 
 export type NewCompanyInput = {
   name: string;
-  phone?: string;
+  description?: string;
   email?: string;
-  address?: string;
+  tenant_count?: number;
 };
 
 export async function listCompanies(): Promise<Company[]> {
@@ -43,14 +43,15 @@ export async function listCompanies(): Promise<Company[]> {
   }));
 }
 
-export async function createCompany(input: NewCompanyInput): Promise<Company> {
+export async function createCompany(input: NewCompanyInput): Promise<any> {
   const [result] = await pool.query<ResultSetHeader>(
-    `INSERT INTO companyList (name, description, email)
-     VALUES (?, ?, ?)`,
+    `INSERT INTO companyList (name, description, email, tenant_count)
+     VALUES (?, ?, ?, ?)`,
     [
       input.name,
-      input.address ?? null,
+      input.description ?? null,
       input.email ?? null,
+      input.tenant_count ?? 0,
     ]
   );
 
@@ -58,25 +59,13 @@ export async function createCompany(input: NewCompanyInput): Promise<Company> {
 
   const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT
-       c.id, c.name, c.email, c.description AS address, c.created_at AS createdAt
+       c.id, c.name, c.email, c.description, c.tenant_count, c.created_at AS createdAt
      FROM companyList c
      WHERE c.id = ?`,
     [insertedId]
   );
 
-  const row = rows[0];
-  if (!row) {
-    throw new Error("Failed to retrieve inserted company row.");
-  }
-  return {
-    id: Number(row.id),
-    name: String(row.name),
-    phone: "N/A",
-    email: row.email ? String(row.email) : null,
-    address: row.address ? String(row.address) : null,
-    contacts: 0,
-    createdAt: String(row.createdAt),
-  };
+  return rows[0];
 }
 
 export async function getContactsByCompanyId(companyId: number) {
@@ -105,18 +94,18 @@ export async function getContactsByCompanyId(companyId: number) {
 
 export async function updateCompanyById(
   id: number,
-  companyName: string,
-  phone?: string,
+  name: string,
+  description?: string,
   email?: string,
-  address?: string
+  tenant_count?: number
 ) {
   await pool.query(
     `
       UPDATE companyList 
-      SET name = ?, description = ?, email = ?
+      SET name = ?, description = ?, email = ?, tenant_count = ?
       WHERE id = ?
     `,
-    [companyName, address || null, email || null, id]
+    [name, description || null, email || null, tenant_count || 0, id]
   );
 }
 

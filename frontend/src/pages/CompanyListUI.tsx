@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { ArrowUpDown, ChevronLeft, ChevronRight, Download, Edit2, Plus, Search, ServerCog, Settings2, SlidersHorizontal, Users, X } from 'lucide-react';
+import { ArrowUpDown, Check, ChevronLeft, ChevronRight, Download, Edit2, Plus, Search, ServerCog, Settings2, SlidersHorizontal, Users, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Datepicker, Label } from 'flowbite-react';
 import { API_BASE_URL } from '../config/api';
@@ -62,6 +62,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [editingCompanyId, setEditingCompanyId] = useState<number | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
 
   const [activeServerCompanyId, setActiveServerCompanyId] = useState<number | null>(null);
   const [serverRecords, setServerRecords] = useState<any[]>([]);
@@ -111,6 +112,16 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     sipProvider?: string;
   }>({});
   const [companyWizardStep, setCompanyWizardStep] = useState(1);
+  const nextStep = () => {
+    if (validateCompanyWizardStep(companyWizardStep)) {
+      setCompanyWizardStep(prev => Math.min(4, prev + 1));
+    } else {
+      toast.error('Please fix the errors in this step first');
+    }
+  };
+  const prevStep = () => {
+    setCompanyWizardStep(prev => Math.max(1, prev - 1));
+  };
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [filters, setFilters] = useState({
     fromDate: '',
@@ -393,8 +404,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       }
 
       const parsedTenantCount = Number(companyForm.tenantCount);
-      if (!Number.isFinite(parsedTenantCount) || parsedTenantCount <= 0) {
-        errors.tenantCount = 'Tenant count must be a positive number';
+      if (!Number.isFinite(parsedTenantCount) || parsedTenantCount < 0) {
+        errors.tenantCount = 'Tenant count must be a non-negative number';
       }
     }
 
@@ -477,9 +488,10 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     setCompanyWizardStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleCompanySubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleCompanySubmit = async (event?: any) => {
+    if (event && event.preventDefault) event.preventDefault();
 
+    setIsSavingCompany(true);
     try {
       if (editingCompanyId !== null) {
         if (!validateCompanyForm()) {
@@ -559,7 +571,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       const companyPayload = await companyResponse.json().catch(() => ({}));
       const createdCompanyId = Number(companyPayload?.company?.id);
       if (!Number.isFinite(createdCompanyId) || createdCompanyId <= 0) {
-        throw new Error('Created company id missing');
+        console.error('Create company failed: Invalid response', companyPayload);
+        throw new Error('Created company id missing in response');
       }
 
       const serverResponse = await fetch(`${API_BASE_URL}/api/servers`, {
@@ -603,7 +616,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
       const tenantPayload = await tenantResponse.json().catch(() => ({}));
       const createdTenantId = Number(tenantPayload?.tenant?.id);
       if (!Number.isFinite(createdTenantId) || createdTenantId <= 0) {
-        throw new Error('Created tenant id missing');
+        console.error('Create tenant failed: Invalid response', tenantPayload);
+        throw new Error('Created tenant id missing in response');
       }
 
       const sipCountValue = companyForm.sipCount.trim();
@@ -638,6 +652,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
     } catch (error) {
       console.error('Save company error:', error);
       toast.error('Unable to save company');
+    } finally {
+      setIsSavingCompany(false);
     }
   };
 
@@ -2068,7 +2084,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
       {isCompanyModalOpen && (
         <div className={`fixed inset-0 z-50 flex items-start justify-center p-4 pt-[10vh] ${isDark ? 'bg-black/65' : 'bg-black/40'}`}>
-          <div className={`w-full max-w-2xl rounded-2xl border p-6 ${isDark
+          <div className={`w-full max-w-3xl rounded-2xl border p-6 ${isDark
             ? 'bg-[#111318] border-white/10 shadow-[0_0_35px_rgba(59,130,246,0.25)]'
             : 'bg-white border-gray-200 shadow-[0_0_25px_rgba(59,130,246,0.15)]'
             }`}>
@@ -2090,7 +2106,41 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
               </button>
             </div>
 
-            <form className="space-y-4" onSubmit={handleCompanySubmit}>
+            <div className="space-y-4">
+
+              {!isEditingCompany && (
+                <div className="flex items-center justify-between mb-10 px-6">
+                  {addCompanyWizardSteps.map((s) => (
+                    <div key={s.step} className="flex items-center flex-1 last:flex-none">
+                      <button 
+                        type="button"
+                        onClick={() => setCompanyWizardStep(s.step)}
+                        className="flex flex-col items-center relative group"
+                      >
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 border-2 ${
+                          companyWizardStep === s.step
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)]'
+                            : companyWizardStep > s.step
+                            ? 'bg-emerald-500 border-emerald-500 text-white'
+                            : isDark ? 'bg-white/5 border-white/10 text-slate-500 group-hover:border-white/20' : 'bg-gray-50 border-gray-200 text-gray-400 group-hover:border-gray-300'
+                        }`}>
+                          {companyWizardStep > s.step ? <Check size={16} /> : s.step}
+                        </div>
+                        <span className={`absolute -bottom-7 whitespace-nowrap text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                          companyWizardStep === s.step ? 'text-blue-500' : 'text-slate-500'
+                        }`}>
+                          {s.title.split(': ')[1]}
+                        </span>
+                      </button>
+                      {s.step < 4 && (
+                        <div className={`flex-1 h-0.5 mx-4 transition-all duration-500 ${
+                          companyWizardStep > s.step ? 'bg-emerald-500' : isDark ? 'bg-white/5' : 'bg-gray-100'
+                        }`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {isEditingCompany && (
                 <p className={`text-[0.75rem] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
@@ -2177,9 +2227,10 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                   </div>
                 </>
               ) : (
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="min-h-[280px]">
                   {/* Section 1: Company Details */}
-                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                  {companyWizardStep === 1 && (
+                    <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-8 animate-in fade-in slide-in-from-bottom-4">
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">Company Details</h5>
                     <div className="space-y-4">
                       <div>
@@ -2191,8 +2242,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           value={companyForm.name}
                           onChange={(event) => updateCompanyForm('name', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.name
-                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
-                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
                           }`}
                           placeholder="Company name"
                         />
@@ -2206,8 +2257,8 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           value={companyForm.email}
                           onChange={(event) => updateCompanyForm('email', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.email
-                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
-                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
                           }`}
                           placeholder="email@example.com"
                         />
@@ -2221,17 +2272,19 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           value={companyForm.description}
                           onChange={(event) => updateCompanyForm('description', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${formErrors.description
-                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
-                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
                           }`}
                           placeholder="Brief description"
                         />
                       </div>
                     </div>
                   </div>
+                )}
 
                   {/* Section 2: Server Details */}
-                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                  {companyWizardStep === 2 && (
+                    <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-8 animate-in fade-in slide-in-from-bottom-4">
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Server Details</h5>
                     <div className="space-y-4">
                       <div>
@@ -2242,11 +2295,12 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           value={companyForm.serverIpAddress}
                           onChange={(event) => updateCompanyForm('serverIpAddress', event.target.value)}
                           className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.serverIpAddress
-                            ? isDark ? 'border-red-500/50 bg-red-500/10' : 'border-red-500 bg-red-50'
-                            : isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
                           }`}
                           placeholder="192.168.0.1"
                         />
+                        {formErrors.serverIpAddress && <p className="mt-1 text-xs text-red-400">{formErrors.serverIpAddress}</p>}
                       </div>
                       <div>
                         <Label htmlFor="serverLabel" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Server Label</Label>
@@ -2255,15 +2309,17 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           type="text"
                           value={companyForm.serverLabel}
                           onChange={(event) => setCompanyForm(prev => ({ ...prev, serverLabel: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`}
                           placeholder="Primary server"
                         />
                       </div>
                     </div>
                   </div>
+                )}
 
                   {/* Section 3: Tenant Details */}
-                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                  {companyWizardStep === 3 && (
+                    <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-8 animate-in fade-in slide-in-from-bottom-4">
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400">Tenant Details</h5>
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
@@ -2274,9 +2330,13 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                             type="number"
                             value={companyForm.tenantCount}
                             onChange={(event) => updateCompanyForm('tenantCount', event.target.value)}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantCount
+                              ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                              : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
                             placeholder="0"
                           />
+                          {formErrors.tenantCount && <p className="mt-1 text-xs text-red-400">{formErrors.tenantCount}</p>}
                         </div>
                         <div>
                           <Label htmlFor="tenantName" className={`text-[12px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Tenant Name *</Label>
@@ -2285,9 +2345,13 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                             type="text"
                             value={companyForm.tenantName}
                             onChange={(event) => updateCompanyForm('tenantName', event.target.value)}
-                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                            className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.tenantName
+                              ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                              : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
                             placeholder="Default tenant"
                           />
+                          {formErrors.tenantName && <p className="mt-1 text-xs text-red-400">{formErrors.tenantName}</p>}
                         </div>
                       </div>
                       <div>
@@ -2297,15 +2361,17 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           rows={1}
                           value={companyForm.tenantDescription}
                           onChange={(event) => setCompanyForm(prev => ({ ...prev, tenantDescription: event.target.value }))}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none resize-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`}
                           placeholder="Tenant notes"
                         />
                       </div>
                     </div>
                   </div>
+                )}
 
                   {/* Section 4: SIP Details */}
-                  <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-4">
+                  {companyWizardStep === 4 && (
+                    <div className="space-y-4 rounded-2xl border border-white/5 bg-white/5 p-8 animate-in fade-in slide-in-from-bottom-4">
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">SIP Details</h5>
                     <div className="space-y-4">
                       <div>
@@ -2315,26 +2381,31 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                           type="text"
                           value={companyForm.sipProvider}
                           onChange={(event) => updateCompanyForm('sipProvider', event.target.value)}
-                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`}
+                          className={`mt-1 w-full rounded-lg px-3 py-2 text-sm outline-none border ${formErrors.sipProvider
+                            ? isDark ? 'border-red-500/50 bg-red-500/10 text-gray-200' : 'border-red-500 bg-red-50 text-gray-900'
+                            : isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'
+                          }`}
                           placeholder="Twilio"
                         />
+                        {formErrors.sipProvider && <p className="mt-1 text-xs text-red-400">{formErrors.sipProvider}</p>}
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
                           <Label className="text-[10px]">SIPs</Label>
-                          <input type="number" value={companyForm.sipCount} onChange={(e) => updateCompanyForm('sipCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`} />
+                          <input type="number" value={companyForm.sipCount} onChange={(e) => updateCompanyForm('sipCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`} />
                         </div>
                         <div>
                           <Label className="text-[10px]">Channels</Label>
-                          <input type="number" value={companyForm.sipChannelCount} onChange={(e) => updateCompanyForm('sipChannelCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`} />
+                          <input type="number" value={companyForm.sipChannelCount} onChange={(e) => updateCompanyForm('sipChannelCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`} />
                         </div>
                         <div>
                           <Label className="text-[10px]">Licenses</Label>
-                          <input type="number" value={companyForm.licenseCount} onChange={(e) => updateCompanyForm('licenseCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10' : 'bg-white border-gray-300'}`} />
+                          <input type="number" value={companyForm.licenseCount} onChange={(e) => updateCompanyForm('licenseCount', e.target.value)} className={`w-full rounded-lg px-2 py-1.5 text-xs outline-none border ${isDark ? 'bg-[#09090B] border-white/10 text-gray-200' : 'bg-white border-gray-300 text-gray-900'}`} />
                         </div>
                       </div>
                     </div>
                   </div>
+                )}
                 </div>
               )}
 
@@ -2353,25 +2424,51 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                 )}
                 {isEditingCompany ? (
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={() => handleCompanySubmit()}
+                    disabled={isSavingCompany}
                     className={`px-3 py-2 rounded-lg text-sm font-semibold border ${isDark
                       ? 'border-blue-400/40 bg-blue-500/15 text-blue-200 hover:bg-blue-500/25'
                       : 'border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200'
                       }`}
                   >
-                    Save Changes
+                    {isSavingCompany ? 'Saving...' : 'Save Changes'}
                   </button>
                 ) : (
-                  <button
-                    type="submit"
-                    disabled={isSavingCompany}
-                    className="rounded-xl bg-blue-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all disabled:opacity-50"
-                  >
-                    {isSavingCompany ? 'Saving...' : 'Create Company Bundle'}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {companyWizardStep > 1 && (
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className={`px-6 py-2 rounded-xl text-sm font-bold border transition-all ${isDark 
+                          ? 'border-white/10 text-gray-400 hover:bg-white/5' 
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                      >
+                        Back
+                      </button>
+                    )}
+                    {companyWizardStep < 4 ? (
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        className="px-8 py-2 rounded-xl bg-blue-600 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all ml-auto"
+                      >
+                        Next Step
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleCompanySubmit()}
+                        disabled={isSavingCompany}
+                        className="rounded-xl bg-blue-600 px-8 py-2 text-sm font-bold text-white shadow-lg shadow-blue-900/20 hover:bg-blue-500 transition-all disabled:opacity-50 ml-auto"
+                      >
+                        {isSavingCompany ? 'Saving...' : 'Create Company Bundle'}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

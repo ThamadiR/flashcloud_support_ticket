@@ -187,8 +187,8 @@ export class ManagementService {
     }
 
     const tenantCount = Number.isFinite(tenantCountInput) && tenantCountInput >= 0 ? Math.floor(tenantCountInput) : 0;
-    if (tenantCount === 0 || !Number.isFinite(tenantCountInput) || tenantCountInput < 0) {
-      throw new ApiError(400, 'Tenant count must be a positive number');
+    if (!Number.isFinite(tenantCountInput) || tenantCountInput < 0) {
+      throw new ApiError(400, 'Tenant count must be a non-negative number');
     }
 
     const companyRaw = await this.repository.createCompany({ name, description, email, tenantCount } as any);
@@ -221,8 +221,8 @@ export class ManagementService {
     }
 
     const tenantCount = Number.isFinite(tenantCountInput) && tenantCountInput >= 0 ? Math.floor(tenantCountInput) : 0;
-    if (tenantCount === 0 || !Number.isFinite(tenantCountInput) || tenantCountInput < 0) {
-      throw new ApiError(400, 'Tenant count must be a positive number');
+    if (!Number.isFinite(tenantCountInput) || tenantCountInput < 0) {
+      throw new ApiError(400, 'Tenant count must be a non-negative number');
     }
 
     try {

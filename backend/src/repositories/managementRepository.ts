@@ -13,6 +13,7 @@ interface CompanyRow extends RowDataPacket {
   name:        string;
   description: string;
   email:       string;
+  tenantCount: number;
   created_at:  Date;
 }
 
@@ -92,9 +93,9 @@ export class ManagementRepository {
   // ─── Companies ───────────────────────────────────────────────────────────
 
   async listCompanies(): Promise<CompanyRow[]> {
-    console.log('[DEBUG] listCompanies: executing SELECT * FROM companyList');
+    console.log('[DEBUG] listCompanies: executing SELECT id, name, description, email, tenant_count AS tenantCount, created_at FROM companyList');
     const [rows] = await pool.execute<CompanyRow[]>(
-      'SELECT * FROM `companyList` ORDER BY `id` DESC'
+      'SELECT `id`, `name`, `description`, `email`, `tenant_count` AS `tenantCount`, `created_at` FROM `companyList` ORDER BY `id` DESC'
     );
     console.log(`[DEBUG] listCompanies: DB returned ${rows.length} rows`);
     return rows;
@@ -102,11 +103,11 @@ export class ManagementRepository {
 
   async createCompany(data: Partial<CompanyRow>): Promise<CompanyRow | null> {
     const [result] = await pool.execute<ResultSetHeader>(
-      'INSERT INTO `companyList` (`name`, `description`, `email`, `tenantCount`) VALUES (?, ?, ?, ?)',
+      'INSERT INTO `companyList` (`name`, `description`, `email`, `tenant_count`) VALUES (?, ?, ?, ?)',
       [data.name, data.description, data.email, data.tenantCount || 0]
     );
     const [rows] = await pool.execute<CompanyRow[]>(
-      'SELECT * FROM `companyList` WHERE `id` = ?',
+      'SELECT `id`, `name`, `description`, `email`, `tenant_count` AS `tenantCount`, `created_at` FROM `companyList` WHERE `id` = ?',
       [result.insertId]
     );
     return rows[0] ?? null;
@@ -114,11 +115,11 @@ export class ManagementRepository {
 
   async updateCompany(id: number, data: Partial<CompanyRow>): Promise<CompanyRow | null> {
     await pool.execute<ResultSetHeader>(
-      'UPDATE `companyList` SET `name` = ?, `description` = ?, `email` = ?, `tenantCount` = ? WHERE `id` = ?',
+      'UPDATE `companyList` SET `name` = ?, `description` = ?, `email` = ?, `tenant_count` = ? WHERE `id` = ?',
       [data.name, data.description, data.email, data.tenantCount, id]
     );
     const [rows] = await pool.execute<CompanyRow[]>(
-      'SELECT * FROM `companyList` WHERE `id` = ?',
+      'SELECT `id`, `name`, `description`, `email`, `tenant_count` AS `tenantCount`, `created_at` FROM `companyList` WHERE `id` = ?',
       [id]
     );
     return rows[0] ?? null;
