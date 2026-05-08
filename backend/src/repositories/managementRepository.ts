@@ -604,4 +604,33 @@ export class ManagementRepository {
       [id]
     );
   }
+
+  // ─── Groups ──────────────────────────────────────────────────────────────
+
+  async listGroups(): Promise<any[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT `groupId` AS id, `name`, `description` FROM `groups` ORDER BY `name` ASC'
+    );
+    return rows;
+  }
+
+  async findUsersByGroup(groupId: number): Promise<any[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      'SELECT `userId` AS id, `userName` AS username FROM `Management` WHERE `groupId` = ? ORDER BY `userName` ASC',
+      [groupId]
+    );
+    return rows;
+  }
+
+  async findUsersByGroupName(groupName: string): Promise<any[]> {
+    const [rows] = await pool.execute<RowDataPacket[]>(
+      `SELECT m.\`userId\` AS id, m.\`userName\` AS username 
+       FROM \`Management\` m
+       JOIN \`groups\` g ON m.\`groupId\` = g.\`groupId\`
+       WHERE g.\`name\` = ?
+       ORDER BY m.\`userName\` ASC`,
+      [groupName]
+    );
+    return rows;
+  }
 }

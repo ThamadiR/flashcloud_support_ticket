@@ -793,4 +793,29 @@ if (hasSectionId) {
       throw error;
     }
   }
+
+  // ─── Groups ──────────────────────────────────────────────────────────────
+
+  async listGroups(requesterIdRaw: unknown) {
+    await this.getRequesterUser(requesterIdRaw);
+    const groups = await this.repository.listGroups();
+    return { groups };
+  }
+
+  async listUsersByGroup(requesterIdRaw: unknown, query: any) {
+    await this.getRequesterUser(requesterIdRaw);
+    
+    const groupId = query.groupId ? parseInt(String(query.groupId), 10) : NaN;
+    const groupName = String(query.groupName || '').trim();
+
+    if (Number.isFinite(groupId)) {
+      const users = await this.repository.findUsersByGroup(groupId);
+      return { users };
+    } else if (groupName) {
+      const users = await this.repository.findUsersByGroupName(groupName);
+      return { users };
+    } else {
+      throw new ApiError(400, 'groupId or groupName is required');
+    }
+  }
 }

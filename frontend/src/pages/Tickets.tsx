@@ -132,9 +132,24 @@ const Tickets: React.FC = () => {
             <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Support Tickets
             </h1>
-            <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+            <p className={`text-sm opacity-60 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Overview of all active and resolved support cases
             </p>
+          </div>
+          
+          {/* View My Tickets Toggle */}
+          <div className="flex items-center gap-3 p-2 px-4 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-300 group">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                id="viewMyTickets" 
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
+            </label>
+            <span className={`text-sm font-medium select-none ${isDark ? 'text-gray-300 group-hover:text-white' : 'text-gray-700 group-hover:text-black'}`}>
+              My Tickets
+            </span>
           </div>
 
           {loading && (
@@ -182,13 +197,13 @@ const Tickets: React.FC = () => {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                    {/* <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
                         (ticket.status?.toLowerCase() ?? '') === 'open'
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         : 'bg-slate-500/10 text-slate-400 border border-white/10'
                       }`}>
                       {ticket.status ?? '—'}
-                    </span>
+                    </span> */}
                     <h3 className={`text-base font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                       {ticket.subject} <span className="opacity-30 font-normal ml-1">#{ticket.id}</span>
                     </h3>

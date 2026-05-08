@@ -72,4 +72,7 @@ export const registerRoutes = (
   app.post('/api/customizations', authenticate, managementAdminController.createCustomization);
   app.put('/api/customizations/:id', authenticate, managementAdminController.updateCustomization);
   app.delete('/api/customizations/:id', authenticate, managementAdminController.deleteCustomization);
+
+  app.get('/api/groups', authenticate, managementQueryController.listGroups);
+  app.get('/api/groups/users', authenticate, managementQueryController.listUsersByGroup);
 };

@@ -87,4 +87,26 @@ export class ManagementQueryController {
       return res.status(500).json({ error: 'Error fetching customizations' });
     }
   };
+
+  listGroups = async (req: any, res: any) => {
+    try {
+      const result = await this.managementService.listGroups(req?.user?.id);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      if (error instanceof ApiError) return res.status(error.statusCode).json({ error: error.message });
+      console.error('Fetch groups error:', error);
+      return res.status(500).json({ error: 'Error fetching groups' });
+    }
+  };
+
+  listUsersByGroup = async (req: any, res: any) => {
+    try {
+      const result = await this.managementService.listUsersByGroup(req?.user?.id, req.query);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      if (error instanceof ApiError) return res.status(error.statusCode).json({ error: error.message });
+      console.error('Fetch users by group error:', error);
+      return res.status(500).json({ error: 'Error fetching users by group' });
+    }
+  };
 }
