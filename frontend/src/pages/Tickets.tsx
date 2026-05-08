@@ -196,18 +196,9 @@ const Tickets: React.FC = () => {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    {/* <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                        (ticket.status?.toLowerCase() ?? '') === 'open'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-slate-500/10 text-slate-400 border border-white/10'
-                      }`}>
-                      {ticket.status ?? '—'}
-                    </span> */}
-                    <h3 className={`text-base font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {ticket.subject} <span className="opacity-30 font-normal ml-1">#{ticket.id}</span>
-                    </h3>
-                  </div>
+                  <h3 className={`text-sm font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {ticket.subject} <span className={isDark ? 'text-slate-500' : 'text-gray-400'}>#{ticket.id}</span>
+                  </h3>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-60">
                     <div className="flex items-center gap-1.5">
@@ -236,10 +227,13 @@ const Tickets: React.FC = () => {
                     {ticket.priority ?? '—'}
                   </div>
                   <div
-                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1 px-2 rounded-lg transition-all ${isDark ? 'bg-white/5 text-slate-400 group-hover:text-white group-hover:bg-white/10' : 'bg-gray-100 text-gray-500 group-hover:text-gray-900 group-hover:bg-gray-200'
-                      }`}
+                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm ${
+                      isDark 
+                        ? 'bg-slate-800 text-white border border-white/5 group-hover:bg-slate-700' 
+                        : 'bg-gray-100 text-gray-600 border border-gray-200 group-hover:bg-gray-200 group-hover:text-gray-900'
+                    }`}
                   >
-                    {ticket.state}
+                    {ticket.state || 'open'}
                     <ChevronRight className="w-3.5 h-3.5" />
                   </div>
                 </div>

@@ -130,17 +130,17 @@ const TicketDetail: React.FC = () => {
   };
 
   // State for dropdown values
-  const [status, setStatus] = useState(ticketData.status);
-  const [priority, setPriority] = useState(ticketData.priority);
-  const [group, setGroup] = useState(ticketData.group);
-  const [assignee, setAssignee] = useState(ticketData.assignee);
-  const [subject, setSubject] = useState(ticketData.subject);
+  const [status, setStatus] = useState("");
+  const [priority, setPriority] = useState("");
+  const [group, setGroup] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [subject, setSubject] = useState("");
 
   // Pending state for dropdowns
   const [pendingStatus, setPendingStatus] = useState(status);
   const [pendingPriority, setPendingPriority] = useState(priority);
   const [pendingGroup, setPendingGroup] = useState(group);
-  const [pendingAssignee, setPendingAssignee] = useState(assignee);
+  const [pendingAssigneeId, setPendingAssigneeId] = useState<string | number>("");
   const [isModified, setIsModified] = useState(false);
 
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -296,9 +296,13 @@ const TicketDetail: React.FC = () => {
         setPendingStatus(data.status || data.state || "");
         setPendingPriority(data.priority || "");
         setPendingGroup(data.group_type || "");
-        setPendingAssignee(data.assignee || "");
+
+        // If the ticket data includes an assignee ID, set it here
+        setPendingAssigneeId(data.userId || data.assigneeId || "");
       } catch (err) {
         console.error("Error fetching ticket details:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchTicketDetails();
@@ -348,11 +352,11 @@ const TicketDetail: React.FC = () => {
         break;
       case "group":
         setPendingGroup(value);
-        // Reset assignee when group changes to ensure valid selection
-        setPendingAssignee("");
+        // Reset assignee when group changes
+        setPendingAssigneeId("");
         break;
       case "assignee":
-        setPendingAssignee(value);
+        setPendingAssigneeId(value); // value will be the userId from the select
         break;
     }
   };
@@ -377,10 +381,19 @@ const TicketDetail: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Find the selected group ID to save to the Management table logic
-      const selectedGroup = groupOptions.find(g => g.name === pendingGroup);
-      const groupId = selectedGroup ? selectedGroup.id : null;
+      console.log("Applying changes for Group:", pendingGroup, "and Assignee:", pendingAssignee);
 
+      // Resolve IDs and names for the update
+      const selectedGroupObj = groupOptions.find(g => g.name === pendingGroup);
+      const groupId = selectedGroupObj ? selectedGroupObj.id : null;
+
+      const selectedAssigneeObj = assigneeOptions.find(a => String(a.id) === String(pendingAssigneeId));
+      const userId = selectedAssigneeObj ? selectedAssigneeObj.id : null;
+      const assigneeName = selectedAssigneeObj ? selectedAssigneeObj.username : "";
+
+      console.log("Calculated IDs - GroupID:", groupId, "UserID:", userId, "Name:", assigneeName);
+
+      // Update the Ticket (tbl_ticket_det logic)
       const res = await fetch(`http://localhost:5000/api/tickets/${id}`, {
         method: "PUT",
         headers: {
@@ -391,28 +404,25 @@ const TicketDetail: React.FC = () => {
           state: pendingStatus,
           priority: pendingPriority,
           group_type: pendingGroup,
-          assignee: pendingAssignee,
-          groupId: groupId // This maps to the Management table groupId logic
+          assignee: assigneeName,
+          groupId: groupId,
+          userId: userId
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to update ticket");
+      if (!res.ok) throw new Error(`Ticket update failed with status ${res.status}`);
 
-      // SYNC MANAGEMENT TABLE: Update Assignee's groupId for ANY selected group
-      if (pendingGroup && pendingAssignee) {
-        const targetAssignee = assigneeOptions.find(a => a.username === pendingAssignee);
-        if (targetAssignee && groupId) {
-          // Update the Assignee's record in the Management table
-          await fetch(`http://localhost:5000/api/users/${targetAssignee.id}/update-group`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ groupId: groupId }),
-          });
-          console.log(`Synced Assignee ${pendingAssignee} to Group ID ${groupId} in Management table`);
-        }
+      // SYNC MANAGEMENT TABLE
+      if (userId && groupId) {
+        console.log("Syncing Management Table for User:", userId, "to Group:", groupId);
+        await fetch(`http://localhost:5000/api/users/${userId}/update-group`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ groupId: groupId }),
+        });
       }
 
       toast.success("Applied successfully");
@@ -627,21 +637,41 @@ const TicketDetail: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
-      <main className={`flex-1 p-4 ${mainMarginClass} h-auto pt-20 flex`}>
-        <div className="flex-1 flex flex-col space-y-4 pr-4">
-          <div className="mb-4 flex items-center gap-4">
-            <button
-              onClick={() => navigate('/tickets')}
-              className="p-2 rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
-            >
-              <FaChevronLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              {subject || "Loading..."}
-              <span className="text-gray-400 font-normal text-lg">#{id}</span>
-            </h1>
-          </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+      <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Main Content Area */}
+          <div className="flex-1 space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4">
+              <button
+                onClick={() => navigate('/tickets')}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"
+              >
+                <FaChevronLeft className="w-6 h-6" />
+              </button>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-gray-400 font-medium text-xs uppercase tracking-wider">
+                    Ticket #{id || '...'}
+                  </span>
+                  <div className="flex gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      (status || '').toLowerCase() === 'open' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {status || '...'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      (priority || '').toLowerCase() === 'high' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {priority || '...'}
+                    </span>
+                  </div>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {subject || "Loading Ticket Details..."}
+                </h1>
+              </div>
+            </div>
 
           {/* Action Buttons */}
           <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex space-x-2 overflow-x-auto">
@@ -1043,7 +1073,7 @@ const TicketDetail: React.FC = () => {
                   <div
                     className="email-body bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-white/5 text-gray-800 dark:text-gray-200 leading-relaxed shadow-inner"
                     dangerouslySetInnerHTML={{
-                      __html: email.body as string,
+                      __html: (email.body || "") as string,
                     }}
                   />
 
@@ -1145,13 +1175,13 @@ const TicketDetail: React.FC = () => {
               ))
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Right Sidebar (Properties) */}
-        <div className="w-80 glass-panel rounded-2xl p-6 border border-white/10 flex-shrink-0 ml-4 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-          <div className="flex flex-col mb-6">
-            <div className="flex justify-between items-center mb-2">
-            </div>
+          {/* Right Sidebar (Properties) */}
+          <div className="w-full lg:w-80 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 flex-shrink-0 shadow-sm">
+            <div className="flex flex-col mb-6">
+              <div className="flex justify-between items-center mb-2">
+              </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Resolution Due: {ticketData.resolutionDueDate}
             </p>
@@ -1175,7 +1205,7 @@ const TicketDetail: React.FC = () => {
                 onChange={(e) => handleDropdownChange("status", e.target.value)}
                 className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
               >
-                {Array.isArray(ticketData?.statusOptions) && ticketData.statusOptions.map((option) => (
+                {(ticketData?.statusOptions || []).map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -1201,7 +1231,7 @@ const TicketDetail: React.FC = () => {
                 }
                 className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
               >
-                {ticketData.priorityOptions.map((option) => (
+                {(ticketData?.priorityOptions || []).map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -1246,7 +1276,7 @@ const TicketDetail: React.FC = () => {
             <div className="relative mt-1">
               <select
                 id="assignee"
-                value={pendingAssignee}
+                value={pendingAssigneeId}
                 onChange={(e) =>
                   handleDropdownChange("assignee", e.target.value)
                 }
@@ -1254,7 +1284,7 @@ const TicketDetail: React.FC = () => {
               >
                 <option value="">Select Assignee</option>
                 {assigneeOptions.map((option) => (
-                  <option key={option.id} value={option.username}>
+                  <option key={option.id} value={option.id}>
                     {option.username}
                   </option>
                 ))}
@@ -1277,6 +1307,7 @@ const TicketDetail: React.FC = () => {
             >
               Apply
             </button>
+          </div>
           </div>
         </div>
       </main>
