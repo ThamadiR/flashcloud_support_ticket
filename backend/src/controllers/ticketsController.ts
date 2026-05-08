@@ -159,7 +159,11 @@ export async function forwardEmailController(req: Request, res: Response) {
     res.status(200).json({ message: "Email forwarded successfully", info });
   } catch (err: any) {
     console.error("Error forwarding email:", err);
-    res.status(500).json({ error: err.message || "Failed to forward email" });
+    let errorMessage = err.message || "Failed to forward email";
+    if (errorMessage.includes("Missing credentials") || errorMessage.includes("user")) {
+      errorMessage = "Server error: Missing EMAIL_USER or EMAIL_PASS in backend/.env configuration. Please add them and restart the server.";
+    }
+    res.status(500).json({ error: errorMessage });
   }
 }
 

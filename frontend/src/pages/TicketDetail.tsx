@@ -406,7 +406,12 @@ const TicketDetail: React.FC = () => {
 
       if (!res.ok) {
         console.error("Forward failed:", res.statusText);
-        alert("Failed to forward email.");
+        try {
+          const errData = await res.json();
+          alert(errData.error || "Failed to forward email.");
+        } catch {
+          alert("Failed to forward email.");
+        }
         return;
       }
 
@@ -424,6 +429,7 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  
   // Toggle reply form and ensure forward form is closed
   const toggleReply = () => {
     setIsForwarding(false);
