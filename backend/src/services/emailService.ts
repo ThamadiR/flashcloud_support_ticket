@@ -38,6 +38,16 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+function parseFromUser(fromUser: string) {
+  if (!fromUser) return { name: "", email: "" };
+  // Matches "Name" <email@domain.com> or just email@domain.com
+  const match = fromUser.match(/^(?:"?([^"]*)"?\s*)?<?([^>]+)>?$/);
+  if (match) {
+    return { name: match[1] ? match[1].trim() : "", email: match[2] ? match[2].trim() : fromUser.trim() };
+  }
+  return { name: "", email: fromUser.trim() };
+}
+
 export async function sendEmail(to: string, subject: string, message: string) {
   try {
     const mailOptions = {
@@ -63,15 +73,17 @@ export async function replyToEmail(
   originalSubject: string,
   replyMessage: string,
   inReplyToId?: string,
-  attachments: any[] = []
+  attachments: any[] = [],
+  fromUser?: string,
+  cc?: string
 ) {
   try {
     const subject = originalSubject.startsWith("Re:")
       ? originalSubject
       : `Re: ${originalSubject}`;
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
+    const mailOptions: any = {
+      from: fromUser || process.env.EMAIL_USER,
       to,
       subject,
       text: replyMessage,
@@ -80,6 +92,10 @@ export async function replyToEmail(
       references: inReplyToId ? [inReplyToId] : [],
       attachments,
     };
+
+    if (cc) {
+      mailOptions.cc = cc;
+    }
 
     const info = await transporter.sendMail(mailOptions);
     console.log("Reply email sent:", info.response);
@@ -100,7 +116,8 @@ export async function forwardEmail(
   originalFrom?: string,
   originalDate?: string,
   originalTo?: string,
-  cc?: string
+  cc?: string,
+  fromUser?: string
 ) {
   try {
     const safeOriginalSubject = originalSubject || "";
@@ -120,16 +137,16 @@ export async function forwardEmail(
     `;
 
     const mailOptions: any = {
-      from: process.env.EMAIL_USER,
+      from: fromUser || process.env.EMAIL_USER,
       subject,
       html: combinedMessage,
       attachments,
     };
-    
+
     if (to && to.trim() !== "") {
       mailOptions.to = to;
     }
-    
+
     if (cc) {
       mailOptions.cc = cc;
     }

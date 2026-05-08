@@ -29,6 +29,7 @@ router.get('/:id', ticketsController.show);
 router.get('/:ticketId/emails', ticketsController.getEmailsByTicket);
 
 router.put('/:id', ticketsController.updateTicket);
+router.delete('/:id', ticketsController.deleteTicket);
 router.post('/emails/reply', upload.array('attachments'), ticketsController.replyEmail);
 router.post('/emails/forward', upload.array('attachments'), ticketsController.forwardEmailController);
 

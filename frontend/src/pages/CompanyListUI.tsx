@@ -27,7 +27,7 @@ type CompanyRecord = {
 
 export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIProps) {
   const { isDark } = useTheme();
-  const { isDrawerOpen, setIsUserManagementOpen } = useDrawer();
+  const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const isSidebarMinimized = !isDrawerOpen;
   const navigate = useNavigate();

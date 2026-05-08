@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDrawer } from "../context/DrawerContext";
+import toast from "react-hot-toast";
 
 import {
   FaReply,
@@ -67,8 +68,11 @@ const TicketDetail: React.FC = () => {
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [replyTo, setReplyTo] = useState("");
+  const [replyCc, setReplyCc] = useState("");
   /*const [ccRecipients, setCcRecipients] = useState<CcRecipients>({
     akila: false,
     machiavarathnayake: true,
@@ -176,7 +180,7 @@ const TicketDetail: React.FC = () => {
             date: email.date_received
               ? new Date(email.date_received).toLocaleString()
               : new Date().toLocaleString(),
-            body: email.body || "<p>(No message content)</p>",
+            body: email.body || "<p></p>",
             attachments: email.attachments
               ? (() => {
                 try {
@@ -191,6 +195,9 @@ const TicketDetail: React.FC = () => {
           : [];
 
         setEmails(formattedEmails);
+        if (formattedEmails.length > 0) {
+          setReplyTo(formattedEmails[0].from || "");
+        }
         setError(null);
       } catch (err: any) {
         console.error("Error fetching unread emails:", err);
@@ -212,6 +219,7 @@ const TicketDetail: React.FC = () => {
         .filter((cc: string) => cc.length > 0);
 
       setCcList(list);
+      setReplyCc(list.join(", "));
 
       // Set default checked = true (you can change this)
       const defaultState: { [key: string]: boolean } = {};
@@ -302,13 +310,35 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  // Helper for email validation
+  const isValidEmailList = (emailsStr: string): boolean => {
+    if (!emailsStr || emailsStr.trim() === "") return true;
+    const emailsArray = emailsStr.split(",").map((e) => e.trim()).filter((e) => e.length > 0);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailsArray.length > 0 && emailsArray.every((email) => emailRegex.test(email));
+  };
+
   // Handle reply submission
   const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const selectedCc = Object.keys(ccRecipients).filter(
-      (email) => ccRecipients[email] === true
-    );
+    if (!replyTo.trim()) {
+      toast.error("Please provide at least one 'To' email address.");
+      return;
+    }
+    if (!isValidEmailList(replyTo)) {
+      toast.error("One or more 'To' email addresses are invalid.");
+      return;
+    }
+    if (replyCc.trim() && !isValidEmailList(replyCc)) {
+      toast.error("One or more 'Cc' email addresses are invalid.");
+      return;
+    }
+
+    const selectedCc = replyCc
+      .split(",")
+      .map((cc) => cc.trim())
+      .filter((cc) => cc.length > 0);
 
     const originalEmail = emails[0];
 
@@ -324,13 +354,15 @@ const TicketDetail: React.FC = () => {
     const fullReply = `${replyContent}${quotedOriginal}`;
 
     const formData = new FormData();
-    formData.append("to", originalEmail.from);
+    formData.append("to", replyTo);
     formData.append("subject", originalEmail.subject);
     formData.append("replyMessage", fullReply);
     if (ticketData.id) {
       formData.append("inReplyToId", ticketData.id);
     }
-    selectedCc.forEach((cc) => formData.append("cc", cc));
+    if (selectedCc.length > 0) {
+      formData.append("cc", selectedCc.join(", "));
+    }
     attachments.forEach((file) => formData.append("attachments", file));
 
     try {
@@ -344,7 +376,12 @@ const TicketDetail: React.FC = () => {
 
       if (!res.ok) {
         console.error("Reply failed:", res.statusText);
-        alert("Failed to send reply.");
+        try {
+          const errData = await res.json();
+          toast.error(errData.error || "Failed to send reply.");
+        } catch {
+          toast.error("Failed to send reply.");
+        }
         return;
       }
 
@@ -354,10 +391,10 @@ const TicketDetail: React.FC = () => {
       setReplyContent("");
       setAttachments([]);
       setIsReplying(false);
-      alert("Reply sent successfully!");
+      toast.success("Reply sent successfully!");
     } catch (err) {
       console.error("Error sending reply:", err);
-      alert("An error occurred while sending the reply.");
+      toast.error("An error occurred while sending the reply.");
     }
   };
 
@@ -365,8 +402,21 @@ const TicketDetail: React.FC = () => {
   const handleForwardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!forwardRecipients.to.trim()) {
+      toast.error("Please provide at least one 'To' email address.");
+      return;
+    }
+    if (!isValidEmailList(forwardRecipients.to)) {
+      toast.error("One or more 'To' email addresses are invalid.");
+      return;
+    }
+    if (forwardRecipients.cc.trim() && !isValidEmailList(forwardRecipients.cc)) {
+      toast.error("One or more 'Cc' email addresses are invalid.");
+      return;
+    }
+
     if (!emails || emails.length === 0) {
-      alert("No email selected to forward.");
+      toast.error("No email selected to forward.");
       return;
     }
 
@@ -408,16 +458,16 @@ const TicketDetail: React.FC = () => {
         console.error("Forward failed:", res.statusText);
         try {
           const errData = await res.json();
-          alert(errData.error || "Failed to forward email.");
+          toast.error(errData.error || "Failed to forward email.");
         } catch {
-          alert("Failed to forward email.");
+          toast.error("Failed to forward email.");
         }
         return;
       }
 
       const data = await res.json();
       console.log("Email forwarded:", data);
-      alert("Email forwarded successfully!");
+      toast.success("Email forwarded successfully!");
 
       // Reset states
       setForwardContent("");
@@ -425,11 +475,11 @@ const TicketDetail: React.FC = () => {
       setIsForwarding(false);
     } catch (err) {
       console.error("Error forwarding email:", err);
-      alert("An error occurred while forwarding the email.");
+      toast.error("An error occurred while forwarding the email.");
     }
   };
 
-  
+
   // Toggle reply form and ensure forward form is closed
   const toggleReply = () => {
     setIsForwarding(false);
@@ -440,6 +490,28 @@ const TicketDetail: React.FC = () => {
   const toggleForward = () => {
     setIsReplying(false);
     setIsForwarding(!isForwarding);
+  };
+
+  const handleDeleteTicket = async () => {
+    if (!window.confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/tickets/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete ticket");
+      }
+
+      toast.success("Ticket deleted successfully!");
+      navigate("/tickets");
+    } catch (err) {
+      console.error("Error deleting ticket:", err);
+      toast.error("An error occurred while deleting the ticket.");
+    }
   };
 
   return (
@@ -461,8 +533,8 @@ const TicketDetail: React.FC = () => {
               type="button"
               onClick={toggleForward}
               className={`${isForwarding
-                  ? "bg-gray-200 dark:bg-gray-700"
-                  : "bg-white dark:bg-gray-800"
+                ? "bg-gray-200 dark:bg-gray-700"
+                : "bg-white dark:bg-gray-800"
                 } text-gray-900 border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center`}
             >
               <FaShareSquare className="w-4 h-4 me-2" />
@@ -484,6 +556,7 @@ const TicketDetail: React.FC = () => {
             </button>
             <button
               type="button"
+              onClick={handleDeleteTicket}
               className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 inline-flex items-center"
             >
               <FaTrash className="w-4 h-4 me-2" />
@@ -495,73 +568,52 @@ const TicketDetail: React.FC = () => {
           {isReplying && (
             <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <form onSubmit={handleReplySubmit}>
-                {/* From & To */}
+                {/* From */}
                 <div className="mb-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
-                      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
-                        From
-                      </h4>
-                      <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {emails[0]?.to?.split(",")[0]?.trim() ||
-                          "iPhonik Support"}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
-                      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
-                        To
-                      </h4>
-                      <p className="text-base font-semibold text-gray-900 dark:text-white">
-                        {emails[0]?.from || "No recipient"}
-                      </p>
-                    </div>
+                  <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 mb-4">
+                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
+                      From
+                    </h4>
+                    <p className="text-base font-semibold text-gray-900 dark:text-white">
+                      {emails[0]?.to?.split(",")[0]?.trim() || "iPhonik Support"}
+                    </p>
                   </div>
+                </div>
 
-                  {/* Cc */}
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Cc:
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/*{ccOptions.map((recipient) => (
-                        <label
-                          key={recipient.key}
-                          className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={ccRecipients[recipient.key]}
-                            onChange={() => toggleCcRecipient(recipient.key)}
-                            className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded border-gray-300 dark:border-gray-600"
-                          />
-                          <span className="ml-3 text-sm text-gray-800 dark:text-gray-200">
-                            {recipient.label}
-                          </span>
-                        </label>
-                      ))}*/}
-                      {ccList.map((email) => (
-                        <label
-                          key={email}
-                          className="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={ccRecipients[email] || false}
-                            onChange={() =>
-                              setCcRecipients((prev) => ({
-                                ...prev,
-                                [email]: !prev[email],
-                              }))
-                            }
-                            className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded border-gray-300 dark:border-gray-600"
-                          />
-                          <span className="ml-3 text-sm text-gray-800 dark:text-gray-200">
-                            {email}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                {/* To */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="replyToInput"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    To
+                  </label>
+                  <input
+                    type="text"
+                    id="replyToInput"
+                    value={replyTo}
+                    onChange={(e) => setReplyTo(e.target.value)}
+                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                    placeholder="recipient@example.com, another@example.com"
+                  />
+                </div>
+
+                {/* Cc */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="replyCcInput"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  >
+                    Cc
+                  </label>
+                  <input
+                    type="text"
+                    id="replyCcInput"
+                    value={replyCc}
+                    onChange={(e) => setReplyCc(e.target.value)}
+                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                    placeholder="cc@example.com, cc2@example.com"
+                  />
                 </div>
 
                 {/* Message */}
@@ -583,16 +635,38 @@ const TicketDetail: React.FC = () => {
                   />
                 </div>
 
+                {/* Attachments Preview */}
+                {attachments.length > 0 && (
+                  <div className="mb-4 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Attached Files:
+                    </h4>
+                    <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                      {attachments.map((file, idx) => (
+                        <li
+                          key={idx}
+                          className="flex justify-between items-center"
+                        >
+                          <span>{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAttachments(
+                                attachments.filter((_, i) => i !== idx)
+                              )
+                            }
+                            className="text-red-500 hover:text-red-700 transition"
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex justify-between items-center">
-                  {/*<button
-                    type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
-                  >
-                    <FaPaperclip className="mr-2" />
-                    Attach File
-                  </button>*/}
-
                   <div className="flex items-center gap-2">
                     <label className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
                       <FaPaperclip className="mr-2" />
@@ -600,35 +674,14 @@ const TicketDetail: React.FC = () => {
                       <input
                         type="file"
                         multiple
-                        onChange={(e) =>
-                          setAttachments(
-                            e.currentTarget.files
-                              ? Array.from(e.currentTarget.files)
-                              : []
-                          )
-                        }
+                        onChange={(e) => {
+                          const newFiles = e.currentTarget.files ? Array.from(e.currentTarget.files) : [];
+                          setAttachments((prev) => [...prev, ...newFiles]);
+                        }}
                         className="hidden"
                       />
                     </label>
-
-                    {attachments.length > 0 && (
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {attachments.length} file(s) selected
-                      </p>
-                    )}
                   </div>
-
-                  {/* Show attached file names */}
-                  {attachments.length > 0 && (
-                    <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                      <p>Attached files:</p>
-                      <ul className="list-disc pl-5">
-                        {attachments.map((file, index) => (
-                          <li key={index}>{file.name}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
 
                   <div className="space-x-2">
                     <button
@@ -675,7 +728,7 @@ const TicketDetail: React.FC = () => {
                     To
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     id="forwardTo"
                     value={forwardRecipients.to}
                     onChange={(e) =>
@@ -685,9 +738,7 @@ const TicketDetail: React.FC = () => {
                       })
                     }
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="recipient@example.com"
-                    required
-                    multiple
+                    placeholder="recipient@example.com, another@example.com"
                   />
                 </div>
 
@@ -700,7 +751,7 @@ const TicketDetail: React.FC = () => {
                     Cc
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     id="forwardCc"
                     value={forwardRecipients.cc}
                     onChange={(e) =>
@@ -710,8 +761,7 @@ const TicketDetail: React.FC = () => {
                       })
                     }
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="cc@example.com"
-                    multiple
+                    placeholder="cc@example.com, cc2@example.com"
                   />
                 </div>
 
@@ -791,9 +841,10 @@ const TicketDetail: React.FC = () => {
                     id="forwardAttachmentInput"
                     multiple
                     className="hidden"
-                    onChange={(e) =>
-                      setAttachments(Array.from(e.target.files || []))
-                    }
+                    onChange={(e) => {
+                      const newFiles = e.target.files ? Array.from(e.target.files) : [];
+                      setAttachments((prev) => [...prev, ...newFiles]);
+                    }}
                   />
                   <button
                     type="button"
@@ -838,9 +889,9 @@ const TicketDetail: React.FC = () => {
               emails.map((email, index) => (
                 <div
                   key={index}
-                  className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
+                // className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
                 >
-                  <div className="flex items-center mb-2 text-sm text-gray-700 dark:text-gray-300">
+                  {/* <div className="flex items-center mb-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-semibold mr-2">From:</span>
                     <span className="text-blue-600 dark:text-blue-400">
                       {email.from}
@@ -848,9 +899,9 @@ const TicketDetail: React.FC = () => {
                     <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
                       {email.date}
                     </span>
-                  </div>
+                  </div> */}
 
-                  <div className="mb-2 text-sm">
+                  {/* <div className="mb-2 text-sm">
                     <strong>To:</strong> {email.to}
                   </div>
 
@@ -862,7 +913,7 @@ const TicketDetail: React.FC = () => {
 
                   <div className="mb-2 text-sm">
                     <strong>Subject:</strong> {email.subject}
-                  </div>
+                  </div> */}
 
                   <div
                     className="email-body text-gray-800 dark:text-gray-200 leading-relaxed"

@@ -8,7 +8,7 @@ import { getTickets, getTicketById } from "../models/ticketsModel";
 
 import { fetchAndSaveLatestEmails } from "../services/emailReceiver";
 
-import { updateTicketById } from "../models/ticketsModel";
+import { updateTicketById, deleteTicketById } from "../models/ticketsModel";
 import { pool } from "../config/db";
 
 export async function list(req: Request, res: Response) {
@@ -55,7 +55,7 @@ export async function sendTicketEmail(req: Request, res: Response) {
 // Replying to an existing email
 export async function replyEmail(req: Request, res: Response) {
   try {
-    const { to, subject, replyMessage, inReplyToId } = req.body;
+    const { to, subject, replyMessage, inReplyToId, cc, fromUser } = req.body;
 
     const attachments = (
       (req as Request & { files?: { originalname: string; path: string }[] })
@@ -70,7 +70,9 @@ export async function replyEmail(req: Request, res: Response) {
       subject,
       replyMessage,
       inReplyToId,
-      attachments
+      attachments,
+      fromUser,
+      cc
     );
 
     const cleanSubj = subject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
@@ -85,7 +87,7 @@ export async function replyEmail(req: Request, res: Response) {
          VALUES (?, ?, ?, ?, ?, NOW(), 'sent', NOW())`,
         [
           ticketId,
-          process.env.EMAIL_USER || "support@flashcloud.com",
+          fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
           to,
           subject,
           replyMessage,
@@ -112,6 +114,7 @@ export async function forwardEmailController(req: Request, res: Response) {
       originalDate,
       originalTo,
       cc,
+      fromUser,
     } = req.body;
     const files =
       (req as Request & { files?: { originalname: string; path: string }[] })
@@ -131,7 +134,8 @@ export async function forwardEmailController(req: Request, res: Response) {
       originalFrom,
       originalDate,
       originalTo,
-      cc
+      cc,
+      fromUser
     );
 
     // Try to link this forward action to a ticket by ID or subject
@@ -148,7 +152,7 @@ export async function forwardEmailController(req: Request, res: Response) {
          VALUES (?, ?, ?, ?, ?, NOW(), 'forwarded', NOW())`,
         [
           ticketId,
-          process.env.EMAIL_USER || "support@flashcloud.com",
+          fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
           to || "",
           safeSubject,
           forwardMessage,
@@ -292,75 +296,50 @@ export async function getEmailsByTicket(req: Request, res: Response) {
       `Email fetch stats for Ticket ${ticketId}: Total raw=${allRawEmails.length}`
     );
 
-    // 6. Deduplicate by message_id or (body prefix + date)
-    const uniqueEmailsMap = new Map();
-    allRawEmails.forEach((email) => {
-      // Normalize subject (remove Re:, Fwd:, etc)
-      const normSubject = (email.subject || "").replace(/^(Re|Fwd|Fw|\[JIRA\]):\s*/i, "").trim().toLowerCase();
-      
-      // Fuzzy date matching (within 10 seconds)
-      const timestamp = email.date_received ? new Date(email.date_received).getTime() : 0;
-      const fuzzyDate = Math.floor(timestamp / 10000); 
-
-      // Create a composite key based on subject and time
-      // We ignore message_id for the key to ensure we match across tables that might lack it
-      const key = `${normSubject}_${fuzzyDate}`;
-
-      if (!uniqueEmailsMap.has(key)) {
-        uniqueEmailsMap.set(key, email);
-      } else {
-        const existing = uniqueEmailsMap.get(key);
-        
-        // Preference Logic:
-        // 1. Prefer ones with a body
-        // 2. Prefer ones with more attachments
-        // 3. Prefer ones with a message_id (more formal)
-        
-        const newBodyLen = (email.body || "").length;
-        const oldBodyLen = (existing.body || "").length;
-        const newAttLen = Array.isArray(email.attachments) ? email.attachments.length : 0;
-        const oldAttLen = Array.isArray(existing.attachments) ? existing.attachments.length : 0;
-        const hasNewMsgId = !!email.message_id;
-        const hasOldMsgId = !!existing.message_id;
-
-        if (
-          (newBodyLen > oldBodyLen) || 
-          (newAttLen > oldAttLen) || 
-          (hasNewMsgId && !hasOldMsgId)
-        ) {
-          uniqueEmailsMap.set(key, email);
-        }
-      }
-    });
-
-    // 7. Sort by date ascending
-    const combinedEmails = Array.from(uniqueEmailsMap.values()).sort((a, b) => {
+    // 6. Sort by date ascending
+    const sortedEmails = allRawEmails.sort((a, b) => {
       return (
         new Date(a.date_received).getTime() -
         new Date(b.date_received).getTime()
       );
     });
 
-    console.log(
-      `Total unique emails for Ticket ${ticketId}: ${combinedEmails.length}`
-    );
-    res.status(200).json(combinedEmails);
-  } catch (err: any) {
-    console.error("Error fetching ticket emails:", err);
-    res
-      .status(500)
-      .json({ error: err.message || "Failed to fetch ticket emails" });
-  }
-}
+    res.status(200).json(sortedEmails);
+      } catch (err: any) {
+        console.error("Error fetching ticket emails:", err);
+        res
+          .status(500)
+          .json({ error: err.message || "Failed to fetch ticket emails" });
+      }
+    }
 
-export async function show(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const ticket = await getTicketById(Number(id));
-    if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-    res.json(ticket);
-  } catch (err) {
-    console.error("Error fetching ticket:", err);
-    res.status(500).json({ error: "Failed to fetch ticket" });
-  }
-}
+    export async function show(req: Request, res: Response) {
+      try {
+        const { id } = req.params;
+        const ticket = await getTicketById(Number(id));
+        if (!ticket) return res.status(404).json({ error: "Ticket not found" });
+        res.json(ticket);
+      } catch (err) {
+        console.error("Error fetching ticket:", err);
+        res.status(500).json({ error: "Failed to fetch ticket" });
+      }
+    }
+
+    export async function deleteTicket(req: Request, res: Response) {
+      try {
+        const { id } = req.params;
+        if (!id || isNaN(Number(id))) {
+          return res.status(400).json({ error: "Invalid ticket ID" });
+        }
+
+        const success = await deleteTicketById(Number(id));
+        if (!success) {
+          return res.status(404).json({ error: "Ticket not found or already deleted" });
+        }
+
+        res.json({ message: "Ticket deleted successfully" });
+      } catch (err) {
+        console.error("Error deleting ticket:", err);
+        res.status(500).json({ error: "Failed to delete ticket" });
+      }
+    }
