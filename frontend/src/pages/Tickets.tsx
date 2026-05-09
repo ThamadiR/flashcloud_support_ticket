@@ -19,6 +19,8 @@ type Ticket = {
   group_type: string;
   state: string;
   initial: string;
+  assignee?: string;
+  userId?: number | null;
 };
 
 type PaginatedTickets = {

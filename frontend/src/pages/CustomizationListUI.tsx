@@ -929,7 +929,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
             )}
 
             {isAddCustomizationOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+              <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[5vh] backdrop-blur-sm">
                 <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
@@ -1047,7 +1047,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
 
             {/* Edit Customization Modal */}
             {isEditCustomizationOpen && editingCustomization && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+              <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[5vh] backdrop-blur-sm">
                 <div className="absolute inset-0 bg-slate-950/60" onClick={closeEditCustomizationModal} />
                 <div className={`relative w-full max-w-lg rounded-3xl border p-6 shadow-2xl ${isDark ? 'border-white/10 bg-[#0b1729]' : 'border-gray-200 bg-white'}`}>
                   <div className="mb-6 flex items-center justify-between">

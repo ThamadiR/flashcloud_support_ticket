@@ -518,19 +518,25 @@ export class ManagementRepository {
 
   async createCustomization(data: Partial<CustomizationRow>): Promise<CustomizationRow | null> {
     const [result] = await pool.execute<ResultSetHeader>(
-      'INSERT INTO `customization` (`name`, `subsection_id`, `company_id`) VALUES (?, ?, ?)',
-      [data.name, data.subsection_id, data.company_id]
+      'INSERT INTO `customization` (`name`, `description`, `subsection_id`, `company_id`) VALUES (?, ?, ?, ?)',
+      [data.name, data.description || null, data.subsection_id, data.company_id]
     );
     const insertId = result.insertId;
     const [rows] = await pool.execute<CustomizationRow[]>(
       `SELECT
         cu.id,
         cu.name,
+        cu.description,
+        cu.created_at,
         cu.subsection_id,
         cu.company_id,
-        c.name AS company_name
+        c.name AS company_name,
+        cs.name AS subsection_name,
+        cs.section_id AS section_id,
+        0 AS tenant_count
        FROM \`customization\` cu
        LEFT JOIN \`companyList\` c ON c.id = cu.company_id
+       LEFT JOIN \`customization_subsection\` cs ON cs.id = cu.subsection_id
        WHERE cu.id = ?`,
       [insertId]
     );

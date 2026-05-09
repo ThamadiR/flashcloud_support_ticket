@@ -173,15 +173,18 @@ export async function forwardEmailController(req: Request, res: Response) {
 
 // Update ticket details (state, priority, group_type, assignee)
 export async function updateTicket(req: Request, res: Response) {
+  console.log("!!! HIT updateTicket endpoint !!!");
   try {
     const { id } = req.params;
-    const { state, priority, group_type, assignee } = req.body;
+    console.log(`[DEBUG] updateTicket: body=`, req.body);
+    const { state, priority, group_type, assignee, userId } = req.body;
 
     const updated = await updateTicketById(Number(id), {
       state,
       priority,
       group_type,
       assignee,
+      userId,
     });
 
     if (!updated) {

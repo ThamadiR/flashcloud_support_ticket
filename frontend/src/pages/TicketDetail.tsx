@@ -385,14 +385,16 @@ const TicketDetail: React.FC = () => {
       console.log("Applying changes for Group:", pendingGroup, "and Assignee:", pendingAssignee);
 
       // Resolve IDs and names for the update
-      const selectedGroupObj = groupOptions.find(g => g.name === pendingGroup);
+      const selectedGroupObj = groupOptions.find(g => String(g.name).trim() === String(pendingGroup).trim());
       const groupId = selectedGroupObj ? selectedGroupObj.id : null;
 
+      // Ensure pendingAssigneeId is matched correctly against assigneeOptions
       const selectedAssigneeObj = assigneeOptions.find(a => String(a.id) === String(pendingAssigneeId));
+      
       const userId = selectedAssigneeObj ? selectedAssigneeObj.id : null;
       const assigneeName = selectedAssigneeObj ? selectedAssigneeObj.username : "";
 
-      console.log("Calculated IDs - GroupID:", groupId, "UserID:", userId, "Name:", assigneeName);
+      console.log("Calculated IDs - GroupID:", groupId, "UserID:", userId, "Name:", assigneeName, "pendingAssigneeId:", pendingAssigneeId);
 
       // Update the Ticket (tbl_ticket_det logic)
       const res = await fetch(`${API_BASE_URL}/api/tickets/${id}`, {
@@ -412,6 +414,13 @@ const TicketDetail: React.FC = () => {
       });
 
       if (!res.ok) throw new Error(`Ticket update failed with status ${res.status}`);
+
+      // Update local state so UI reflects changes immediately
+      setStatus(pendingStatus);
+      setPriority(pendingPriority);
+      setGroup(pendingGroup);
+      setAssignee(assigneeName);
+      setIsModified(false);
 
       // SYNC MANAGEMENT TABLE
       if (userId && groupId) {

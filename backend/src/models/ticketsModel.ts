@@ -14,6 +14,8 @@ export type Ticket = {
   overdueBy: number;
   initial?: string;
   email?: string;
+  assignee?: string;
+  userId?: number | null;
 };
 
 export type PaginatedTickets = {
@@ -69,6 +71,8 @@ export async function getTickets(
       priority,
       group_type,
       state,
+      assignee,
+      userId,
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS daysAgo,
       GREATEST(TIMESTAMPDIFF(DAY, due_at, NOW()), 0) AS overdueBy,
       UPPER(LEFT(TRIM(author), 1)) AS initial
@@ -102,6 +106,8 @@ export async function getTicketById(id: number): Promise<Ticket | null> {
       t.priority,
       t.group_type,
       t.state,
+      t.assignee,
+      t.userId,
       (
         SELECT COALESCE(
           (SELECT sender FROM tbl_email_receive WHERE ticket_id = t.id ORDER BY date_received ASC LIMIT 1),
@@ -129,34 +135,41 @@ export async function updateTicketById(
     priority?: string;
     group_type?: string;
     assignee?: string;
+    userId?: number | string | null;
   }
 ) {
   const fields = [];
   const values: any[] = [];
 
   if (updates.state !== undefined) {
-    fields.push("state = ?");
+    fields.push("`state` = ?");
     values.push(updates.state);
   }
   if (updates.priority !== undefined) {
-    fields.push("priority = ?");
+    fields.push("`priority` = ?");
     values.push(updates.priority);
   }
   if (updates.group_type !== undefined) {
-    fields.push("group_type = ?");
+    fields.push("`group_type` = ?");
     values.push(updates.group_type);
   }
   if (updates.assignee !== undefined) {
-    fields.push("assignee = ?");
+    fields.push("`assignee` = ?");
     values.push(updates.assignee);
+  }
+  if (updates.userId !== undefined) {
+    fields.push("`userId` = ?");
+    values.push(updates.userId === "" ? null : updates.userId);
   }
 
   if (fields.length === 0) return null;
 
   values.push(id);
 
+  console.log(`[DEBUG] updateTicketById: query=UPDATE \`tbl_ticket_det\` SET ${fields.join(", ")} WHERE \`id\` = ?, values=`, values);
+
   await pool.query(
-    `UPDATE tbl_ticket_det SET ${fields.join(", ")} WHERE id = ?`,
+    `UPDATE \`tbl_ticket_det\` SET ${fields.join(", ")} WHERE \`id\` = ?`,
     values
   );
 
