@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config/api";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDrawer } from "../context/DrawerContext";
 import toast from "react-hot-toast";
@@ -163,7 +164,7 @@ const TicketDetail: React.FC = () => {
         const selectedGroup = groupOptions.find(g => g.name === activeGroup);
 
         // Use group name for the request as it's the more established pattern in the project
-        const res = await fetch(`http://localhost:5000/api/groups/users?groupName=${encodeURIComponent(activeGroup)}`, {
+        const res = await fetch(`${API_BASE_URL}/api/groups/users?groupName=${encodeURIComponent(activeGroup)}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -186,7 +187,7 @@ const TicketDetail: React.FC = () => {
         setLoading(true);
 
         const res = await fetch(
-          `http://localhost:5000/api/tickets/${id}/emails`
+          `${API_BASE_URL}/api/tickets/${id}/emails`
         );
 
         // Check if backend responded
@@ -279,7 +280,7 @@ const TicketDetail: React.FC = () => {
     const fetchTicketDetails = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`http://localhost:5000/api/tickets/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/api/tickets/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -313,7 +314,7 @@ const TicketDetail: React.FC = () => {
     const fetchGroups = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/groups", {
+        const res = await fetch(`${API_BASE_URL}/api/groups`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -394,7 +395,7 @@ const TicketDetail: React.FC = () => {
       console.log("Calculated IDs - GroupID:", groupId, "UserID:", userId, "Name:", assigneeName);
 
       // Update the Ticket (tbl_ticket_det logic)
-      const res = await fetch(`http://localhost:5000/api/tickets/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tickets/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -415,7 +416,7 @@ const TicketDetail: React.FC = () => {
       // SYNC MANAGEMENT TABLE
       if (userId && groupId) {
         console.log("Syncing Management Table for User:", userId, "to Group:", groupId);
-        await fetch(`http://localhost:5000/api/users/${userId}/update-group`, {
+        await fetch(`${API_BASE_URL}/api/users/${userId}/update-group`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -489,7 +490,7 @@ const TicketDetail: React.FC = () => {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/tickets/emails/reply",
+        `${API_BASE_URL}/api/tickets/emails/reply`,
         {
           method: "POST",
           body: formData,
@@ -569,7 +570,7 @@ const TicketDetail: React.FC = () => {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/tickets/emails/forward",
+        `${API_BASE_URL}/api/tickets/emails/forward`,
         {
           method: "POST",
           body: formData,
@@ -620,7 +621,7 @@ const TicketDetail: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/tickets/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tickets/${id}`, {
         method: "DELETE",
       });
 

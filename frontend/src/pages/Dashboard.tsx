@@ -1,4 +1,4 @@
-
+import { API_BASE_URL } from "../config/api";
 import Header from "../components/common/Header";
 import Footer from "../components/common/Footer";
 import { Card, Badge } from "flowbite-react";
@@ -51,11 +51,11 @@ function Dashboard() {
       setLoading(true);
 
       const summaryRes = await axios.get(
-        "http://localhost:5000/api/dashboard/summary"
+        `${API_BASE_URL}/api/dashboard/summary`
       );
 
       const groupRes = await axios.get(
-        "http://localhost:5000/api/dashboard/group-summary"
+        `${API_BASE_URL}/api/dashboard/group-summary`
       );
 
       setSummary(summaryRes.data);

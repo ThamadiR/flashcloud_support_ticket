@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL as API_BASE } from "../config/api";
 import { User, Building2, Clock, AlertCircle, ChevronRight, Ticket as TicketIcon, ChevronLeft } from "lucide-react";
 
 import { Link } from "react-router-dom";
@@ -29,7 +30,7 @@ type PaginatedTickets = {
 };
 
 
-const API_BASE = "http://localhost:5000";
+
 
 const avatarColors = [
   "#F59E0B", // amber

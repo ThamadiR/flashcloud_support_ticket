@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
-// Force reload to apply new validation rules
+// Force reload to apply new validation rules and ensure port 5000 is clean
 
 import app from './app';
 import { pool } from './config/db';
