@@ -67,7 +67,6 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
   const [isAddSipConfigOpen, setIsAddSipConfigOpen] = useState(false);
   const [editingSipConfigId, setEditingSipConfigId] = useState<number | null>(null);
   const [isSavingSipConfig, setIsSavingSipConfig] = useState(false);
-  const [sipConfigWizardStep, setSipConfigWizardStep] = useState(1);
   const [companyId, setCompanyId] = useState<string>(initialCompanyId);
   const [companyName, setCompanyName] = useState<string>(initialCompanyName);
   const [sipConfigForm, setSipConfigForm] = useState({
@@ -212,37 +211,6 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
     }
   };
 
-  const handleSipConfigNext = async () => {
-    if (!validateSipConfigStep(sipConfigWizardStep)) {
-      return;
-    }
-    if (sipConfigWizardStep < sipConfigWizardSteps.length) {
-      setSipConfigWizardStep((prev) => prev + 1);
-      return;
-    }
-    await saveSipConfig();
-  };
-
-  const handleSipConfigBack = () => {
-    setSipConfigWizardStep((prev) => Math.max(prev - 1, 1));
-  };
-
-  const sipConfigWizardSteps = [
-    { step: 1, title: 'SIP Provider' },
-    { step: 2, title: 'SIP Count' },
-    { step: 3, title: 'Channel Count' },
-    { step: 4, title: 'License Count' },
-    { step: 5, title: 'Description' },
-  ];
-
-  const validateSipConfigStep = (step: number): boolean => {
-    if (step === 1 && !sipConfigForm.sipProvider.trim()) {
-      toast.error('SIP provider is required');
-      return false;
-    }
-    return true;
-  };
-
   const openAddSipConfigModal = () => {
     setSipConfigForm({
       sipCount: '',
@@ -251,7 +219,6 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
       sipDescription: '',
       licenseCount: '',
     });
-    setSipConfigWizardStep(1);
     setEditingSipConfigId(null);
     setIsAddSipConfigOpen(true);
   };
@@ -297,10 +264,10 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
 
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className={`min-h-screen flex flex-col transition-all duration-300 ${isDark ? 'bg-[#030712] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex-grow">
-        <main className={`p-4 md:p-8 transition-all duration-300 ${mainMarginClass} pt-20`}>
-          <div className={`mx-auto max-w-7xl rounded-[2.5rem] border p-6 transition-all duration-500 backdrop-blur-xl ${isDark
+        <main className={`p-4 md:p-8 transition-all duration-300 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-32`}>
+          <div className={`mx-auto max-w-7xl mt-15 rounded-[2.5rem] border p-6 transition-all duration-500 backdrop-blur-xl ${isDark
               ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]'
               : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
             }`}>
@@ -364,7 +331,7 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                       : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
                     }`}
                 >
-                  <Plus size={15} /> Add Config
+                  <Plus size={15} /> Add
                 </button>
               </div>
             </div>
@@ -401,7 +368,7 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                   ) : pagedSipConfigs.map((item) => (
 
                     <tr key={item.id} className={`group transition-colors ${isDark ? 'hover:bg-white/[0.02]' : 'hover:bg-gray-50/50'}`}>
-                      <td className="px-5 py-4 text-sm font-mono opacity-50">#{item.id}</td>
+                      <td className={`px-5 py-4 text-sm font-mono ${isDark ? 'text-slate-100' : 'text-gray-500 opacity-50'}`}>#{item.id}</td>
                       <td className={`px-5 py-4 text-sm font-semibold ${isDark ? 'text-cyan-200' : 'text-cyan-700'}`}>{item.tenant?.name || 'N/A'}</td>
                       <td className="px-5 py-4 text-sm">
                         {editingSipConfigId === item.id ? (
@@ -533,61 +500,91 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
           <div className={`w-full max-w-xl rounded-3xl border p-6 shadow-2xl transition-all duration-500 ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>New SIP Config</h2>
-                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{tenantName ? `For ${tenantName}` : 'Add a new configuration'}</p>
+                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add SIP Config</h2>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{tenantName ? `Create a configuration for ${tenantName}.` : 'Add a new configuration'}</p>
               </div>
               <button onClick={closeSipConfigModal} className={`h-10 w-10 rounded-full flex items-center justify-center border transition-all ${isDark ? 'border-white/10 text-slate-400 hover:text-white hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-100'}`}><X size={18} /></button>
             </div>
 
-            <div className="mb-8 rounded-2xl border border-white/5 bg-white/5 p-4">
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-cyan-400">
-                <span>Step {sipConfigWizardStep} of {sipConfigWizardSteps.length}</span>
-                <span>{sipConfigWizardSteps[sipConfigWizardStep - 1].title}</span>
-              </div>
-              <div className="mt-3 flex gap-2">
-                {sipConfigWizardSteps.map(s => (
-                  <div key={s.step} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${sipConfigWizardStep >= s.step ? 'bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'bg-white/10'}`} />
-                ))}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Provider Name *</label>
+                  <input 
+                    autoFocus 
+                    value={sipConfigForm.sipProvider} 
+                    onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipProvider: e.target.value })} 
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="e.g. Twilio, Vonage" 
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>SIP Count</label>
+                  <input 
+                    type="number" 
+                    value={sipConfigForm.sipCount} 
+                    onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipCount: e.target.value })} 
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="0" 
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Channels</label>
+                  <input 
+                    type="number" 
+                    value={sipConfigForm.sipChannelCount} 
+                    onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipChannelCount: e.target.value })} 
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="0" 
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Licenses</label>
+                  <input 
+                    type="number" 
+                    value={sipConfigForm.licenseCount} 
+                    onChange={(e) => setSipConfigForm({ ...sipConfigForm, licenseCount: e.target.value })} 
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="0" 
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Tenant ID</label>
+                  <div className={`w-full rounded-xl border px-4 py-3 text-sm ${isDark ? 'border-white/10 bg-black/20 text-slate-400' : 'border-gray-100 bg-gray-100 text-gray-500'}`}>
+                    {tenantId || 'N/A'}
+                  </div>
+                </div>
+
+                <div className="col-span-2">
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Description</label>
+                  <textarea 
+                    rows={3} 
+                    value={sipConfigForm.sipDescription} 
+                    onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipDescription: e.target.value })} 
+                    className={`w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="Notes about this configuration..." 
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="mb-8 min-h-[100px]">
-              {sipConfigWizardStep === 1 && (
-                <div>
-                  <label className={`mb-2 block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Provider Name</label>
-                  <input autoFocus value={sipConfigForm.sipProvider} onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipProvider: e.target.value })} className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-cyan-400/40' : 'border-gray-200 bg-gray-50 focus:border-cyan-500/40 focus:bg-white'}`} placeholder="e.g. Twilio, Vonage" />
-                </div>
-              )}
-              {sipConfigWizardStep === 2 && (
-                <div>
-                  <label className={`mb-2 block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>SIP Count</label>
-                  <input type="number" autoFocus value={sipConfigForm.sipCount} onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipCount: e.target.value })} className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-cyan-400/40' : 'border-gray-200 bg-gray-50 focus:border-cyan-500/40 focus:bg-white'}`} placeholder="0" />
-                </div>
-              )}
-              {sipConfigWizardStep === 3 && (
-                <div>
-                  <label className={`mb-2 block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Channels</label>
-                  <input type="number" autoFocus value={sipConfigForm.sipChannelCount} onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipChannelCount: e.target.value })} className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-cyan-400/40' : 'border-gray-200 bg-gray-50 focus:border-cyan-500/40 focus:bg-white'}`} placeholder="0" />
-                </div>
-              )}
-              {sipConfigWizardStep === 4 && (
-                <div>
-                  <label className={`mb-2 block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Licenses</label>
-                  <input type="number" autoFocus value={sipConfigForm.licenseCount} onChange={(e) => setSipConfigForm({ ...sipConfigForm, licenseCount: e.target.value })} className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-cyan-400/40' : 'border-gray-200 bg-gray-50 focus:border-cyan-500/40 focus:bg-white'}`} placeholder="0" />
-                </div>
-              )}
-              {sipConfigWizardStep === 5 && (
-                <div>
-                  <label className={`mb-2 block text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Description</label>
-                  <textarea rows={4} autoFocus value={sipConfigForm.sipDescription} onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipDescription: e.target.value })} className={`w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-cyan-400/40' : 'border-gray-200 bg-gray-50 focus:border-cyan-500/40 focus:bg-white'}`} placeholder="Notes about this config..." />
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-between gap-3 pt-4 border-t border-white/5">
-              <button onClick={handleSipConfigBack} disabled={sipConfigWizardStep === 1} className={`px-5 py-2 rounded-xl text-sm font-bold transition-all ${sipConfigWizardStep === 1 ? 'opacity-0 cursor-default' : isDark ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>Back</button>
-              <button onClick={handleSipConfigNext} disabled={isSavingSipConfig} className={`rounded-xl px-8 py-2 text-sm font-bold transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30' : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20'}`}>
-                {isSavingSipConfig ? 'Saving...' : sipConfigWizardStep === sipConfigWizardSteps.length ? 'Finish' : 'Next'}
+            <div className="flex justify-end items-center gap-4 pt-6 mt-6 border-t border-white/5">
+              <button 
+                onClick={closeSipConfigModal} 
+                className={`text-sm font-bold transition-all ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => void saveSipConfig()} 
+                disabled={isSavingSipConfig} 
+                className={`rounded-xl px-8 py-3 text-sm font-bold transition-all ${isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20'}`}
+              >
+                {isSavingSipConfig ? 'Saving...' : 'Save SIP Config'}
               </button>
             </div>
           </div>

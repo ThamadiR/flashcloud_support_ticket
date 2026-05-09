@@ -279,12 +279,14 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
       name: tenant.name,
       description: tenant.description || '',
     });
+    setIsAddTenantModalOpen(true);
   };
 
   const cancelEditTenant = () => {
     setEditingTenantId(null);
     setTenantForm({ name: '', description: '' });
     setIsSavingTenant(false);
+    setIsAddTenantModalOpen(false);
   };
 
   const saveTenantEdit = async (tenantId: number) => {
@@ -337,20 +339,13 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
     }
   };
 
-  const addTenantWizardSteps = [
-    { step: 1, title: 'Step 1: Company id', field: 'companyId' as const },
-    { step: 2, title: 'Step 2: Tenant name', field: 'name' as const },
-    { step: 3, title: 'Step 3: Description', field: 'description' as const },
-  ];
-
   const openAddTenantModal = () => {
     setAddTenantForm({
       companyId: companyId || '',
       name: '',
       description: '',
     });
-    setAddTenantErrors({});
-    setAddTenantStep(1);
+    setEditingTenantId(null);
     setIsAddTenantModalOpen(true);
   };
 
@@ -857,62 +852,14 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                           <td className={`px-5 py-4 whitespace-nowrap ${isDark ? 'text-cyan-300/80' : 'text-cyan-700'}`} style={{ fontSize: '12px' }}>{item.company?.name || 'N/A'}</td>
                           <td className={`px-5 py-4 ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>{item.companyId}</td>
                           <td className={`px-5 py-4 ${isDark ? 'text-slate-300' : 'text-gray-700'}`} style={{ fontSize: '12px' }}>
-                            {editingTenantId === item.id ? (
-                              <input
-                                value={tenantForm.name}
-                                onChange={(e) => setTenantForm({ ...tenantForm, name: e.target.value })}
-                                className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none transition-all ${isDark
-                                    ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                                    : 'border-gray-200 bg-white text-gray-900 focus:border-cyan-500/40 shadow-sm'
-                                  }`}
-                              />
-                            ) : (
-                              item.name
-                            )}
+                            {item.name}
                           </td>
                           <td className={`px-5 py-4 ${isDark ? 'text-slate-400' : 'text-gray-500'}`} style={{ fontSize: '12px' }}>
-                            {editingTenantId === item.id ? (
-                              <input
-                                value={tenantForm.description}
-                                onChange={(e) => setTenantForm({ ...tenantForm, description: e.target.value })}
-                                className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none transition-all ${isDark
-                                    ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                                    : 'border-gray-200 bg-white text-gray-900 focus:border-cyan-500/40 shadow-sm'
-                                  }`}
-                              />
-                            ) : (
-                              item.description || <span className="italic opacity-40">No description</span>
-                            )}
+                            {item.description || <span className="italic opacity-40">No description</span>}
                           </td>
                           <td className={`px-5 py-4 whitespace-nowrap ${isDark ? 'text-slate-500' : 'text-gray-400'}`} style={{ fontSize: '12px' }}>{item.createdAt ?? '—'}</td>
                           <td className="px-5 py-4" style={{ fontSize: '12px' }}>
                             <div className="flex items-center justify-center gap-2">
-                              {editingTenantId === item.id ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => saveTenantEdit(item.id)}
-                                    disabled={isSavingTenant}
-                                    className={`h-8 rounded-lg px-3 flex items-center gap-2 text-xs font-bold transition-all ${isDark
-                                        ? 'bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20'
-                                        : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm shadow-cyan-600/20'
-                                      } disabled:opacity-50`}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={cancelEditTenant}
-                                    className={`h-8 rounded-lg px-3 flex items-center gap-2 text-xs font-bold transition-all ${isDark
-                                        ? 'text-slate-400 hover:bg-white/5 hover:text-white'
-                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
-                                      }`}
-                                  >
-                                    Cancel
-                                  </button>
-                                </>
-                              ) : (
-                                <>
                                   <button
                                     type="button"
                                     onClick={() => navigate(`/sip-configs?tenantId=${item.id}&tenantName=${encodeURIComponent(item.name)}&companyId=${companyId}&companyName=${encodeURIComponent(companyName)}`)}
@@ -924,21 +871,19 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
                                   >
                                     <SlidersHorizontal size={13} />
                                   </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditTenant(item)}
-                                    className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
-                                        ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
-                                        : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
-                                      }`}
-                                    title="Edit"
-                                  >
-                                    <Edit2 size={13} />
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </td>
+                                <button
+                                  type="button"
+                                  onClick={() => startEditTenant(item)}
+                                  className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark
+                                      ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20'
+                                      : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'
+                                    }`}
+                                  title="Edit"
+                                >
+                                  <Edit2 size={13} />
+                                </button>
+                              </div>
+                            </td>
                         </tr>
                       ))}
                     </tbody>
@@ -995,100 +940,82 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
 
       {isAddTenantModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className={`w-full max-w-xl rounded-3xl border p-6 shadow-2xl transition-all duration-500 ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+            <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Tenant</h2>
-                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                  {companyName ? `Create a tenant for ${companyName}.` : 'Create a new tenant record.'}
-                </p>
+                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{editingTenantId ? 'Edit Tenant' : 'Add Tenant'}</h2>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{editingTenantId ? `Update details for ${tenantForm.name}` : companyName ? `Create a tenant for ${companyName}.` : 'Create a new tenant record.'}</p>
               </div>
-              <button
-                type="button"
-                onClick={closeAddTenantModal}
-                className={`rounded-full border p-2 transition-all ${isDark
-                    ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
-                    : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-              >
-                <X size={16} />
-              </button>
+              <button onClick={cancelEditTenant} className={`h-10 w-10 rounded-full flex items-center justify-center border transition-all ${isDark ? 'border-white/10 text-slate-400 hover:text-white hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-100'}`}><X size={18} /></button>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Company ID *</label>
-                <input
-                  type="number"
-                  autoFocus
-                  value={addTenantForm.companyId}
-                  onChange={(e) => setAddTenantForm({ ...addTenantForm, companyId: e.target.value })}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                      ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
-                    }`}
-                  placeholder="Enter company id"
-                />
-                {addTenantErrors.companyId && <p className="text-xs text-rose-400">{addTenantErrors.companyId}</p>}
-              </div>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Company ID *</label>
+                  <input 
+                    type="number"
+                    disabled={!!editingTenantId}
+                    value={editingTenantId ? String(tenants.find(t => t.id === editingTenantId)?.companyId || '') : addTenantForm.companyId} 
+                    onChange={(e) => setAddTenantForm({ ...addTenantForm, companyId: e.target.value })} 
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'} ${editingTenantId ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                    placeholder="Enter company ID" 
+                  />
+                  {!editingTenantId && addTenantErrors.companyId && <p className="mt-1 text-xs text-rose-400">{addTenantErrors.companyId}</p>}
+                </div>
 
-              <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Tenant Name *</label>
-                <input
-                  type="text"
-                  value={addTenantForm.name}
-                  onChange={(e) => setAddTenantForm({ ...addTenantForm, name: e.target.value })}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark
-                      ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
-                    }`}
-                  placeholder="Enter tenant name"
-                />
-                {addTenantErrors.name && <p className="text-xs text-rose-400">{addTenantErrors.name}</p>}
-              </div>
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Tenant Name *</label>
+                  <input 
+                    autoFocus 
+                    value={editingTenantId ? tenantForm.name : addTenantForm.name} 
+                    onChange={(e) => {
+                      if (editingTenantId) setTenantForm({ ...tenantForm, name: e.target.value });
+                      else setAddTenantForm({ ...addTenantForm, name: e.target.value });
+                    }} 
+                    className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="Enter tenant name" 
+                  />
+                  {!editingTenantId && addTenantErrors.name && <p className="mt-1 text-xs text-rose-400">{addTenantErrors.name}</p>}
+                </div>
 
-              <div className="space-y-2">
-                <label className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Description</label>
-                <textarea
-                  rows={4}
-                  value={addTenantForm.description}
-                  onChange={(e) => setAddTenantForm({ ...addTenantForm, description: e.target.value })}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all resize-none ${isDark
-                      ? 'border-white/10 bg-black/20 text-white focus:border-cyan-400/40'
-                      : 'border-gray-200 bg-gray-50 text-gray-900 focus:border-cyan-500/40 focus:bg-white'
-                    }`}
-                  placeholder="Enter tenant description"
-                />
+                <div>
+                  <label className={`mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Description</label>
+                  <textarea 
+                    rows={4} 
+                    value={editingTenantId ? tenantForm.description : addTenantForm.description} 
+                    onChange={(e) => {
+                      if (editingTenantId) setTenantForm({ ...tenantForm, description: e.target.value });
+                      else setAddTenantForm({ ...addTenantForm, description: e.target.value });
+                    }} 
+                    className={`w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? 'border-white/10 bg-black/40 text-white focus:border-blue-500/50' : 'border-gray-200 bg-gray-50 focus:border-blue-500/50 focus:bg-white'}`} 
+                    placeholder="Enter tenant description" 
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6">
-              <button
-                type="button"
-                onClick={closeAddTenantModal}
-                className={`rounded-xl px-6 py-2.5 text-sm font-medium transition-all ${isDark
-                    ? 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 border border-gray-200 hover:border-gray-300'
-                  }`}
+            <div className="flex justify-end items-center gap-4 pt-6 mt-6 border-t border-white/5">
+              <button 
+                onClick={cancelEditTenant} 
+                className={`text-sm font-bold transition-all ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
               >
                 Cancel
               </button>
-
-              <button
-                type="button"
-                onClick={handleCreateTenant}
-                disabled={isCreatingTenant}
-                className={`rounded-xl px-6 py-2.5 text-sm font-bold transition-all ${isDark
-                    ? 'bg-blue-600 text-white hover:bg-blue-500'
-                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/20'
-                  } disabled:opacity-50`}
+              <button 
+                onClick={() => {
+                  if (editingTenantId) void saveTenantEdit(editingTenantId);
+                  else void handleCreateTenant();
+                }} 
+                disabled={editingTenantId ? isSavingTenant : isCreatingTenant} 
+                className={`rounded-xl px-8 py-3 text-sm font-bold transition-all ${isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20'}`}
               >
-                {isCreatingTenant ? 'Saving...' : 'Save Tenant'}
+                {editingTenantId ? (isSavingTenant ? 'Saving...' : 'Update Tenant') : (isCreatingTenant ? 'Saving...' : 'Save Tenant')}
               </button>
             </div>
           </div>
         </div>
-        )}
+      )}
         </main>
       </div>
     </div>
