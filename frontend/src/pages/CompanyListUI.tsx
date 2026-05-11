@@ -869,7 +869,7 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
 
   return (
     <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300 pb-12`}>
-      <div className="mt-4 w-full">
+      <div className="mt-0 w-full">
         <div className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5 pl-2 border-b pb-3 ${isDark ? 'border-white/5' : 'border-gray-200'}`}>
           <h3 className={`text-[1.1rem] font-medium tracking-wide ${isDark ? 'text-white/90' : 'text-gray-900'}`}>
             Company List
@@ -2136,10 +2136,10 @@ export default function CompanyListUI({ token, onUnauthorized }: CompanyListUIPr
                         className="flex flex-col items-center relative group"
                       >
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 border-2 ${companyWizardStep === s.step
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)]'
-                            : companyWizardStep > s.step
-                              ? 'bg-emerald-500 border-emerald-500 text-white'
-                              : isDark ? 'bg-white/5 border-white/10 text-slate-500 group-hover:border-white/20' : 'bg-gray-50 border-gray-200 text-gray-400 group-hover:border-gray-300'
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.5)]'
+                          : companyWizardStep > s.step
+                            ? 'bg-emerald-500 border-emerald-500 text-white'
+                            : isDark ? 'bg-white/5 border-white/10 text-slate-500 group-hover:border-white/20' : 'bg-gray-50 border-gray-200 text-gray-400 group-hover:border-gray-300'
                           }`}>
                           {companyWizardStep > s.step ? <Check size={16} /> : s.step}
                         </div>

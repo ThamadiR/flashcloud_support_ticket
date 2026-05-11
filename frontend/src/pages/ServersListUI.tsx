@@ -73,12 +73,12 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
   const [isIpAddressSortMenuOpen, setIsIpAddressSortMenuOpen] = useState(false);
   const [isLabelSortMenuOpen, setIsLabelSortMenuOpen] = useState(false);
   const [isCreatedAtSortMenuOpen, setIsCreatedAtSortMenuOpen] = useState(false);
-  
+
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
 
-  
+
   const [isEditServerModalOpen, setIsEditServerModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<ServerRecord | null>(null);
   const [isUpdatingServer, setIsUpdatingServer] = useState(false);
@@ -184,10 +184,10 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
       const htmlTarget = event.target as HTMLElement;
       const isDatepickerClick = htmlTarget.closest('.datepicker') || htmlTarget.closest('[data-testid="datepicker-popup"]');
-      
-      if (filterDropdownRef.current && 
-          !filterDropdownRef.current.contains(htmlTarget) && 
-          !isDatepickerClick) {
+
+      if (filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(htmlTarget) &&
+        !isDatepickerClick) {
         setIsFilterDropdownOpen(false);
       }
 
@@ -483,12 +483,11 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-300 ${isDark ? 'bg-[#030712] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex-grow">
-        <main className={`p-4 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-24 transition-all duration-300`}>
-          <div className={`w-full rounded-3xl border p-4 backdrop-blur-xl sm:p-6 transition-all duration-300 ${
-            isDark 
-              ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]' 
+        <main className={`p-4 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-18 transition-all duration-300`}>
+          <div className={`w-full rounded-3xl border p-4 backdrop-blur-xl sm:p-6 transition-all duration-300 ${isDark
+              ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]'
               : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
-          }`}>
+            }`}>
             {/* Header section */}
             <div className={`mb-6 flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-center lg:justify-between ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
               <div>
@@ -496,8 +495,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                   type="button"
                   onClick={() => navigate('/companies')}
                   className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition-all duration-300 ${isDark
-                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
-                      : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300'
+                    ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                    : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 hover:border-cyan-300'
                     }`}
                 >
                   <ArrowLeft size={14} />
@@ -505,8 +504,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                 </button>
                 <div className="flex items-center gap-3">
                   <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 ${isDark
-                      ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
-                      : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-sm'
+                    ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
+                    : 'border-cyan-200 bg-cyan-50 text-cyan-600 shadow-sm'
                     }`}>
                     <ServerCog size={20} />
                   </div>
@@ -525,8 +524,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
               <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                 <label className={`flex w-full max-w-md items-center gap-3 rounded-2xl border px-4 py-3 shadow-inner transition-all duration-300 focus-within:ring-2 ${isDark
-                    ? 'border-white/10 bg-black/20 text-slate-300 shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30'
-                    : 'border-gray-200 bg-gray-50 text-gray-700 shadow-gray-100 focus-within:border-cyan-500/40 focus-within:bg-white'
+                  ? 'border-white/10 bg-black/20 text-slate-300 shadow-black/20 focus-within:border-cyan-400/40 focus-within:bg-black/30'
+                  : 'border-gray-200 bg-gray-50 text-gray-700 shadow-gray-100 focus-within:border-cyan-500/40 focus-within:bg-white'
                   }`}>
                   <Search size={16} className={`shrink-0 ${isDark ? 'text-cyan-300' : 'text-cyan-600'}`} />
                   <input
@@ -544,19 +543,17 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                       setIsFilterDropdownOpen(!isFilterDropdownOpen);
                       setTempFilters(filters);
                     }}
-                    className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${
-                      isFilterDropdownOpen 
+                    className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isFilterDropdownOpen
                         ? (isDark ? 'bg-blue-600/20 border-blue-500/50 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600')
                         : (isDark ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white' : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900')
-                    }`}
+                      }`}
                   >
                     <SlidersHorizontal size={15} /> Filter
                   </button>
 
                   {isFilterDropdownOpen && (
-                    <div className={`absolute right-0 top-full z-[70] mt-2 w-[340px] rounded-2xl border p-5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 ${
-                      isDark ? 'bg-[#10131A] border-white/10 shadow-black/60' : 'bg-white border-gray-100 shadow-gray-200/50'
-                    }`}>
+                    <div className={`absolute right-0 top-full z-[70] mt-2 w-[340px] rounded-2xl border p-5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200 ${isDark ? 'bg-[#10131A] border-white/10 shadow-black/60' : 'bg-white border-gray-100 shadow-gray-200/50'
+                      }`}>
                       <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 dark:border-white/5">
                         <h4 className="font-semibold text-sm">Filter</h4>
                       </div>
@@ -566,7 +563,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Publishing Date (MM/DD/YYYY)</span>
-                            <button 
+                            <button
                               onClick={() => setTempFilters(prev => ({ ...prev, fromDate: '', toDate: '' }))}
                               className="text-[10px] text-blue-500 hover:underline"
                             >
@@ -637,7 +634,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[0.75rem] font-bold uppercase tracking-wider text-gray-400">Company Name</span>
-                            <button 
+                            <button
                               onClick={() => setTempFilters(prev => ({ ...prev, companyName: '' }))}
                               className="text-[10px] text-blue-500 hover:underline"
                             >
@@ -647,9 +644,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                           <select
                             value={tempFilters.companyName}
                             onChange={(e) => setTempFilters(prev => ({ ...prev, companyName: e.target.value }))}
-                            className={`w-full text-xs rounded-lg p-2 border outline-none ${
-                              isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
-                            }`}
+                            className={`w-full text-xs rounded-lg p-2 border outline-none ${isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'
+                              }`}
                           >
                             <option value="">All companies</option>
                             {Array.from(new Set(servers.map(s => s.company?.name).filter(Boolean))).sort().map(name => (
@@ -662,7 +658,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[0.75rem] font-bold uppercase tracking-wider text-gray-400">IP Address</span>
-                            <button 
+                            <button
                               onClick={() => setTempFilters(prev => ({ ...prev, ipAddress: '' }))}
                               className="text-[10px] text-blue-500 hover:underline"
                             >
@@ -674,9 +670,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                             placeholder="Enter IP address..."
                             value={tempFilters.ipAddress}
                             onChange={(e) => setTempFilters(prev => ({ ...prev, ipAddress: e.target.value }))}
-                            className={`w-full text-xs rounded-lg p-2.5 border outline-none transition-all ${
-                              isDark ? 'bg-black/20 border-white/10 text-white focus:border-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500/50'
-                            }`}
+                            className={`w-full text-xs rounded-lg p-2.5 border outline-none transition-all ${isDark ? 'bg-black/20 border-white/10 text-white focus:border-blue-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500/50'
+                              }`}
                           />
                         </div>
                       </div>
@@ -688,9 +683,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                             setFilters({ fromDate: '', toDate: '', companyName: '', ipAddress: '' });
                           }}
 
-                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${
-                            isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
-                          }`}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${isDark ? 'border-white/10 hover:bg-white/5' : 'border-gray-200 hover:bg-gray-50'
+                            }`}
                         >
                           Reset all
                         </button>
@@ -699,9 +693,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                             setFilters(tempFilters);
                             setIsFilterDropdownOpen(false);
                           }}
-                          className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all shadow-lg ${
-                            isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
-                          }`}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-all shadow-lg ${isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
+                            }`}
                         >
                           Apply now
                         </button>
@@ -714,8 +707,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                   type="button"
                   onClick={openAddServerModal}
                   className={`h-[42px] px-3 rounded-xl border flex items-center gap-2 text-sm transition-all whitespace-nowrap ${isDark
-                      ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
-                      : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
+                    ? 'bg-[#09090B] border-white/10 text-gray-300 hover:text-white hover:border-white/20'
+                    : 'bg-white border-gray-300 text-gray-700 hover:text-gray-900 hover:border-gray-400 shadow-sm'
                     }`}
                 >
                   <Plus size={15} /> Add
@@ -763,22 +756,20 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('id', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'id' && sortOrder === 'asc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   ASC
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('id', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'id' && sortOrder === 'desc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'id' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   DSC
                                 </button>
@@ -807,22 +798,20 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('company', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'company' && sortOrder === 'asc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'company' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   ASC
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('company', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'company' && sortOrder === 'desc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'company' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   DSC
                                 </button>
@@ -851,22 +840,20 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('ipAddress', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'ipAddress' && sortOrder === 'asc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'ipAddress' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   ASC
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('ipAddress', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'ipAddress' && sortOrder === 'desc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'ipAddress' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   DSC
                                 </button>
@@ -895,22 +882,20 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('label', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'label' && sortOrder === 'asc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'label' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   ASC
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('label', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'label' && sortOrder === 'desc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'label' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   DSC
                                 </button>
@@ -939,22 +924,20 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('createdAt', 'asc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'createdAt' && sortOrder === 'asc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'asc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   ASC
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => applyColumnSort('createdAt', 'desc')}
-                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${
-                                    sortBy === 'createdAt' && sortOrder === 'desc'
+                                  className={`w-full rounded-md px-2 py-1.5 text-left text-[0.75rem] uppercase transition-colors ${sortBy === 'createdAt' && sortOrder === 'desc'
                                       ? 'bg-blue-500/20 text-blue-300'
                                       : isDark ? 'text-gray-300 hover:bg-white/5' : 'text-gray-700 hover:bg-gray-100'
-                                  }`}
+                                    }`}
                                 >
                                   DSC
                                 </button>
@@ -991,8 +974,8 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 type="button"
                                 onClick={() => openEditServerModal(server)}
                                 className={`rounded-lg p-2 transition-all duration-300 ${isDark
-                                    ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                                  ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                                  : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
                                   }`}
                               >
                                 <Edit2 size={14} />
@@ -1000,11 +983,10 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                               <button
                                 type="button"
                                 onClick={() => handleDeleteServer(server.id)}
-                                className={`rounded-lg p-2 transition-all duration-300 ${
-                                  isDark 
-                                    ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20' 
+                                className={`rounded-lg p-2 transition-all duration-300 ${isDark
+                                    ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20'
                                     : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300'
-                                }`}
+                                  }`}
                                 title="Delete"
                               >
                                 <Trash2 size={13} />
@@ -1017,246 +999,235 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                   </table>
                 </div>
 
-            <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
-              <div className="flex items-center gap-3">
-                <span className={`text-[0.75rem] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
-                <select
-                  value={rowsPerPage}
-                  onChange={(e) => {
-                    setRowsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
-                >
-                  {[5, 10, 20, 50].map(size => (
-                    <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    disabled
-                    className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
-                  >
-                    {currentPage}
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-
-          {/* Add Server Modal */}
-          {isAddServerModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-              <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Server</h2>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {companyName ? `Create a server for ${companyName}.` : 'Create a new server record.'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeAddServerModal}
-                    className={`rounded-full border p-2 transition-all ${
-                      isDark 
-                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    aria-label="Close"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Company ID</label>
-                    <input
-                      type="number"
-                      autoFocus
-                      value={addServerForm.companyId}
-                      onChange={(e) => setAddServerForm({ ...addServerForm, companyId: e.target.value })}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                        addServerErrors.companyId
-                          ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
-                          : isDark 
-                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                      }`}
-                      placeholder="Enter company ID"
-                    />
-                    {addServerErrors.companyId && <p className="mt-2 text-xs text-rose-400">{addServerErrors.companyId}</p>}
+                <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[0.75rem] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                    <select
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(Number(e.target.value));
+                        setCurrentPage(1);
+                      }}
+                      className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                    >
+                      {[5, 10, 20, 50].map(size => (
+                        <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
-                    <input
-                      type="text"
-                      value={addServerForm.ipAddress}
-                      onChange={(e) => setAddServerForm({ ...addServerForm, ipAddress: e.target.value })}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                        addServerErrors.ipAddress
-                          ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
-                          : isDark 
-                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                      }`}
-                      placeholder="e.g. 192.168.1.1"
-                    />
-                    {addServerErrors.ipAddress && <p className="mt-2 text-xs text-rose-400">{addServerErrors.ipAddress}</p>}
-                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+                      disabled={currentPage === 1}
+                      className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
 
-                  <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
-                    <input
-                      type="text"
-                      value={addServerForm.label}
-                      onChange={(e) => setAddServerForm({ ...addServerForm, label: e.target.value })}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                        isDark 
-                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                      }`}
-                      placeholder="e.g. Production Server"
-                    />
-                  </div>
-                </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        disabled
+                        className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
+                      >
+                        {currentPage}
+                      </button>
+                    </div>
 
-                <div className="flex justify-end gap-3 pt-6">
-                  <button
-                    type="button"
-                    onClick={closeAddServerModal}
-                    className={`h-[42px] rounded-xl border px-6 text-sm font-medium transition-all ${
-                      isDark 
-                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreateServer}
-                    disabled={isCreatingServer}
-                    className={`h-[42px] rounded-xl border px-6 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
-                      isDark 
-                        ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
-                        : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm'
-                    }`}
-                  >
-                    {isCreatingServer ? 'Saving...' : 'Create Server'}
-                  </button>
+                    <button
+                      onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Edit Server Modal */}
-          {isEditServerModalOpen && editingServer && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-              <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Server</h2>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      Update server record for {editingServer.company?.name || 'N/A'}.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeEditServerModal}
-                    className={`rounded-full border p-2 transition-all ${
-                      isDark 
-                        ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
-                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
 
-                <form onSubmit={handleUpdateServer} className="space-y-4">
-                  <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
-                    <input
-                      type="text"
-                      value={editForm.ipAddress}
-                      onChange={(e) => setEditForm({ ...editForm, ipAddress: e.target.value })}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                        isDark 
-                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                      }`}
-                      placeholder="e.g. 192.168.1.1"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
-                    <input
-                      type="text"
-                      value={editForm.label}
-                      onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
-                      className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${
-                        isDark 
-                          ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40' 
-                          : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
-                      }`}
-                      placeholder="e.g. Main Server"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-2">
+            {/* Add Server Modal */}
+            {isAddServerModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add Server</h2>
+                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        {companyName ? `Create a server for ${companyName}.` : 'Create a new server record.'}
+                      </p>
+                    </div>
                     <button
                       type="button"
-                      onClick={closeEditServerModal}
-                      className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${
-                        isDark 
-                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5' 
+                      onClick={closeAddServerModal}
+                      className={`rounded-full border p-2 transition-all ${isDark
+                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                      aria-label="Close"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Company ID</label>
+                      <input
+                        type="number"
+                        autoFocus
+                        value={addServerForm.companyId}
+                        onChange={(e) => setAddServerForm({ ...addServerForm, companyId: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${addServerErrors.companyId
+                            ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
+                            : isDark
+                              ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                              : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="Enter company ID"
+                      />
+                      {addServerErrors.companyId && <p className="mt-2 text-xs text-rose-400">{addServerErrors.companyId}</p>}
+                    </div>
+
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
+                      <input
+                        type="text"
+                        value={addServerForm.ipAddress}
+                        onChange={(e) => setAddServerForm({ ...addServerForm, ipAddress: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${addServerErrors.ipAddress
+                            ? 'border-rose-500/50 bg-rose-500/5 focus:border-rose-500'
+                            : isDark
+                              ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                              : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="e.g. 192.168.1.1"
+                      />
+                      {addServerErrors.ipAddress && <p className="mt-2 text-xs text-rose-400">{addServerErrors.ipAddress}</p>}
+                    </div>
+
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
+                      <input
+                        type="text"
+                        value={addServerForm.label}
+                        onChange={(e) => setAddServerForm({ ...addServerForm, label: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="e.g. Production Server"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-6">
+                    <button
+                      type="button"
+                      onClick={closeAddServerModal}
+                      className={`h-[42px] rounded-xl border px-6 text-sm font-medium transition-all ${isDark
+                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       Cancel
                     </button>
                     <button
-                      type="submit"
-                      disabled={isUpdatingServer}
-                      className={`h-[42px] rounded-xl border px-4 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
-                        isDark 
-                          ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20' 
+                      type="button"
+                      onClick={handleCreateServer}
+                      disabled={isCreatingServer}
+                      className={`h-[42px] rounded-xl border px-6 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isDark
+                          ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
                           : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm'
-                      }`}
+                        }`}
                     >
-                      {isUpdatingServer ? 'Saving...' : 'Update Server'}
+                      {isCreatingServer ? 'Saving...' : 'Create Server'}
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Edit Server Modal */}
+            {isEditServerModalOpen && editingServer && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                <div className={`w-full max-w-xl rounded-3xl border p-5 shadow-2xl ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Edit Server</h2>
+                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        Update server record for {editingServer.company?.name || 'N/A'}.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={closeEditServerModal}
+                      className={`rounded-full border p-2 transition-all ${isDark
+                          ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                        }`}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleUpdateServer} className="space-y-4">
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>IP Address</label>
+                      <input
+                        type="text"
+                        value={editForm.ipAddress}
+                        onChange={(e) => setEditForm({ ...editForm, ipAddress: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="e.g. 192.168.1.1"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>Label</label>
+                      <input
+                        type="text"
+                        value={editForm.label}
+                        onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
+                        className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition-all ${isDark
+                            ? 'border-white/10 bg-black/20 text-white placeholder:text-slate-500 focus:border-cyan-400/40'
+                            : 'border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500/40'
+                          }`}
+                        placeholder="e.g. Main Server"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={closeEditServerModal}
+                        className={`h-[42px] rounded-xl border px-4 text-sm transition-all ${isDark
+                            ? 'border-white/10 text-slate-300 hover:border-white/20 hover:text-white hover:bg-white/5'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isUpdatingServer}
+                        className={`h-[42px] rounded-xl border px-4 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60 ${isDark
+                            ? 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                            : 'border-cyan-500/30 bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm'
+                          }`}
+                      >
+                        {isUpdatingServer ? 'Saving...' : 'Update Server'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

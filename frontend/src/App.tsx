@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CustomizationListUI from './pages/CustomizationListUI';
 import SipConfigsListUI from './pages/SipConfigsListUI';
@@ -73,9 +72,7 @@ export default function App() {
                 !token ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />
               } />
 
-              <Route path="/register" element={
-                !token ? <Register /> : <Navigate to="/dashboard" />
-              } />
+
 
               {/* Authenticated Routes with Header and Footer */}
               <Route element={<AuthenticatedLayout token={token} />}>

@@ -38,7 +38,7 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
   // Data States
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   // UI States
   const [searchTerm, setSearchTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -219,8 +219,8 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
   };
 
   const filteredData = useMemo(() => {
-    let result = users.filter(u => 
-      u.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    let result = users.filter(u =>
+      u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     result.sort((a, b) => {
@@ -238,7 +238,7 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
   }, [filteredData, currentPage, rowsPerPage]);
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${mainMarginClass} ${isDark ? 'bg-[#0B1220]' : 'bg-gray-50/50'} pt-20 pb-10 px-4 md:px-8`}>
+    <div className={`min-h-screen transition-all duration-300 ${mainMarginClass} ${isDark ? 'bg-[#0B1220]' : 'bg-gray-50/50'} pt-19 pb-10 px-4 md:px-8`}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -254,10 +254,10 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
         </div>
 
         {/* Search and Filters Bar (Match Company UI) */}
-        <div className={`p-3 rounded-[2rem] border flex flex-col md:flex-row items-center gap-3 transition-all ${isDark 
-          ? 'bg-[#09090B]/60 border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md' 
+        <div className={`p-3 rounded-[2rem] border flex flex-col md:flex-row items-center gap-3 transition-all ${isDark
+          ? 'bg-[#09090B]/60 border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-md'
           : 'bg-white border-gray-100 shadow-[0_8px_20px_rgba(0,0,0,0.04)]'}`}>
-          
+
           <div className="relative flex-1 w-full group">
             <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-gray-600 group-focus-within:text-cyan-400' : 'text-gray-400 group-focus-within:text-cyan-500'}`} size={18} />
             <input
@@ -364,7 +364,7 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
                           {item.img || item.avatarUrl ? (
                             <img src={item.img || item.avatarUrl} alt={item.username} className="w-full h-full object-cover" />
                           ) : (
-                            (item.firstName && item.lastName) ? 
+                            (item.firstName && item.lastName) ?
                               `${item.firstName.charAt(0)}${item.lastName.charAt(0)}`.toUpperCase() :
                               item.username?.charAt(0).toUpperCase()
                           )}
@@ -376,7 +376,7 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
                       <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>{item.email}</span>
                     </td>
                     <td className={`px-6 py-4 transition-colors ${isDark ? `${index % 2 === 0 ? 'bg-white/[0.04]' : 'bg-white/[0.02]'} group-hover:bg-white/[0.08]` : `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} group-hover:bg-cyan-50`}`}>
-                      <button 
+                      <button
                         onClick={() => handleToggleRole(item.id, item.role)}
                         className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer ${item.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30' : 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'}`}
                       >
@@ -431,131 +431,131 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
           </div>
         </div>
 
-          {/* Pagination Footer */}
-          <div className={`px-8 py-5 flex flex-wrap items-center justify-between gap-6 border-t ${isDark ? 'border-white/10 bg-black/40' : 'border-gray-100 bg-gray-50/50'}`}>
-            <div className="flex items-center gap-4">
-              <span className={`text-[0.75rem] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className={`bg-transparent text-xs font-black border-none focus:ring-0 p-0 pr-8 cursor-pointer transition-colors ${isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-700'}`}
+        {/* Pagination Footer */}
+        <div className={`px-8 py-5 flex flex-wrap items-center justify-between gap-6 border-t ${isDark ? 'border-white/10 bg-black/40' : 'border-gray-100 bg-gray-50/50'}`}>
+          <div className="flex items-center gap-4">
+            <span className={`text-[0.75rem] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className={`bg-transparent text-xs font-black border-none focus:ring-0 p-0 pr-8 cursor-pointer transition-colors ${isDark ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-700'}`}
+            >
+              {[5, 10, 20, 50].map(size => (
+                <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            <div className="flex items-center gap-1">
+              <button
+                disabled
+                className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
               >
-                {[5, 10, 20, 50].map(size => (
-                  <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
-                ))}
-              </select>
+                {currentPage}
+              </button>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
-                disabled={currentPage === 1}
-                className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-              >
-                <ChevronLeft size={16} />
-              </button>
+            <button
+              onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
 
-              <div className="flex items-center gap-1">
+        {/* Add/Edit User Modals */}
+        {(isAddUserModalOpen || isEditUserModalOpen) && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl animate-in fade-in duration-300">
+            <div className={`w-full max-w-lg rounded-[2.5rem] border p-8 shadow-2xl transform transition-all scale-in duration-300 ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-2xl ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
+                    {isEditUserModalOpen ? <FaEdit size={24} /> : <FaUserPlus size={24} />}
+                  </div>
+                  <h3 className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {isEditUserModalOpen ? "Modify Account" : "Create New User"}
+                  </h3>
+                </div>
                 <button
-                  disabled
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
+                  onClick={() => {
+                    setIsAddUserModalOpen(false);
+                    setIsEditUserModalOpen(false);
+                  }}
+                  className={`p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-slate-400 hover:text-rose-500`}
                 >
-                  {currentPage}
+                  <FaTimes size={20} />
                 </button>
               </div>
 
-              <button
-                onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
-                disabled={currentPage === totalPages || totalPages === 0}
-                className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-
-      {/* Add/Edit User Modals */}
-      {(isAddUserModalOpen || isEditUserModalOpen) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className={`w-full max-w-lg rounded-[2.5rem] border p-8 shadow-2xl transform transition-all scale-in duration-300 ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-2xl ${isDark ? 'bg-cyan-500/10 text-cyan-400' : 'bg-cyan-50 text-cyan-600'}`}>
-                  {isEditUserModalOpen ? <FaEdit size={24} /> : <FaUserPlus size={24} />}
-                </div>
-                <h3 className={`text-2xl font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {isEditUserModalOpen ? "Modify Account" : "Create New User"}
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  setIsAddUserModalOpen(false);
-                  setIsEditUserModalOpen(false);
-                }}
-                className={`p-3 rounded-2xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-slate-400 hover:text-rose-500`}
-              >
-                <FaTimes size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={isEditUserModalOpen ? handleUpdateUser : handleAddUser} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Username</label>
-                  <input
-                    type="text"
-                    required
-                    value={userFormData.username}
-                    onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
-                    className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
-                    placeholder="Enter unique username"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={userFormData.email}
-                    onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
-                    className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
-                    placeholder="name@example.com"
-                  />
-                </div>
-              </div>
-
-              {!isEditUserModalOpen && (
+              <form onSubmit={isEditUserModalOpen ? handleUpdateUser : handleAddUser} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Password</label>
+                    <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Username</label>
                     <input
-                      type="password"
+                      type="text"
                       required
-                      value={userFormData.password}
-                      onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                      value={userFormData.username}
+                      onChange={(e) => setUserFormData({ ...userFormData, username: e.target.value })}
                       className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
-                      placeholder="••••••••"
+                      placeholder="Enter unique username"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Confirm Password</label>
+                    <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Email Address</label>
                     <input
-                      type="password"
+                      type="email"
                       required
-                      value={userFormData.confirmPassword}
-                      onChange={(e) => setUserFormData({ ...userFormData, confirmPassword: e.target.value })}
+                      value={userFormData.email}
+                      onChange={(e) => setUserFormData({ ...userFormData, email: e.target.value })}
                       className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
-                      placeholder="••••••••"
+                      placeholder="name@example.com"
                     />
                   </div>
                 </div>
-              )}
 
-              {isEditUserModalOpen && (
-                 <div className="space-y-2">
+                {!isEditUserModalOpen && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={userFormData.password}
+                        onChange={(e) => setUserFormData({ ...userFormData, password: e.target.value })}
+                        className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Confirm Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={userFormData.confirmPassword}
+                        onChange={(e) => setUserFormData({ ...userFormData, confirmPassword: e.target.value })}
+                        className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {isEditUserModalOpen && (
+                  <div className="space-y-2">
                     <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Change Password (Optional)</label>
                     <input
                       type="password"
@@ -565,41 +565,41 @@ const UserListUI: React.FC<UserListUIProps> = ({ token, onUnauthorized }) => {
                       className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
                     />
                   </div>
-              )}
+                )}
 
-              <div className="space-y-2">
-                <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Contact Number</label>
-                <input
-                  type="text"
-                  value={userFormData.contactNo}
-                  onChange={(e) => setUserFormData({ ...userFormData, contactNo: e.target.value })}
-                  className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
-                  placeholder="+1 (555) 000-0000"
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className={`block text-[0.75rem] font-black uppercase tracking-[0.2em] ml-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Contact Number</label>
+                  <input
+                    type="text"
+                    value={userFormData.contactNo}
+                    onChange={(e) => setUserFormData({ ...userFormData, contactNo: e.target.value })}
+                    className={`w-full px-5 py-4 rounded-2xl border text-sm font-bold outline-none transition-all ${isDark ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-400'}`}
+                    placeholder="+1 (555) 000-0000"
+                  />
+                </div>
 
-              <div className="pt-6 flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddUserModalOpen(false);
-                    setIsEditUserModalOpen(false);
-                  }}
-                  className={`flex-1 px-6 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-4 rounded-[1.5rem] bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-cyan-600/30 active:scale-95"
-                >
-                  {isEditUserModalOpen ? "Update Account" : "Create Account"}
-                </button>
-              </div>
-            </form>
+                <div className="pt-6 flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddUserModalOpen(false);
+                      setIsEditUserModalOpen(false);
+                    }}
+                    className={`flex-1 px-6 py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-900'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-4 rounded-[1.5rem] bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-cyan-600/30 active:scale-95"
+                  >
+                    {isEditUserModalOpen ? "Update Account" : "Create Account"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );

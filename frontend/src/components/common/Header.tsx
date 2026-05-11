@@ -84,8 +84,8 @@ const Header: React.FC = () => {
 
   return (
     <div className="antialiased bg-gray-50 dark:bg-gray-900">
-      <nav className="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50">
-        <div className="flex flex-wrap justify-between items-center">
+      <nav className="bg-white border-b border-gray-200 px-4 h-14 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50 flex items-center">
+        <div className="flex flex-wrap justify-between items-center w-full">
           <div className="flex justify-start items-center">
             {/* Hamburger Button */}
             <button
@@ -107,7 +107,7 @@ const Header: React.FC = () => {
             >
               <img
                 src={FlashLogo}
-                className="mr-3 h-12 ml-7"
+                className="mr-3 h-10 ml-7"
                 alt="Flashcloud Logo"
               />
             </a>
@@ -165,7 +165,7 @@ const Header: React.FC = () => {
                       </svg>
                     </div>
                   </div>
-                  <div className="pl-3 w-full">
+                  {/* <div className="pl-3 w-full">
                     <div className="text-gray-500 font-normal text-sm mb-1.5 dark:text-gray-400">
                       New ticket submitted by
                       <span className="font-semibold text-gray-900 dark:text-white">
@@ -177,7 +177,7 @@ const Header: React.FC = () => {
                     <div className="text-xs font-medium text-primary-600 dark:text-primary-500">
                       Just now
                     </div>
-                  </div>
+                  </div> */}
                 </a>
               </div>
 
@@ -506,7 +506,7 @@ const Header: React.FC = () => {
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
-                height="24"
+                height="30"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -522,7 +522,7 @@ const Header: React.FC = () => {
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
-                height="24"
+                height="30"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >

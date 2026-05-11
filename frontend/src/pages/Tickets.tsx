@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { API_BASE_URL as API_BASE } from "../config/api";
-import { User, Building2, Clock, AlertCircle, ChevronRight, Ticket as TicketIcon, ChevronLeft } from "lucide-react";
+import { User, Building2, Clock, AlertCircle, ChevronRight, Ticket as TicketIcon, ChevronLeft, Search } from "lucide-react";
 
 import { Link } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
@@ -62,7 +62,7 @@ const Tickets: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { searchTerm } = useSearch();
+  const { searchTerm, setSearchTerm } = useSearch();
   const { isDrawerOpen } = useDrawer();
   const { isDark } = useTheme();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -127,7 +127,7 @@ const Tickets: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0B1120] text-slate-300' : 'bg-gray-50 text-gray-700'}`}>
-      <main className={`p-4 ${mainMarginClass} h-auto pt-20 space-y-6 transition-all duration-300`}>
+      <main className={`p-4 ${mainMarginClass} h-auto pt-18 space-y-6 transition-all duration-300`}>
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -139,13 +139,29 @@ const Tickets: React.FC = () => {
               Overview of all active and resolved support cases
             </p>
           </div>
-          
-          {/* View My Tickets Toggle */}
+
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="relative">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`} size={16} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search subject, author, company..."
+                className={`w-64 md:w-80 rounded-2xl border transition-all outline-none py-2 pl-10 pr-4 text-sm ${
+                  isDark 
+                    ? 'border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-blue-500/40' 
+                    : 'border-gray-200 bg-white text-gray-900 placeholder:text-slate-400 focus:border-blue-400/40 shadow-sm'
+                }`}
+              />
+            </div>
+
+            {/* View My Tickets Toggle */}
           <div className="flex items-center gap-3 p-2 px-4 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-300 group">
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                id="viewMyTickets" 
+              <input
+                type="checkbox"
+                id="viewMyTickets"
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
@@ -162,6 +178,7 @@ const Tickets: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
 
         {error && (
           <div className={`p-4 rounded-xl border flex items-center gap-3 ${isDark ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-red-50 border-red-200 text-red-600'}`}>
@@ -184,8 +201,8 @@ const Tickets: React.FC = () => {
               key={ticket.id}
               to={`/ticket/${ticket.id}`}
               className={`group block relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${isDark
-                  ? 'bg-white/5 border-white/10 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10'
-                  : 'bg-white border-gray-200 hover:border-cyan-400 hover:shadow-xl'
+                ? 'bg-white/5 border-white/10 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10'
+                : 'bg-white border-gray-200 hover:border-cyan-400 hover:shadow-xl'
                 }`}
             >
               <div className="p-5 flex items-center gap-5">
@@ -221,20 +238,18 @@ const Tickets: React.FC = () => {
 
                 {/* Priority & State */}
                 <div className="hidden md:flex flex-col items-end gap-2 shrink-0">
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                      (ticket.priority?.toLowerCase() ?? '') === 'urgent' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${(ticket.priority?.toLowerCase() ?? '') === 'urgent' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
                       (ticket.priority?.toLowerCase() ?? '') === 'high' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                      (ticket.priority?.toLowerCase() ?? '') === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                      'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                        (ticket.priority?.toLowerCase() ?? '') === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                          'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                     }`}>
                     {ticket.priority ?? '—'}
                   </div>
                   <div
-                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm ${
-                      isDark 
-                        ? 'bg-slate-800 text-white border border-white/5 group-hover:bg-slate-700' 
+                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm ${isDark
+                        ? 'bg-slate-800 text-white border border-white/5 group-hover:bg-slate-700'
                         : 'bg-gray-100 text-gray-600 border border-gray-200 group-hover:bg-gray-200 group-hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     {ticket.state || 'open'}
                     <ChevronRight className="w-3.5 h-3.5" />

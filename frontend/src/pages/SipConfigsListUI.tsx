@@ -268,8 +268,8 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
   return (
     <div className={`min-h-screen flex flex-col transition-all duration-300 ${isDark ? 'bg-[#030712] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex-grow">
-        <main className={`p-4 md:p-8 transition-all duration-300 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-32`}>
-          <div className={`mx-auto max-w-7xl mt-15 rounded-[2.5rem] border p-6 transition-all duration-500 backdrop-blur-xl ${isDark
+        <main className={`p-4 md:p-8 transition-all duration-300 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-14`}>
+          <div className={`mx-auto max-w-7xl mt-10 rounded-[2.5rem] border p-6 transition-all duration-500 backdrop-blur-xl ${isDark
               ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]'
               : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'
             }`}>

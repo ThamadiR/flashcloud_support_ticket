@@ -208,13 +208,13 @@ export default function Login({ onLogin }: { onLogin: (token: string, user: any)
             )}
           </button>
 
-          <p className={`text-[13px] text-center mt-2 ${
+          {/* <p className={`text-[13px] text-center mt-2 ${
             isDark ? 'text-gray-600' : 'text-gray-500'
           }`}>
             or register <Link to="/register" className={`font-medium transition ${
               isDark ? 'text-gray-400 hover:text-white' : 'text-blue-600 hover:text-blue-700'
             }`}>new account</Link>
-          </p>
+          </p> */}
         </form>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Spinner } from "flowbite-react";
 import { API_BASE_URL } from "../config/api";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDrawer } from "../context/DrawerContext";
@@ -94,6 +95,7 @@ const TicketDetail: React.FC = () => {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Dummy data with proper typing
   const ticketData: TicketData = {
@@ -390,7 +392,7 @@ const TicketDetail: React.FC = () => {
 
       // Ensure pendingAssigneeId is matched correctly against assigneeOptions
       const selectedAssigneeObj = assigneeOptions.find(a => String(a.id) === String(pendingAssigneeId));
-      
+
       const userId = selectedAssigneeObj ? selectedAssigneeObj.id : null;
       const assigneeName = selectedAssigneeObj ? selectedAssigneeObj.username : "";
 
@@ -497,6 +499,7 @@ const TicketDetail: React.FC = () => {
     }
     attachments.forEach((file) => formData.append("attachments", file));
 
+    setIsSendingEmail(true);
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/tickets/emails/reply`,
@@ -527,6 +530,8 @@ const TicketDetail: React.FC = () => {
     } catch (err) {
       console.error("Error sending reply:", err);
       toast.error("An error occurred while sending the reply.");
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -577,6 +582,7 @@ const TicketDetail: React.FC = () => {
       }
     }
 
+    setIsSendingEmail(true);
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/tickets/emails/forward`,
@@ -608,6 +614,8 @@ const TicketDetail: React.FC = () => {
     } catch (err) {
       console.error("Error forwarding email:", err);
       toast.error("An error occurred while forwarding the email.");
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -629,26 +637,26 @@ const TicketDetail: React.FC = () => {
       return;
     }
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/tickets/${id}`, {
-        method: "DELETE",
-      });
+    // try {
+    //   const res = await fetch(`${API_BASE_URL}/api/tickets/${id}`, {
+    //     method: "DELETE",
+    //   });
 
-      if (!res.ok) {
-        throw new Error("Failed to delete ticket");
-      }
+    //   if (!res.ok) {
+    //     throw new Error("Failed to delete ticket");
+    //   }
 
-      toast.success("Ticket deleted successfully!");
-      navigate("/tickets");
-    } catch (err) {
-      console.error("Error deleting ticket:", err);
-      toast.error("An error occurred while deleting the ticket.");
-    }
+    //   toast.success("Ticket deleted successfully!");
+    //   navigate("/tickets");
+    // } catch (err) {
+    //   console.error("Error deleting ticket:", err);
+    //   toast.error("An error occurred while deleting the ticket.");
+    // }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
+      <main className={`p-4 ${mainMarginClass} h-auto pt-16 transition-all duration-300`}>
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content Area */}
           <div className="flex-1 space-y-6">
@@ -665,14 +673,12 @@ const TicketDetail: React.FC = () => {
                     Ticket #{id || '...'}
                   </span>
                   <div className="flex gap-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      (status || '').toLowerCase() === 'open' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${(status || '').toLowerCase() === 'open' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
+                      }`}>
                       {status || '...'}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      (priority || '').toLowerCase() === 'high' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${(priority || '').toLowerCase() === 'high' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
                       {priority || '...'}
                     </span>
                   </div>
@@ -683,255 +689,263 @@ const TicketDetail: React.FC = () => {
               </div>
             </div>
 
-          {/* Action Buttons */}
-          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex space-x-2 overflow-x-auto">
-            <button
-              type="button"
-              onClick={toggleReply}
-              className={`${isReplying ? "bg-blue-800" : "bg-blue-700"
-                } text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
-            >
-              <FaReply className="w-4 h-4 me-2" />
-              Reply
-            </button>
-            <button
-              type="button"
-              onClick={toggleForward}
-              className={`${isForwarding
-                ? "bg-gray-200 dark:bg-gray-700"
-                : "bg-white dark:bg-gray-800"
-                } text-gray-900 border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center`}
-            >
-              <FaShareSquare className="w-4 h-4 me-2" />
-              Forward
-            </button>
-            <button
-              type="button"
-              className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center"
-            >
-              <FaTimes className="w-4 h-4 me-2" />
-              Close
-            </button>
-            <button
-              type="button"
-              className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center"
-            >
-              <FaArrowsAltH className="w-4 h-4 me-2" />
-              Merge
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteTicket}
-              className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 inline-flex items-center"
-            >
-              <FaTrash className="w-4 h-4 me-2" />
-              Delete
-            </button>
-          </div>
-
-          {/* Reply Form */}
-          {isReplying && (
-            <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <form onSubmit={handleReplySubmit}>
-                {/* From */}
-                <div className="mb-4">
-                  <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 mb-4">
-                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
-                      From
-                    </h4>
-                    <p className="text-base font-semibold text-gray-900 dark:text-white">
-                      {emails[0]?.to?.split(",")[0]?.trim() || "iPhonik Support"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* To */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="replyToInput"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    To
-                  </label>
-                  <input
-                    type="text"
-                    id="replyToInput"
-                    value={replyTo}
-                    onChange={(e) => setReplyTo(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="recipient@example.com, another@example.com"
-                  />
-                </div>
-
-                {/* Cc */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="replyCcInput"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Cc
-                  </label>
-                  <input
-                    type="text"
-                    id="replyCcInput"
-                    value={replyCc}
-                    onChange={(e) => setReplyCc(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="cc@example.com, cc2@example.com"
-                  />
-                </div>
-
-                {/* Message */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="replyContent"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Message
-                  </label>
-                  <textarea
-                    id="replyContent"
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    rows={8}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="Type your reply here..."
-                    required
-                  />
-                </div>
-
-                {/* Attachments Preview */}
-                {attachments.length > 0 && (
-                  <div className="mb-4 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Attached Files:
-                    </h4>
-                    <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                      {attachments.map((file, idx) => (
-                        <li
-                          key={idx}
-                          className="flex justify-between items-center"
-                        >
-                          <span>{file.name}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setAttachments(
-                                attachments.filter((_, i) => i !== idx)
-                              )
-                            }
-                            className="text-red-500 hover:text-red-700 transition"
-                          >
-                            Remove
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <label className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
-                      <FaPaperclip className="mr-2" />
-                      Attach File
-                      <input
-                        type="file"
-                        multiple
-                        onChange={(e) => {
-                          const newFiles = e.currentTarget.files ? Array.from(e.currentTarget.files) : [];
-                          setAttachments((prev) => [...prev, ...newFiles]);
-                        }}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsReplying(false)}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
-              </form>
+            {/* Action Buttons */}
+            <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-3 border border-gray-200 dark:border-gray-700 flex space-x-2 overflow-x-auto">
+              <button
+                type="button"
+                onClick={toggleReply}
+                className={`${isReplying ? "bg-blue-800" : "bg-blue-700"
+                  } text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
+              >
+                <FaReply className="w-4 h-4 me-2" />
+                Reply
+              </button>
+              <button
+                type="button"
+                onClick={toggleForward}
+                className={`${isForwarding
+                  ? "bg-gray-200 dark:bg-gray-700"
+                  : "bg-white dark:bg-gray-800"
+                  } text-gray-900 border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center`}
+              >
+                <FaShareSquare className="w-4 h-4 me-2" />
+                Forward
+              </button>
+              {/* <button
+                type="button"
+                className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center"
+              >
+                <FaTimes className="w-4 h-4 me-2" />
+                Close
+              </button> */}
+              <button
+                type="button"
+                className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center"
+              >
+                <FaArrowsAltH className="w-4 h-4 me-2" />
+                Merge
+              </button>
+              {/* <button
+                type="button"
+                onClick={handleDeleteTicket}
+                className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 inline-flex items-center"
+              >
+                <FaTrash className="w-4 h-4 me-2" />
+                Delete
+              </button> */}
             </div>
-          )}
 
-          {/* Forward Form */}
-          {isForwarding && (
-            <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <form onSubmit={handleForwardSubmit}>
-                {/* From */}
-                <div className="mb-4">
-                  <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 mb-4">
-                    <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
-                      From
-                    </h4>
-                    <p className="text-base font-semibold text-gray-900 dark:text-white">
-                      {emails[0]?.from || "No recipient"}
-                    </p>
+            {/* Reply Form */}
+            {isReplying && (
+              <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                <form onSubmit={handleReplySubmit}>
+                  {/* From */}
+                  <div className="mb-4">
+                    <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 mb-4">
+                      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
+                        From
+                      </h4>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
+                        {emails[0]?.to?.split(",")[0]?.trim() || "iPhonik Support"}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* To */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="forwardTo"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    To
-                  </label>
-                  <input
-                    type="text"
-                    id="forwardTo"
-                    value={forwardRecipients.to}
-                    onChange={(e) =>
-                      setForwardRecipients({
-                        ...forwardRecipients,
-                        to: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="recipient@example.com, another@example.com"
-                  />
-                </div>
+                  {/* To */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="replyToInput"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
+                      To
+                    </label>
+                    <input
+                      type="text"
+                      id="replyToInput"
+                      value={replyTo}
+                      onChange={(e) => setReplyTo(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      placeholder="recipient@example.com, another@example.com"
+                    />
+                  </div>
 
-                {/* Cc */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="forwardCc"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Cc
-                  </label>
-                  <input
-                    type="text"
-                    id="forwardCc"
-                    value={forwardRecipients.cc}
-                    onChange={(e) =>
-                      setForwardRecipients({
-                        ...forwardRecipients,
-                        cc: e.target.value,
-                      })
-                    }
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="cc@example.com, cc2@example.com"
-                  />
-                </div>
+                  {/* Cc */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="replyCcInput"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
+                      Cc
+                    </label>
+                    <input
+                      type="text"
+                      id="replyCcInput"
+                      value={replyCc}
+                      onChange={(e) => setReplyCc(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      placeholder="cc@example.com, cc2@example.com"
+                    />
+                  </div>
 
-                {/* Original Message */}
-                {/*<div className="mb-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
+                  {/* Message */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="replyContent"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
+                      Message
+                    </label>
+                    <textarea
+                      id="replyContent"
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      rows={8}
+                      className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      placeholder="Type your reply here..."
+                      required
+                    />
+                  </div>
+
+                  {/* Attachments Preview */}
+                  {attachments.length > 0 && (
+                    <div className="mb-4 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Attached Files:
+                      </h4>
+                      <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                        {attachments.map((file, idx) => (
+                          <li
+                            key={idx}
+                            className="flex justify-between items-center"
+                          >
+                            <span>{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAttachments(
+                                  attachments.filter((_, i) => i !== idx)
+                                )
+                              }
+                              className="text-red-500 hover:text-red-700 transition"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
+                        <FaPaperclip className="mr-2" />
+                        Attach File
+                        <input
+                          type="file"
+                          multiple
+                          onChange={(e) => {
+                            const newFiles = e.currentTarget.files ? Array.from(e.currentTarget.files) : [];
+                            setAttachments((prev) => [...prev, ...newFiles]);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    <div className="space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsReplying(false)}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSendingEmail}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSendingEmail ? (
+                          <>
+                            <Spinner size="sm" className="mr-2" />
+                            Sending...
+                          </>
+                        ) : (
+                          "Send"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Forward Form */}
+            {isForwarding && (
+              <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                <form onSubmit={handleForwardSubmit}>
+                  {/* From */}
+                  <div className="mb-4">
+                    <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 mb-4">
+                      <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
+                        From
+                      </h4>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">
+                        {emails[0]?.from || "No recipient"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* To */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="forwardTo"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
+                      To
+                    </label>
+                    <input
+                      type="text"
+                      id="forwardTo"
+                      value={forwardRecipients.to}
+                      onChange={(e) =>
+                        setForwardRecipients({
+                          ...forwardRecipients,
+                          to: e.target.value,
+                        })
+                      }
+                      className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      placeholder="recipient@example.com, another@example.com"
+                    />
+                  </div>
+
+                  {/* Cc */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="forwardCc"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
+                      Cc
+                    </label>
+                    <input
+                      type="text"
+                      id="forwardCc"
+                      value={forwardRecipients.cc}
+                      onChange={(e) =>
+                        setForwardRecipients({
+                          ...forwardRecipients,
+                          cc: e.target.value,
+                        })
+                      }
+                      className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      placeholder="cc@example.com, cc2@example.com"
+                    />
+                  </div>
+
+                  {/* Original Message */}
+                  {/*<div className="mb-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
                   <h4 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">
                     Original Message
                   </h4>
@@ -951,112 +965,120 @@ const TicketDetail: React.FC = () => {
                   </div>
                 </div>*/}
 
-                {/* Message */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="forwardContent"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Message
-                  </label>
-                  <textarea
-                    id="forwardContent"
-                    value={forwardContent}
-                    onChange={(e) => setForwardContent(e.target.value)}
-                    rows={8}
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                    placeholder="Add a message to accompany the forwarded email..."
-                  />
-                </div>
-
-                {/* Attachments Preview */}
-                {attachments.length > 0 && (
-                  <div className="mb-4 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3">
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Attached Files:
-                    </h4>
-                    <ul className="list-disc list-inside text-sm text-gray-800 dark:text-gray-200">
-                      {attachments.map((file, idx) => (
-                        <li
-                          key={idx}
-                          className="flex justify-between items-center"
-                        >
-                          <span>{file.name}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setAttachments(
-                                attachments.filter((_, i) => i !== idx)
-                              )
-                            }
-                            className="text-red-500 hover:text-red-700 text-xs"
-                          >
-                            Remove
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
+                  {/* Message */}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="forwardContent"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                    >
+                      Message
+                    </label>
+                    <textarea
+                      id="forwardContent"
+                      value={forwardContent}
+                      onChange={(e) => setForwardContent(e.target.value)}
+                      rows={8}
+                      className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                      placeholder="Add a message to accompany the forwarded email..."
+                    />
                   </div>
-                )}
 
-                {/* Actions */}
-                <div className="flex justify-between items-center">
-                  <input
-                    type="file"
-                    id="forwardAttachmentInput"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      const newFiles = e.target.files ? Array.from(e.target.files) : [];
-                      setAttachments((prev) => [...prev, ...newFiles]);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document.getElementById("forwardAttachmentInput")?.click()
-                    }
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
-                  >
-                    <FaPaperclip className="mr-2" />
-                    Attach File
-                  </button>
+                  {/* Attachments Preview */}
+                  {attachments.length > 0 && (
+                    <div className="mb-4 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-3">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Attached Files:
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-gray-800 dark:text-gray-200">
+                        {attachments.map((file, idx) => (
+                          <li
+                            key={idx}
+                            className="flex justify-between items-center"
+                          >
+                            <span>{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAttachments(
+                                  attachments.filter((_, i) => i !== idx)
+                                )
+                              }
+                              className="text-red-500 hover:text-red-700 text-xs"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                  <div className="space-x-2">
+                  {/* Actions */}
+                  <div className="flex justify-between items-center">
+                    <input
+                      type="file"
+                      id="forwardAttachmentInput"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        const newFiles = e.target.files ? Array.from(e.target.files) : [];
+                        setAttachments((prev) => [...prev, ...newFiles]);
+                      }}
+                    />
                     <button
                       type="button"
-                      onClick={() => setIsForwarding(false)}
+                      onClick={() =>
+                        document.getElementById("forwardAttachmentInput")?.click()
+                      }
                       className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
                     >
-                      Cancel
+                      <FaPaperclip className="mr-2" />
+                      Attach File
                     </button>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Forward
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          )}
 
-          {/* Email Thread */}
-          <div className="flex-1 glass-panel rounded-2xl p-8 border border-white/10 overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
-            {loading ? (
-              <p className="text-gray-500">Loading unread emails...</p>
-            ) : error ? (
-              <p className="text-red-600">{error}</p>
-            ) : emails.length === 0 ? (
-              <p className="text-gray-500">No unread emails found.</p>
-            ) : (
-              emails.map((email, index) => (
-                <div
-                  key={index}
-                // className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
-                >
-                  {/* <div className="flex items-center mb-2 text-sm text-gray-700 dark:text-gray-300">
+                    <div className="space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsForwarding(false)}
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSendingEmail}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSendingEmail ? (
+                          <>
+                            <Spinner size="sm" className="mr-2" />
+                            Forwarding...
+                          </>
+                        ) : (
+                          "Forward"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Email Thread */}
+            <div className="flex-1 glass-panel rounded-2xl p-8 border border-white/10 overflow-y-auto shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+              {loading ? (
+                <p className="text-gray-500">Loading unread emails...</p>
+              ) : error ? (
+                <p className="text-red-600">{error}</p>
+              ) : emails.length === 0 ? (
+                <p className="text-gray-500">No unread emails found.</p>
+              ) : (
+                emails.map((email, index) => (
+                  <div
+                    key={index}
+                  // className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
+                  >
+                    {/* <div className="flex items-center mb-2 text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-semibold mr-2">From:</span>
                     <span className="text-blue-600 dark:text-blue-400">
                       {email.from}
@@ -1066,7 +1088,7 @@ const TicketDetail: React.FC = () => {
                     </span>
                   </div> */}
 
-                  {/* <div className="mb-2 text-sm">
+                    {/* <div className="mb-2 text-sm">
                     <strong>To:</strong> {email.to}
                   </div>
 
@@ -1080,15 +1102,15 @@ const TicketDetail: React.FC = () => {
                     <strong>Subject:</strong> {email.subject}
                   </div> */}
 
-                  <div
-                    className="email-body bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-white/5 text-gray-800 dark:text-gray-200 leading-relaxed shadow-inner"
-                    dangerouslySetInnerHTML={{
-                      __html: (email.body || "") as string,
-                    }}
-                  />
+                    <div
+                      className="email-body bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-white/5 text-gray-800 dark:text-gray-200 leading-relaxed shadow-inner"
+                      dangerouslySetInnerHTML={{
+                        __html: (email.body || "") as string,
+                      }}
+                    />
 
-                  {/*Attachments*/}
-                  {/* {email.attachments && email.attachments.length > 0 && (
+                    {/*Attachments*/}
+                    {/* {email.attachments && email.attachments.length > 0 && (
                     <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
                       <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-2">
                         <FaPaperclip className="inline mr-2" />
@@ -1122,69 +1144,69 @@ const TicketDetail: React.FC = () => {
                       </ul>
                     </div>
                   )} */}
-                  {/* Attachments Section */}
-                  {email.attachments && email.attachments.length > 0 && (
-                    <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
-                      <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center">
-                        <FaPaperclip className="mr-2" /> Attachments (
-                        {email.attachments.length})
-                      </h4>
+                    {/* Attachments Section */}
+                    {email.attachments && email.attachments.length > 0 && (
+                      <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
+                        <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                          <FaPaperclip className="mr-2" /> Attachments (
+                          {email.attachments.length})
+                        </h4>
 
-                      <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {email.attachments.map((att, i) => {
-                          const isImage = att.mimeType?.startsWith("image/");
+                        <ul className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {email.attachments.map((att, i) => {
+                            const isImage = att.mimeType?.startsWith("image/");
 
-                          return (
-                            <li
-                              key={i}
-                              className="flex flex-col items-center justify-center p-2 bg-white dark:bg-gray-800 rounded shadow text-sm"
-                            >
-                              {isImage ? (
-                                // Image preview
-                                <img
-                                  src={`http://localhost:5000${att.path}`}
-                                  alt={att.filename}
-                                  className="w-24 h-24 object-cover rounded mb-2 border border-gray-300 dark:border-gray-600"
-                                />
-                              ) : (
-                                // File icon + name
-                                <div className="flex flex-col items-center mb-2">
-                                  <FaFileAlt
-                                    size={32}
-                                    className="text-gray-500 dark:text-gray-300 mb-1"
-                                  />
-                                </div>
-                              )}
-
-                              {/* File name + size */}
-                              <p className="font-medium text-center break-all">
-                                {att.filename}
-                              </p>
-                              {att.size && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {(att.size / 1024).toFixed(1)} KB
-                                </p>
-                              )}
-
-                              {/* Download link */}
-                              <a
-                                href={`http://localhost:5000/api/emails/download/${att.storedName}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-1 text-blue-600 dark:text-blue-400 text-xs hover:underline"
+                            return (
+                              <li
+                                key={i}
+                                className="flex flex-col items-center justify-center p-2 bg-white dark:bg-gray-800 rounded shadow text-sm"
                               >
-                                Download
-                              </a>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+                                {isImage ? (
+                                  // Image preview
+                                  <img
+                                    src={`http://localhost:5000${att.path}`}
+                                    alt={att.filename}
+                                    className="w-24 h-24 object-cover rounded mb-2 border border-gray-300 dark:border-gray-600"
+                                  />
+                                ) : (
+                                  // File icon + name
+                                  <div className="flex flex-col items-center mb-2">
+                                    <FaFileAlt
+                                      size={32}
+                                      className="text-gray-500 dark:text-gray-300 mb-1"
+                                    />
+                                  </div>
+                                )}
+
+                                {/* File name + size */}
+                                <p className="font-medium text-center break-all">
+                                  {att.filename}
+                                </p>
+                                {att.size && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {(att.size / 1024).toFixed(1)} KB
+                                  </p>
+                                )}
+
+                                {/* Download link */}
+                                <a
+                                  href={`http://localhost:5000/api/emails/download/${att.storedName}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-1 text-blue-600 dark:text-blue-400 text-xs hover:underline"
+                                >
+                                  Download
+                                </a>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Right Sidebar (Properties) */}
@@ -1192,132 +1214,132 @@ const TicketDetail: React.FC = () => {
             <div className="flex flex-col mb-6">
               <div className="flex justify-between items-center mb-2">
               </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Resolution Due: {ticketData.resolutionDueDate}
-            </p>
-          </div>
-
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            PROPERTIES
-          </h3>
-
-          <div className="mb-3">
-            <label
-              htmlFor="status"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Status
-            </label>
-            <div className="relative mt-1">
-              <select
-                id="status"
-                value={pendingStatus}
-                onChange={(e) => handleDropdownChange("status", e.target.value)}
-                className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
-              >
-                {(ticketData?.statusOptions || []).map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Resolution Due: {ticketData.resolutionDueDate}
+              </p>
             </div>
-          </div>
 
-          <div className="mb-3">
-            <label
-              htmlFor="priority"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Priority
-            </label>
-            <div className="relative mt-1">
-              <select
-                id="priority"
-                value={pendingPriority}
-                onChange={(e) =>
-                  handleDropdownChange("priority", e.target.value)
-                }
-                className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+              PROPERTIES
+            </h3>
+
+            <div className="mb-3">
+              <label
+                htmlFor="status"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {(ticketData?.priorityOptions || []).map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                Status
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="status"
+                  value={pendingStatus}
+                  onChange={(e) => handleDropdownChange("status", e.target.value)}
+                  className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+                >
+                  {(ticketData?.statusOptions || []).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+              </div>
             </div>
-          </div>
 
-          <div className="mb-3">
-            <label
-              htmlFor="group"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Group
-            </label>
-            <div className="relative mt-1">
-              <select
-                id="group"
-                value={pendingGroup}
-                onChange={(e) => handleDropdownChange("group", e.target.value)}
-                className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+            <div className="mb-3">
+              <label
+                htmlFor="priority"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                <option value="">Select Group</option>
-                {groupOptions.map((option) => (
-                  <option key={option.id} value={option.name}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                Priority
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="priority"
+                  value={pendingPriority}
+                  onChange={(e) =>
+                    handleDropdownChange("priority", e.target.value)
+                  }
+                  className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+                >
+                  {(ticketData?.priorityOptions || []).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+              </div>
             </div>
-          </div>
 
-          <div className="mb-6">
-            <label
-              htmlFor="assignee"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Assignee
-            </label>
-            <div className="relative mt-1">
-              <select
-                id="assignee"
-                value={pendingAssigneeId}
-                onChange={(e) =>
-                  handleDropdownChange("assignee", e.target.value)
-                }
-                className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+            <div className="mb-3">
+              <label
+                htmlFor="group"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                <option value="">Select Assignee</option>
-                {assigneeOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.username}
-                  </option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+                Group
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="group"
+                  value={pendingGroup}
+                  onChange={(e) => handleDropdownChange("group", e.target.value)}
+                  className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+                >
+                  <option value="">Select Group</option>
+                  {groupOptions.map((option) => (
+                    <option key={option.id} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+                <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+              </div>
             </div>
-          </div>
 
-          {/* Apply / Discard Buttons */}
-          <div className={`flex gap-2 transition-all duration-300 ${isModified ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-            <button
-              onClick={handleDiscard}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-gray-700 transition-colors"
-            >
-              Discard
-            </button>
-            <button
-              onClick={handleApply}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-800 transition-colors"
-            >
-              Apply
-            </button>
-          </div>
+            <div className="mb-6">
+              <label
+                htmlFor="assignee"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Assignee
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="assignee"
+                  value={pendingAssigneeId}
+                  onChange={(e) =>
+                    handleDropdownChange("assignee", e.target.value)
+                  }
+                  className="block w-full rounded-lg bg-gray-50 border border-gray-300 text-gray-900 text-sm p-2.5 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none"
+                >
+                  <option value="">Select Assignee</option>
+                  {assigneeOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.username}
+                    </option>
+                  ))}
+                </select>
+                <FaChevronDown className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Apply / Discard Buttons */}
+            <div className={`flex gap-2 transition-all duration-300 ${isModified ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+              <button
+                onClick={handleDiscard}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:ring-gray-700 transition-colors"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleApply}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-800 transition-colors"
+              >
+                Apply
+              </button>
+            </div>
           </div>
         </div>
       </main>

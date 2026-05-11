@@ -65,7 +65,7 @@ function Dashboard() {
 
         {/* Top summary cards */}
         <main
-          className={`p-4 ${mainMarginClass} h-auto pt-20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
+          className={`p-4 ${mainMarginClass} h-auto pt-17 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
         >
           {/* All Tickets */}
           <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">

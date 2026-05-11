@@ -26,7 +26,7 @@ type GroupSummary = {
 };
 
 function Dashboard() {
-  
+
 
   const { isDrawerOpen } = useDrawer();
   const { isDark } = useTheme();
@@ -82,148 +82,148 @@ function Dashboard() {
     <div className="pb-12">
       {/* Top summary cards */}
       <main
-        className={`p-4 ${mainMarginClass} h-auto pt-20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
+        className={`p-4 ${mainMarginClass} h-auto pt-18 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 transition-all duration-300`}
       >
         {/* All Tickets */}
-          <Link to="/tickets">
-            <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="flex items-center space-x-4">
-                <HiTicket className="w-5 h-5 text-blue-500" />
-                <div>
-                  <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {loading ? "..." : summary.all}
-                  </h5>
-                  <p className="text-gray-600 dark:text-gray-400 text-[13px]">All Tickets</p>
-                </div>
+        <Link to="/tickets">
+          <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center space-x-4">
+              <HiTicket className="w-5 h-5 text-blue-500" />
+              <div>
+                <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {loading ? "..." : summary.all}
+                </h5>
+                <p className="text-gray-600 dark:text-gray-400 text-[13px]">All Tickets</p>
               </div>
-              <Badge color="info" className="mt-4">
-                Updated just now
-              </Badge>
-            </Card>
-          </Link>
+            </div>
+            <Badge color="info" className="mt-4">
+              Updated just now
+            </Badge>
+          </Card>
+        </Link>
 
-          {/* Pending Tickets */}
-          <Link to="/tickets?status=Pending">
-            <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="flex items-center space-x-4">
-                <HiClock className="w-5 h-5 text-yellow-500" />
-                <div>
-                  <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {loading ? "..." : summary.pending}
-                  </h5>
-                  <p className="text-gray-600 dark:text-gray-400 text-[13px]">
-                    Pending Tickets
-                  </p>
-                </div>
+        {/* Pending Tickets */}
+        <Link to="/tickets?status=Pending">
+          <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center space-x-4">
+              <HiClock className="w-5 h-5 text-yellow-500" />
+              <div>
+                <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {loading ? "..." : summary.pending}
+                </h5>
+                <p className="text-gray-600 dark:text-gray-400 text-[13px]">
+                  Pending Tickets
+                </p>
               </div>
-              <Badge color="warning" className="mt-4">
-                Needs attention
-              </Badge>
-            </Card>
-          </Link>
+            </div>
+            <Badge color="warning" className="mt-4">
+              Needs attention
+            </Badge>
+          </Card>
+        </Link>
 
-          {/* Resolved Tickets */}
-          <Link to="/tickets?status=Resolved">
-            <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="flex items-center space-x-4">
-                <HiCheckCircle className="w-5 h-5 text-green-500" />
-                <div>
-                  <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {loading ? "..." : summary.resolved}
-                  </h5>
-                  <p className="text-gray-600 dark:text-gray-400 text-[13px]">
-                    Resolved Tickets
-                  </p>
-                </div>
+        {/* Resolved Tickets */}
+        <Link to="/tickets?status=Resolved">
+          <Card className="max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center space-x-4">
+              <HiCheckCircle className="w-5 h-5 text-green-500" />
+              <div>
+                <h5 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {loading ? "..." : summary.resolved}
+                </h5>
+                <p className="text-gray-600 dark:text-gray-400 text-[13px]">
+                  Resolved Tickets
+                </p>
               </div>
-              <Badge color="success" className="mt-4">
-                Great job!
-              </Badge>
-            </Card>
-          </Link>
-        </main>
+            </div>
+            <Badge color="success" className="mt-4">
+              Great job!
+            </Badge>
+          </Card>
+        </Link>
+      </main>
 
-        <main
-          className={`bg-gray-50 dark:bg-gray-800 ${mainMarginClass} p-6 max-w-7xl mx-auto transition-all duration-300`}
-        >
-          {/* Filters */}
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            {/* Filter Controls */}
-          </div>
+      <main
+        className={`bg-gray-50 dark:bg-gray-800 ${mainMarginClass} p-6 max-w-7xl mx-auto transition-all duration-300`}
+      >
+        {/* Filters */}
+        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {/* Filter Controls */}
+        </div>
 
-          {/* Ticket summary table */}
-          <div className="overflow-x-auto no-scrollbar rounded-xl border border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 bg-white dark:bg-gray-900 shadow-sm">
+        {/* Ticket summary table */}
+        <div className="overflow-x-auto no-scrollbar rounded-xl border border-gray-200 dark:border-gray-700 px-4 md:px-6 py-4 bg-white dark:bg-gray-900 shadow-sm">
 
-            <table className="w-full text-[13px] text-left text-gray-700 dark:text-gray-300">
-              <thead className="bg-[#eeeeee] dark:bg-gray-800 rounded-t-xl">
+          <table className="w-full text-[13px] text-left text-gray-700 dark:text-gray-300">
+            <thead className="bg-[#eeeeee] dark:bg-gray-800 rounded-t-xl">
+              <tr>
+                <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
+                  Group
+                </th>
+                <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
+                  All Tickets
+                </th>
+                <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
+                  Pending Tickets
+                </th>
+                <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
+                  Resolved Tickets
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
                 <tr>
-                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
-                    Group
-                  </th>
-                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
-                    All Tickets
-                  </th>
-                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
-                    Pending Tickets
-                  </th>
-                  <th className="px-6 py-3 font-bold text-gray-900 dark:text-white uppercase tracking-tight text-[0.75rem]">
-                    Resolved Tickets
-                  </th>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-6 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    Loading data...
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-6 py-6 text-center text-gray-500 dark:text-gray-400"
+              ) : groupData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-6 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No records found
+                  </td>
+                </tr>
+              ) : (
+                (pagedGroupData || []).map((item, idx) => {
+                  if (!item) return null;
+                  const { group, all, pending, resolved } = item;
+                  return (
+                    <tr
+                      key={idx}
+                      className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900"
                     >
-                      Loading data...
-                    </td>
-                  </tr>
-                ) : groupData.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-6 py-6 text-center text-gray-500 dark:text-gray-400"
-                    >
-                      No records found
-                    </td>
-                  </tr>
-                ) : (
-                  (pagedGroupData || []).map((item, idx) => {
-                    if (!item) return null;
-                    const { group, all, pending, resolved } = item;
-                    return (
-                      <tr
-                        key={idx}
-                        className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-900"
-                      >
-                        <td className="px-6 py-4 font-black tracking-tight">{group}</td>
-                        <td className="px-6 py-4">
-                          <Link to="/tickets" className="hover:text-blue-500 hover:underline">
-                            {all}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 text-yellow-600 font-semibold">
-                          <Link to="/tickets?status=Pending" className="hover:underline">
-                            {pending}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 text-green-600 font-semibold">
-                          <Link to="/tickets?status=Resolved" className="hover:underline">
-                            {resolved}
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                      <td className="px-6 py-4 font-black tracking-tight">{group}</td>
+                      <td className="px-6 py-4">
+                        <Link to="/tickets" className="hover:text-blue-500 hover:underline">
+                          {all}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-yellow-600 font-semibold">
+                        <Link to="/tickets?status=Pending" className="hover:underline">
+                          {pending}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-green-600 font-semibold">
+                        <Link to="/tickets?status=Resolved" className="hover:underline">
+                          {resolved}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-          {/* Pagination
+        {/* Pagination
           <div className="flex justify-center mt-8">
             <div className="flex items-center gap-1">
               <button
@@ -252,8 +252,8 @@ function Dashboard() {
               </button>
             </div>
           </div> */}
-        </main>
-      </div>
+      </main>
+    </div>
   );
 }
 

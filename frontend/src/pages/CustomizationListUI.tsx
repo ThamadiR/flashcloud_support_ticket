@@ -518,7 +518,7 @@ export default function CustomizationListUI({ token, onUnauthorized }: Customiza
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-grow">
-        <main className={`p-4 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-24 transition-all duration-300`}>
+        <main className={`p-4 ${mainMarginClass} min-h-[calc(100vh-80px)] pt-18 transition-all duration-300`}>
           <div className={`w-full rounded-3xl border p-4 backdrop-blur-xl sm:p-6 transition-all duration-300 ${isDark
             ? 'border-white/10 bg-white/5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]'
             : 'border-gray-200 bg-white shadow-xl shadow-gray-200/50'

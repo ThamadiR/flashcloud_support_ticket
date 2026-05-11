@@ -17,7 +17,8 @@ import {
   Lock,
   ShieldCheck,
   Eye,
-  EyeOff
+  EyeOff,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -32,7 +33,7 @@ const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [profileImage, setProfileImage] = useState(storedUser.img || storedUser.avatarUrl || '/profile_avatar_user_1778052147481.png');
-  const userRole = (storedUser?.role || 'Non-Admin').toUpperCase();
+  const [role, setRole] = useState((storedUser?.role || 'Non-Admin').toUpperCase());
 
   const [formData, setFormData] = useState({
     firstName: storedUser?.firstName || storedUser?.name || storedUser?.userName?.split(' ')[0] || '',
@@ -88,6 +89,9 @@ const Profile: React.FC = () => {
           });
           if (user.img || user.avatarUrl) {
             setProfileImage(user.img || user.avatarUrl);
+          }
+          if (user.role) {
+            setRole(user.role.toUpperCase());
           }
         }
       } catch (error) {
@@ -173,6 +177,11 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleDeleteImage = () => {
+    setProfileImage('/profile_avatar_user_1778052147481.png');
+    toast.success('Image removed locally. Save changes to persist.');
+  };
+
   const handleImageClick = () => {
     fileInputRef.current?.click();
   };
@@ -217,7 +226,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className={`transition-all duration-300 ${mainMarginClass} pt-20 pb-12 px-4 md:px-8`}>
+    <div className={`transition-all duration-300 ${mainMarginClass} pt-19 pb-12 px-4 md:px-8`}>
       <div className={`max-w-3xl mx-auto rounded-3xl overflow-hidden shadow-2xl ${isDark ? 'bg-[#111318] border border-white/10' : 'bg-white border border-gray-200'}`}>
         <div className="relative px-6 md:px-10 pb-8 pt-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
@@ -229,12 +238,27 @@ const Profile: React.FC = () => {
                   className="w-full h-full object-cover transition-opacity group-hover:opacity-75"
                 />
                 {isEditing && (
-                  <button
-                    onClick={handleImageClick}
-                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
-                  >
-                    <Camera size={24} className="text-white" />
-                  </button>
+                  <>
+                    <button
+                      onClick={handleImageClick}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-full"
+                      title="Upload new image"
+                    >
+                      <Camera size={24} className="text-white" />
+                    </button>
+                    {profileImage !== '/profile_avatar_user_1778052147481.png' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImage();
+                        }}
+                        className="absolute top-0 right-0 p-1.5 bg-rose-500 rounded-full text-white shadow-lg transform translate-x-1/4 -translate-y-1/4 hover:bg-rose-600 transition-all z-10"
+                        title="Delete profile image"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
               <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2 bg-blue-500 rounded-full p-1 border-2 border-[#111318]">
@@ -272,9 +296,11 @@ const Profile: React.FC = () => {
               <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
                 {formData.firstName} {formData.lastName}
               </h1>
-              <div className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-[10px] font-black uppercase tracking-widest border border-blue-500/20 flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                {userRole === 'ADMIN' ? 'Admin' : 'Non-Admin'}
+              <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border flex items-center gap-1 ${role === 'ADMIN'
+                ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                : 'bg-gray-500/10 text-gray-500 border-gray-500/20'}`}>
+                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${role === 'ADMIN' ? 'bg-blue-500' : 'bg-gray-500'}`} />
+                {role === 'ADMIN' ? 'Admin' : role}
               </div>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">
@@ -380,9 +406,9 @@ const Profile: React.FC = () => {
                       <span className="flex items-center gap-3">
                         {formData.country ? (
                           <>
-                            <img 
-                              src={`https://flagcdn.com/w20/${formData.countryCode?.toLowerCase() || 'un'}.png`} 
-                              alt="" 
+                            <img
+                              src={`https://flagcdn.com/w20/${formData.countryCode?.toLowerCase() || 'un'}.png`}
+                              alt=""
                               className="w-5 h-auto rounded-sm opacity-80"
                               onError={(e) => (e.currentTarget.style.display = 'none')}
                             />
@@ -433,9 +459,9 @@ const Profile: React.FC = () => {
                   <div className={`px-5 py-3.5 rounded-2xl border ${isDark ? 'bg-white/5 border-white/5 text-gray-300' : 'bg-gray-50/50 border-gray-100 text-gray-700'} font-bold text-sm flex items-center gap-3`}>
                     {formData.country ? (
                       <>
-                        <img 
-                          src={`https://flagcdn.com/w20/${formData.countryCode?.toLowerCase() || 'un'}.png`} 
-                          alt="" 
+                        <img
+                          src={`https://flagcdn.com/w20/${formData.countryCode?.toLowerCase() || 'un'}.png`}
+                          alt=""
                           className="w-5 h-auto rounded-sm opacity-80"
                         />
                         {formData.country}
