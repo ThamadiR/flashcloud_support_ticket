@@ -61,6 +61,8 @@ const Header: React.FC = () => {
   const initials = `${user?.firstName?.charAt(0) || user?.fname?.charAt(0) || ""}${user?.lastName?.charAt(0) || user?.lname?.charAt(0) || ""
     }`.toUpperCase();
 
+  const isAgent = (user?.role || "").toLowerCase() === "ticket agent";
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -306,24 +308,26 @@ const Header: React.FC = () => {
         <div className="overflow-y-auto pt-12 pb-6 px-4 h-full">
 
           <ul className="space-y-2">
-            <li>
-              <Link
-                to="/dashboard"
-                className="flex items-center p-2 text-[0.875rem] font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-              >
-                <LayoutDashboard className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${!isDrawerOpen
-                      ? "opacity-0 hidden"
-                      : "opacity-100 block"
-                    }
-                            `}
+            {!isAgent && (
+              <li>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center p-2 text-[0.875rem] font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
                 >
-                  Dashboard
-                </span>
-              </Link>
-            </li>
+                  <LayoutDashboard className="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 
+                                ${!isDrawerOpen
+                        ? "opacity-0 hidden"
+                        : "opacity-100 block"
+                      }
+                              `}
+                  >
+                    Dashboard
+                  </span>
+                </Link>
+              </li>
+            )}
             <li>
               <Link
                 to="/tickets"
@@ -342,137 +346,147 @@ const Header: React.FC = () => {
                 </span>
               </Link>
             </li>
-            <li>
-              <Link
-                to="/contacts"
-                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              >
-                <Users className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${!isDrawerOpen
-                      ? "opacity-0 hidden"
-                      : "opacity-100 block"
-                    }
-                            `}
+            {!isAgent && (
+              <li>
+                <Link
+                  to="/contacts"
+                  className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                 >
-                  Contacts
-                </span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/companies"
-                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              >
-                <Building2 className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${!isDrawerOpen
-                      ? "opacity-0 hidden"
-                      : "opacity-100 block"
-                    }
-                            `}
+                  <Users className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 
+                                ${!isDrawerOpen
+                        ? "opacity-0 hidden"
+                        : "opacity-100 block"
+                      }
+                              `}
+                  >
+                    Contacts
+                  </span>
+                </Link>
+              </li>
+            )}
+            {!isAgent && (
+              <li>
+                <Link
+                  to="/companies"
+                  className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                 >
-                  Companies
-                </span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/tenants"
-                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              >
-                <Key className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${!isDrawerOpen
-                      ? "opacity-0 hidden"
-                      : "opacity-100 block"
-                    }
-                            `}
+                  <Building2 className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 
+                                ${!isDrawerOpen
+                        ? "opacity-0 hidden"
+                        : "opacity-100 block"
+                      }
+                              `}
+                  >
+                    Companies
+                  </span>
+                </Link>
+              </li>
+            )}
+            {!isAgent && (
+              <li>
+                <Link
+                  to="/tenants"
+                  className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                 >
-                  Tenants
-                </span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/servers"
-                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              >
-                <Server className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                              ${!isDrawerOpen
-                      ? "opacity-0 hidden"
-                      : "opacity-100 block"
-                    }
-                            `}
+                  <Key className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 
+                                ${!isDrawerOpen
+                        ? "opacity-0 hidden"
+                        : "opacity-100 block"
+                      }
+                              `}
+                  >
+                    Tenants
+                  </span>
+                </Link>
+              </li>
+            )}
+            {!isAgent && (
+              <li>
+                <Link
+                  to="/servers"
+                  className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                 >
-                  Servers
-                </span>
-              </Link>
-            </li>
+                  <Server className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 
+                                ${!isDrawerOpen
+                        ? "opacity-0 hidden"
+                        : "opacity-100 block"
+                      }
+                              `}
+                  >
+                    Servers
+                  </span>
+                </Link>
+              </li>
+            )}
           </ul>
 
           {/* Removed Reports Dropdown */}
 
           <ul className="pt-5 mt-5 space-y-2 border-t border-gray-200 dark:border-gray-700">
-            <li className="relative">
-              <Link
-                to="/users"
-                className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-              >
-                {/* Icon */}
-                <Users className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-
-                {/* Text */}
-                <span
-                  className={`ml-3 whitespace-nowrap transition-all duration-300 
-                            ${!isDrawerOpen
-                      ? "opacity-0 hidden"
-                      : "opacity-100 block"
-                    }
-                          `}
+            {!isAgent && (
+              <li className="relative">
+                <Link
+                  to="/users"
+                  className="flex items-center p-2 w-full text-[0.875rem] font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
                 >
-                  User Management
-                </span>
+                  {/* Icon */}
+                  <Users className="flex-shrink-0 w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+
+                  {/* Text */}
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 
+                              ${!isDrawerOpen
+                        ? "opacity-0 hidden"
+                        : "opacity-100 block"
+                      }
+                            `}
+                  >
+                    User Management
+                  </span>
 
 
-              </Link>
+                </Link>
 
-              {/* Dropdown Items */}
-              {isDrawerOpen ? (
-                <ul
-                  className={`${showAdminDropdown ? "block" : "hidden"
-                    } py-2 space-y-2`}
-                >
-                  {/* <li>
-                    <Link
-                      to="/create-user"
-                      className="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-                    >
-                      Create User
-                    </Link>
-                  </li> */}
+                {/* Dropdown Items */}
+                {isDrawerOpen ? (
+                  <ul
+                    className={`${showAdminDropdown ? "block" : "hidden"
+                      } py-2 space-y-2`}
+                  >
+                    {/* <li>
+                      <Link
+                        to="/create-user"
+                        className="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                      >
+                        Create User
+                      </Link>
+                    </li> */}
 
 
-                </ul>
-              ) : (
-                <div className="absolute left-16 top-0 hidden group-hover:block w-48 bg-white dark:bg-gray-700 shadow-lg rounded-lg z-50">
-                  {/* <li>
-                    <a
-                      href="#"
-                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
-                    >
-                      Create User
-                    </a>
-                  </li> */}
+                  </ul>
+                ) : (
+                  <div className="absolute left-16 top-0 hidden group-hover:block w-48 bg-white dark:bg-gray-700 shadow-lg rounded-lg z-50">
+                    {/* <li>
+                      <a
+                        href="#"
+                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      >
+                        Create User
+                      </a>
+                    </li> */}
 
-                </div>
-              )}
-            </li>
+                  </div>
+                )}
+              </li>
+            )}
 
             {/* <li>
               <a

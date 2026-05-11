@@ -289,6 +289,18 @@ const TicketDetail: React.FC = () => {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        
+        // Strictly prohibit Ticket Agents from viewing tickets not assigned to them
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const userRole = (storedUser?.role || "").toLowerCase();
+        const currentUserId = storedUser?.id || storedUser?.userId;
+
+        if (userRole === "ticket agent" && data.userId !== currentUserId) {
+          toast.error("Access Denied: You are not authorized to view this ticket.");
+          navigate("/tickets");
+          return;
+        }
+
         setStatus(data.status || data.state || "");
         setPriority(data.priority || "");
         setGroup(data.group_type || "");

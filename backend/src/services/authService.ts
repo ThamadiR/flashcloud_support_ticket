@@ -97,7 +97,8 @@ export class AuthService {
       throw new ApiError(401, 'Invalid email or password');
     }
 
-    const token = jwt.sign({ id: user.userId }, this.jwtSecret, { expiresIn: '1d' });
+    const role = resolveStoredRole(user);
+    const token = jwt.sign({ id: user.userId, role }, this.jwtSecret, { expiresIn: '1d' });
     const safeImg = normalizeImageUrl(user.img) || null;
 
     return {

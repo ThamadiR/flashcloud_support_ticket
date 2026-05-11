@@ -66,42 +66,56 @@ export default function App() {
           <BrowserRouter>
             <Toaster position="top-right" reverseOrder={false} />
             <Routes>
-              <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+              <Route path="/" element={
+                token ? (
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              } />
 
               <Route path="/login" element={
-                !token ? <Login onLogin={handleLogin} /> : <Navigate to="/dashboard" />
+                !token ? (
+                  <Login onLogin={handleLogin} />
+                ) : (
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
+                )
               } />
 
 
 
               {/* Authenticated Routes with Header and Footer */}
               <Route element={<AuthenticatedLayout token={token} />}>
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Dashboard />
+                } />
 
-                <Route path="/companies" element={<CompanyListUI token={token!} onUnauthorized={handleLogout} />} />
+                <Route path="/companies" element={
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <CompanyListUI token={token!} onUnauthorized={handleLogout} />
+                } />
 
                 <Route path="/customizations" element={
-                  <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/sip-configs" element={
-                  <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/servers" element={
-                  <ServersListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <ServersListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/tenants" element={
-                  <TenantsListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <TenantsListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/contacts" element={
-                  <Contacts token={token!} />
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Contacts token={token!} />
                 } />
 
                 <Route path="/users" element={
-                  <UserListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <UserListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/tickets" element={<Tickets />} />

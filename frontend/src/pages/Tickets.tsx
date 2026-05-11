@@ -69,16 +69,38 @@ const Tickets: React.FC = () => {
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = storedUser?.id || storedUser?.userId || null;
-  const userRole = (storedUser?.role || "").toLowerCase();
-  const isAgentOnly = userRole === "ticket agent";
-
-  const [viewMyTickets, setViewMyTickets] = useState(isAgentOnly);
+  const [userRole, setUserRole] = useState((storedUser?.role || "").toLowerCase());
+  const isAgent = userRole === "ticket agent";
+  const isSupervisorOrAdmin = ["admin", "ticket supervisor"].includes(userRole);
+  
+  const [viewMyTickets, setViewMyTickets] = useState(isAgent);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
     setStatusFilter(status);
-  }, []);
+
+    // Fetch latest user role to ensure correct access
+    const fetchUserRole = async () => {
+      try {
+        if (!userId) return;
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE}/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const user = data.user || data;
+          const role = (user.role || "").toLowerCase();
+          setUserRole(role);
+          if (role === "ticket agent") setViewMyTickets(true);
+        }
+      } catch (err) {
+        console.error("Error fetching user role:", err);
+      }
+    };
+    fetchUserRole();
+  }, [userId]);
 
   const fetchTickets = async (
     currentPage: number,
@@ -167,7 +189,6 @@ const Tickets: React.FC = () => {
             </div>
 
             {/* View My Tickets Toggle */}
-          {!isAgentOnly && (
             <div className={`flex items-center gap-3 p-2 px-4 rounded-full border transition-all duration-300 group ${viewMyTickets ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -175,15 +196,15 @@ const Tickets: React.FC = () => {
                   id="viewMyTickets"
                   className="sr-only peer"
                   checked={viewMyTickets}
-                  onChange={(e) => setViewMyTickets(e.target.checked)}
+                  onChange={(e) => !isAgent && setViewMyTickets(e.target.checked)}
+                  disabled={isAgent}
                 />
                 <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500 transition-colors shadow-inner"></div>
               </label>
               <span className={`text-xs font-black uppercase tracking-widest select-none transition-colors ${viewMyTickets ? 'text-blue-400' : isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`}>
-                My Tickets
+                {isAgent ? 'My Assigned Tickets' : 'My Tickets'}
               </span>
             </div>
-          )}
 
           {loading && (
             <div className="flex items-center gap-2 text-xs font-medium animate-pulse text-cyan-400">

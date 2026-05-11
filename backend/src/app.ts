@@ -10,6 +10,10 @@ import roleRoutes      from './routes/roleRoutes';
 import emailRoutes     from './routes/emailRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import userRoutes      from './routes/userRoutes';
+import { buildAuthenticateMiddleware } from './middleware/authenticate';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key_123';
+const authenticate = buildAuthenticateMiddleware(JWT_SECRET);
 
 const app = express();
 
@@ -35,14 +39,14 @@ app.use('/uploads', express.static(path.resolve('uploads'), {
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 // Routes are now partially managed centrally in src/routes/routes.ts
-app.use('/api/tickets',   ticketsRoutes);
+app.use('/api/tickets',   authenticate, ticketsRoutes);
 app.use('/api/contacts',  contactRoutes);
 // Companies, Auth, Users are registered via registerRoutes in server.ts
 // app.use('/api/companies', companiesRoutes);
 // app.use('/api/auth',      authRoutes);
 app.use('/api/roles',     roleRoutes);
 app.use('/api/emails',    emailRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard', authenticate, dashboardRoutes);
 // app.use('/api/users',     userRoutes);
 
 export default app;
