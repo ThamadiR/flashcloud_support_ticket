@@ -145,9 +145,7 @@ export async function updateTicketById(
   const values: any[] = [];
 
   if (updates.state !== undefined) {
-    fields.push("`state` = ?");
     fields.push("`status` = ?");
-    values.push(updates.state);
     values.push(updates.state);
   }
   if (updates.priority !== undefined) {
@@ -177,6 +175,21 @@ export async function updateTicketById(
     `UPDATE \`tbl_ticket_email_mst\` SET ${fields.join(", ")} WHERE \`id\` = ?`,
     values
   );
+
+  // Synchronize status in the detail (email) table as well if it's being changed
+  if (updates.state !== undefined) {
+    // Get the ticket_code first to update the detail table
+    const [ticket] = await pool.query<RowDataPacket[]>(
+      "SELECT ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
+      [id]
+    );
+    if (ticket.length > 0) {
+      await pool.query(
+        "UPDATE tbl_ticket_email_det SET status = ? WHERE ticket_code = ?",
+        [updates.state, ticket[0].ticket_code]
+      );
+    }
+  }
 
   return true;
 }

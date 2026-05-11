@@ -1152,29 +1152,26 @@ const TicketDetail: React.FC = () => {
                     key={index}
                   // className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
                   >
-                    {/* <div className="flex items-center mb-2 text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-semibold mr-2">From:</span>
-                    <span className="text-blue-600 dark:text-blue-400">
-                      {email.from}
-                    </span>
-                    <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                      {email.date}
-                    </span>
-                  </div> */}
-
-                    {/* <div className="mb-2 text-sm">
-                    <strong>To:</strong> {email.to}
-                  </div>
-
-                  {email.cc && (
-                    <div className="mb-2 text-sm">
-                      <strong>Cc:</strong> {email.cc}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
+                          {email.sender?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {email.sender || 'Unknown Sender'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {email.date_received || email.date || 'No Date'}
+                          </p>
+                        </div>
+                      </div>
+                      {email.status && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusStyles(email.status)}`}>
+                          {email.status}
+                        </span>
+                      )}
                     </div>
-                  )}
-
-                  <div className="mb-2 text-sm">
-                    <strong>Subject:</strong> {email.subject}
-                  </div> */}
 
                     <div
                       className="email-body bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-white/5 text-gray-800 dark:text-gray-200 leading-relaxed shadow-inner"
