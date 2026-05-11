@@ -254,52 +254,18 @@ export async function getEmailsByTicket(req: Request, res: Response) {
         .filter(Boolean);
     }
 
-    // 4. Build parallel queries
-    const queries: Promise<any>[] = [
-      // tbl_ticket_email_mst: match by ID or subject (Header info)
-      pool.query(
-        `SELECT id, ticket_code as ticket_id, (SELECT author FROM tbl_ticket_email_det WHERE ticket_code = t.ticket_code LIMIT 1) as sender, 
-                '' as recipient, '' as cc, subject, '' as body, '[]' as attachments, created_at as date_received, status, '' as message_id
-         FROM tbl_ticket_email_mst t
-         WHERE id = ? OR subject LIKE ? OR subject = ?`,
-        [Number(ticketId), `%${cleanSubject}%`, ticketSubject]
-      ),
-
-      // tbl_ticket_email_det: fetch ALL emails for found ticket codes
-      pool.query(
-        `SELECT id, ticket_code as ticket_id, sender_email as sender, recipient_email as recipient,
-                cc_email as cc, subject, body, '[]' as attachments, date_received, status, message_id
-         FROM tbl_ticket_email_det
-         WHERE ticket_code IN (?) OR ticket_code = ?`,
-        [ticketCodes, ticketCode || ticketId]
-      ),
-    ];
-
-    // 5. Merge all results
-    const results = await Promise.all(queries);
-    console.log(`Backend: Queries completed for ticket ${ticketId}. Processing results...`);
-    console.log(`Backend: Queries completed for ticket ${ticketId}. Processing results...`);
-
-    // 5. Merge all results
-    const allRawEmails: any[] = [];
-    results.forEach(([rows], idx) => {
-      console.log(`Backend: Query ${idx} returned ${Array.isArray(rows) ? rows.length : 'not an array'} rows`);
-      if (Array.isArray(rows)) allRawEmails.push(...rows);
-    });
-
-    console.log(
-      `Email fetch stats for Ticket ${ticketId}: Total raw=${allRawEmails.length}`
+    // 4. Fetch ALL emails for found ticket codes from det table
+    const [emails]: any = await pool.query(
+      `SELECT id, ticket_code as ticket_id, sender_email as sender, recipient_email as recipient,
+              cc_email as cc, subject, body, '[]' as attachments, date_received, status, message_id
+       FROM tbl_ticket_email_det
+       WHERE ticket_code IN (?) OR ticket_code = ?
+       ORDER BY date_received ASC`,
+      [ticketCodes.length > 0 ? ticketCodes : [ticketCode || ticketId], ticketCode || ticketId]
     );
 
-    // 6. Sort by date ascending
-    const sortedEmails = allRawEmails.sort((a, b) => {
-      return (
-        new Date(a.date_received).getTime() -
-        new Date(b.date_received).getTime()
-      );
-    });
-
-    res.status(200).json(sortedEmails);
+    console.log(`Email fetch stats for Ticket ${ticketId}: Total emails=${emails.length}`);
+    res.status(200).json(emails);
       } catch (err: any) {
         console.error("Error fetching ticket emails:", err);
         res
