@@ -96,7 +96,7 @@ export const fetchAndSaveLatestEmails = () => {
               //Duplicate check
               if (messageId) {
                 const [rows] = await pool.query(
-                  `SELECT id FROM tbl_email_receive WHERE message_id = ? LIMIT 1`,
+                  `SELECT id FROM tbl_ticket_email_mst WHERE message_id = ? LIMIT 1`,
                   [messageId],
                 );
 
@@ -120,7 +120,7 @@ export const fetchAndSaveLatestEmails = () => {
 
               if (inReplyTo) {
                 const [parentRows] = await pool.query(
-                  `SELECT thread_id FROM tbl_email_receive WHERE message_id = ? LIMIT 1`,
+                  `SELECT thread_id FROM tbl_ticket_email_mst WHERE message_id = ? LIMIT 1`,
                   [inReplyTo],
                 );
 
@@ -134,7 +134,7 @@ export const fetchAndSaveLatestEmails = () => {
 
               if (threadId) {
                 const [ticketByThread]: any = await pool.query(
-                  `SELECT ticket_id FROM tbl_email_receive WHERE thread_id = ? AND ticket_id IS NOT NULL LIMIT 1`,
+                  `SELECT ticket_id FROM tbl_ticket_email_mst WHERE thread_id = ? AND ticket_id IS NOT NULL LIMIT 1`,
                   [threadId],
                 );
 
@@ -231,7 +231,7 @@ export const fetchAndSaveLatestEmails = () => {
 
               try {
                 await pool.query(
-                  `INSERT INTO tbl_email_receive
+                  `INSERT INTO tbl_ticket_email_mst
                   (
                     sender,
                     recipient,
@@ -271,7 +271,7 @@ export const fetchAndSaveLatestEmails = () => {
               // -------- Ticket Creation --------
               if (!ticketId) {
                 const [ticketResult]: any = await pool.query(
-                  `INSERT INTO tbl_ticket_det
+                  `INSERT INTO tbl_ticket_email_det
                   (
                     subject,
                     status,
@@ -297,7 +297,7 @@ export const fetchAndSaveLatestEmails = () => {
                 ticketId = ticketResult.insertId;
 
                 await pool.query(
-                  `UPDATE tbl_email_receive
+                  `UPDATE tbl_ticket_email_mst
                   SET ticket_id = ?
                   WHERE thread_id = ? AND ticket_id IS NULL`,
                   [ticketId, threadId],

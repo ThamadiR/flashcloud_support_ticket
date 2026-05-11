@@ -89,14 +89,14 @@ export async function replyEmail(req: Request, res: Response) {
 
     const cleanSubj = subject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
     const [ticketRows]: any = await pool.query(
-      "SELECT id FROM tbl_ticket_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
+      "SELECT id FROM tbl_ticket_email_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
       [Number(req.body.ticketId) || 0, cleanSubj, `%${cleanSubj}%`]
     );
     if (ticketRows.length > 0) {
       const ticketId = ticketRows[0].id;
       await pool.query(
-        `INSERT INTO tbl_email_receive (ticket_id, sender, recipient, subject, body, date_received, status, created_at)
-         VALUES (?, ?, ?, ?, ?, NOW(), 'sent', NOW())`,
+        `INSERT INTO tbl_ticket_email_mst (ticket_id, sender, recipient, subject, body, date_received, status, created_at)
+         VALUES (?, ?, ?, ?, ?, NOW(), 'replied', NOW())`,
         [
           ticketId,
           fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
@@ -154,13 +154,13 @@ export async function forwardEmailController(req: Request, res: Response) {
     const safeSubject = subject || "";
     const cleanSubj = safeSubject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
     const [ticketRows]: any = await pool.query(
-      "SELECT id FROM tbl_ticket_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
+      "SELECT id FROM tbl_ticket_email_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
       [Number(req.body.ticketId) || 0, cleanSubj, `%${cleanSubj}%`]
     );
     if (ticketRows.length > 0) {
       const ticketId = ticketRows[0].id;
       await pool.query(
-        `INSERT INTO tbl_email_receive (ticket_id, sender, recipient, subject, body, date_received, status, created_at)
+        `INSERT INTO tbl_ticket_email_mst (ticket_id, sender, recipient, subject, body, date_received, status, created_at)
          VALUES (?, ?, ?, ?, ?, NOW(), 'forwarded', NOW())`,
         [
           ticketId,
@@ -217,7 +217,7 @@ export async function getEmailsByTicket(req: Request, res: Response) {
 
     // 1. Fetch ticket subject
     const [ticketRows]: any = await pool.query(
-      "SELECT subject, author FROM tbl_ticket_det WHERE id = ?",
+      "SELECT subject, author FROM tbl_ticket_email_det WHERE id = ?",
       [ticketId]
     );
 
@@ -252,21 +252,21 @@ export async function getEmailsByTicket(req: Request, res: Response) {
 
     // 4. Build parallel queries
     const queries: Promise<any>[] = [
-      // tbl_email_receive: match by ticket_id OR subject
+      // tbl_ticket_email_mst: match by ticket_id OR subject
       pool.query(
         `SELECT id, ticket_id, sender, recipient, cc, subject, body, attachments, date_received, status, message_id
-         FROM tbl_email_receive
+         FROM tbl_ticket_email_mst
          WHERE ticket_id = ?
             OR subject LIKE ?
             OR subject = ?`,
         [ticketId, `%${cleanSubject}%`, ticketSubject]
       ),
 
-      // tbl_ticket_det: match by ID or subject
+      // tbl_ticket_email_det: match by ID or subject
       pool.query(
         `SELECT id, id as ticket_id, author as sender, '' as recipient, '' as cc,
                 subject, '' as body, '[]' as attachments, created_at as date_received, status, '' as message_id
-         FROM tbl_ticket_det
+         FROM tbl_ticket_email_det
          WHERE id = ? OR subject LIKE ? OR subject = ?`,
         [Number(ticketId), `%${cleanSubject}%`, ticketSubject]
       ),
@@ -290,7 +290,7 @@ export async function getEmailsByTicket(req: Request, res: Response) {
       queries.push(
         pool.query(
           `SELECT id, ticket_id, sender, recipient, cc, subject, body, attachments, date_received, status, message_id
-           FROM tbl_email_receive
+           FROM tbl_ticket_email_mst
            WHERE sender IN (?) AND (subject LIKE ? OR subject = ?)`,
           [requesterEmails, `%${cleanSubject}%`, ticketSubject]
         )

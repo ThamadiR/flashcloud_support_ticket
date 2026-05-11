@@ -176,6 +176,7 @@ const TicketDetail: React.FC = () => {
   const [pendingStatus, setPendingStatus] = useState(status);
   const [pendingPriority, setPendingPriority] = useState(priority);
   const [pendingGroup, setPendingGroup] = useState(group);
+  const [pendingAssignee, setPendingAssignee] = useState(assignee);
   const [pendingAssigneeId, setPendingAssigneeId] = useState<string | number>("");
   const [isModified, setIsModified] = useState(false);
 
@@ -345,9 +346,13 @@ const TicketDetail: React.FC = () => {
         setGroup(data.group_type || "");
         setAssignee(data.assignee || "");
         setSubject(data.subject || "");
+        setPendingAssigneeId(data.userId || "");
 
         // Sync pending state
         setPendingStatus(data.status || data.state || "");
+        setPendingPriority(data.priority || "");
+        setPendingGroup(data.group_type || "");
+        setPendingAssignee(data.assignee || "");
         setPendingPriority(data.priority || "");
         setPendingGroup(data.group_type || "");
 
@@ -411,6 +416,8 @@ const TicketDetail: React.FC = () => {
         break;
       case "assignee":
         setPendingAssigneeId(value); // value will be the userId from the select
+        const selObj = assigneeOptions.find(a => String(a.id) === String(value));
+        if (selObj) setPendingAssignee(selObj.username);
         break;
     }
   };
@@ -731,13 +738,23 @@ const TicketDetail: React.FC = () => {
                   <span className="text-gray-400 font-medium text-xs uppercase tracking-wider">
                     Ticket #{id || '...'}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityStyles(priority)}`}>
                       {priority || '...'}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusStyles(status)}`}>
                       {status || '...'}
                     </span>
+                    {group && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+                        {group}
+                      </span>
+                    )}
+                    {assignee && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                        {assignee}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

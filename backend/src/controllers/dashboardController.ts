@@ -8,7 +8,7 @@ export async function getDashboardSummary(req: Request, res: Response) {
         COUNT(*) AS allTickets,
         SUM(state != 'Resolved') AS pendingTickets,
         SUM(state = 'Resolved') AS resolvedTickets
-      FROM tbl_ticket_det
+      FROM tbl_ticket_email_det
     `);
 
     res.json({
@@ -30,7 +30,7 @@ export async function getGroupSummary(req: Request, res: Response) {
         COUNT(*) AS \`all\`,
         SUM(state != 'Resolved') AS pending,
         SUM(state = 'Resolved') AS resolved
-      FROM tbl_ticket_det
+      FROM tbl_ticket_email_det
       GROUP BY group_type
       ORDER BY group_type
     `);

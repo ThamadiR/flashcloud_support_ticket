@@ -60,7 +60,7 @@ export async function getTickets(
 
   // Total count
   const [countRows] = await pool.query<RowDataPacket[]>(
-    `SELECT COUNT(*) AS total FROM tbl_ticket_det ${whereClause}`,
+    `SELECT COUNT(*) AS total FROM tbl_ticket_email_det ${whereClause}`,
     params
   );
   const total = Number((countRows[0] as any)?.total ?? 0);
@@ -82,7 +82,7 @@ export async function getTickets(
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS daysAgo,
       GREATEST(TIMESTAMPDIFF(DAY, due_at, NOW()), 0) AS overdueBy,
       UPPER(LEFT(TRIM(author), 1)) AS initial
-    FROM tbl_ticket_det
+    FROM tbl_ticket_email_det
     ${whereClause}
     ORDER BY created_at DESC
     LIMIT ? OFFSET ?;
@@ -116,14 +116,14 @@ export async function getTicketById(id: number): Promise<Ticket | null> {
       t.userId,
       (
         SELECT COALESCE(
-          (SELECT sender FROM tbl_email_receive WHERE ticket_id = t.id ORDER BY date_received ASC LIMIT 1),
+          (SELECT sender FROM tbl_ticket_email_mst WHERE ticket_id = t.id ORDER BY date_received ASC LIMIT 1),
           (SELECT sender_email FROM tbl_ticket_email_det WHERE subject = t.subject OR subject LIKE CONCAT('%', t.subject, '%') ORDER BY date_received ASC LIMIT 1)
         )
       ) as email,
       GREATEST(TIMESTAMPDIFF(DAY, t.created_at, NOW()), 0) AS daysAgo,
       GREATEST(TIMESTAMPDIFF(DAY, t.due_at, NOW()), 0) AS overdueBy,
       UPPER(LEFT(TRIM(t.author), 1)) AS initial
-    FROM tbl_ticket_det t
+    FROM tbl_ticket_email_det t
     WHERE t.id = ?
     LIMIT 1;
     `,
@@ -174,10 +174,10 @@ export async function updateTicketById(
 
   values.push(id);
 
-  console.log(`[DEBUG] updateTicketById: query=UPDATE \`tbl_ticket_det\` SET ${fields.join(", ")} WHERE \`id\` = ?, values=`, values);
+  console.log(`[DEBUG] updateTicketById: query=UPDATE \`tbl_ticket_email_det\` SET ${fields.join(", ")} WHERE \`id\` = ?, values=`, values);
 
   await pool.query(
-    `UPDATE \`tbl_ticket_det\` SET ${fields.join(", ")} WHERE \`id\` = ?`,
+    `UPDATE \`tbl_ticket_email_det\` SET ${fields.join(", ")} WHERE \`id\` = ?`,
     values
   );
 
@@ -185,7 +185,7 @@ export async function updateTicketById(
 }
 
 export async function deleteTicketById(id: number) {
-  await pool.query(`DELETE FROM tbl_email_receive WHERE ticket_id = ?`, [id]);
-  await pool.query(`DELETE FROM tbl_ticket_det WHERE id = ?`, [id]);
+  await pool.query(`DELETE FROM tbl_ticket_email_mst WHERE ticket_id = ?`, [id]);
+  await pool.query(`DELETE FROM tbl_ticket_email_det WHERE id = ?`, [id]);
   return true;
 }
