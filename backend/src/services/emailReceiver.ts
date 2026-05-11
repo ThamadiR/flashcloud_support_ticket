@@ -134,12 +134,11 @@ export const fetchAndSaveLatestEmails = () => {
 
               if (threadId) {
                 const [ticketByThread]: any = await pool.query(
-                  `SELECT ticket_id FROM tbl_ticket_email_mst WHERE thread_id = ? AND ticket_id IS NOT NULL LIMIT 1`,
-                  [threadId],
+                  `SELECT ticket_code FROM tbl_ticket_email_mst WHERE thread_id = ? AND ticket_code IS NOT NULL LIMIT 1`,
+                  [threadId]
                 );
-
                 if (ticketByThread.length > 0) {
-                  ticketId = ticketByThread[0].ticket_id;
+                  ticketId = ticketByThread[0].ticket_code;
                 }
               }
 
@@ -244,7 +243,7 @@ export const fetchAndSaveLatestEmails = () => {
                     message_id,
                     in_reply_to,
                     thread_id,
-                    ticket_id
+                    ticket_code
                   )
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                   [
@@ -297,10 +296,10 @@ export const fetchAndSaveLatestEmails = () => {
                 ticketId = ticketResult.insertId;
 
                 await pool.query(
-                  `UPDATE tbl_ticket_email_mst
-                  SET ticket_id = ?
-                  WHERE thread_id = ? AND ticket_id IS NULL`,
-                  [ticketId, threadId],
+                  `UPDATE tbl_ticket_email_det 
+                  SET ticket_code = ?
+                  WHERE thread_id = ? AND ticket_code IS NULL`,
+                  [ticketId, threadId]
                 );
               }
             });

@@ -232,7 +232,7 @@ const Header: React.FC = () => {
             </button>
 
             <div
-              className="hidden z-50 my-4 w-64 text-base list-none bg-white rounded-2xl divide-y divide-gray-100 shadow-2xl dark:bg-[#111318] dark:divide-white/10 border dark:border-white/10"
+              className="hidden z-50 my-4 w-45 text-basTe list-none bg-white rounded-2xl divide-y divide-gray-100 shadow-2xl dark:bg-[#111318] dark:divide-white/10 border dark:border-white/10"
               id="dropdown-menu"
             >
               <div className="py-4 px-5">

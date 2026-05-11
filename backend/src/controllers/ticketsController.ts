@@ -89,16 +89,16 @@ export async function replyEmail(req: Request, res: Response) {
 
     const cleanSubj = subject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
     const [ticketRows]: any = await pool.query(
-      "SELECT id FROM tbl_ticket_email_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
+      "SELECT ticket_code FROM tbl_ticket_email_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
       [Number(req.body.ticketId) || 0, cleanSubj, `%${cleanSubj}%`]
     );
     if (ticketRows.length > 0) {
-      const ticketId = ticketRows[0].id;
+      const ticketCode = ticketRows[0].ticket_code;
       await pool.query(
-        `INSERT INTO tbl_ticket_email_mst (ticket_id, sender, recipient, subject, body, date_received, status, created_at)
+        `INSERT INTO tbl_ticket_email_det (ticket_code, sender_email, recipient_email, subject, body, date_received, status, created_at)
          VALUES (?, ?, ?, ?, ?, NOW(), 'replied', NOW())`,
         [
-          ticketId,
+          ticketCode,
           fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
           to,
           subject,
@@ -154,16 +154,16 @@ export async function forwardEmailController(req: Request, res: Response) {
     const safeSubject = subject || "";
     const cleanSubj = safeSubject.replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "").trim();
     const [ticketRows]: any = await pool.query(
-      "SELECT id FROM tbl_ticket_email_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
+      "SELECT ticket_code FROM tbl_ticket_email_det WHERE id = ? OR subject = ? OR subject LIKE ? LIMIT 1",
       [Number(req.body.ticketId) || 0, cleanSubj, `%${cleanSubj}%`]
     );
     if (ticketRows.length > 0) {
-      const ticketId = ticketRows[0].id;
+      const ticketCode = ticketRows[0].ticket_code;
       await pool.query(
-        `INSERT INTO tbl_ticket_email_mst (ticket_id, sender, recipient, subject, body, date_received, status, created_at)
+        `INSERT INTO tbl_ticket_email_det (ticket_code, sender_email, recipient_email, subject, body, date_received, status, created_at)
          VALUES (?, ?, ?, ?, ?, NOW(), 'forwarded', NOW())`,
         [
-          ticketId,
+          ticketCode,
           fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
           to || "",
           safeSubject,

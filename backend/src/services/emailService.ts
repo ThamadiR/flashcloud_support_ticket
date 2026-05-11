@@ -82,15 +82,19 @@ export async function replyToEmail(
       ? originalSubject
       : `Re: ${originalSubject}`;
 
+    const { name: fromName } = parseFromUser(fromUser || "");
     const mailOptions: any = {
-      from: fromUser || process.env.EMAIL_USER,
+      from: fromName
+        ? `"${fromName}" <${process.env.EMAIL_USER}>`
+        : process.env.EMAIL_USER,
       to,
       subject,
       text: replyMessage,
       html: `<p>${replyMessage}</p>`,
-      inReplyTo: inReplyToId, // Optional (helps email clients thread replies)
+      inReplyTo: inReplyToId,
       references: inReplyToId ? [inReplyToId] : [],
       attachments,
+      replyTo: fromUser || process.env.EMAIL_USER,
     };
 
     if (cc) {
@@ -136,11 +140,15 @@ export async function forwardEmail(
       <blockquote>${originalBody}</blockquote>
     `;
 
+    const { name: fromName } = parseFromUser(fromUser || "");
     const mailOptions: any = {
-      from: fromUser || process.env.EMAIL_USER,
+      from: fromName
+        ? `"${fromName}" <${process.env.EMAIL_USER}>`
+        : process.env.EMAIL_USER,
       subject,
       html: combinedMessage,
       attachments,
+      replyTo: fromUser || process.env.EMAIL_USER,
     };
 
     if (to && to.trim() !== "") {

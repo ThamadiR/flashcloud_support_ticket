@@ -195,7 +195,7 @@ export async function updateTicketById(
 }
 
 export async function deleteTicketById(id: number) {
-  await pool.query(`DELETE FROM tbl_ticket_email_mst WHERE ticket_id = ?`, [id]);
+  await pool.query(`DELETE FROM tbl_ticket_email_mst WHERE ticket_code = ?`, [id]);
   await pool.query(`DELETE FROM tbl_ticket_email_det WHERE id = ?`, [id]);
   return true;
 }
