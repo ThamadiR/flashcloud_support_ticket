@@ -82,7 +82,6 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
   const [tenantForm, setTenantForm] = useState({ name: '', description: '' });
   const [isSavingTenant, setIsSavingTenant] = useState(false);
   const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
-  const [addTenantStep, setAddTenantStep] = useState(1);
   const [isCreatingTenant, setIsCreatingTenant] = useState(false);
   const [addTenantForm, setAddTenantForm] = useState({
     companyId: companyId || '',
@@ -352,45 +351,22 @@ export default function TenantsListUI({ token, onUnauthorized }: TenantsListUIPr
   const closeAddTenantModal = () => {
     setIsAddTenantModalOpen(false);
     setAddTenantErrors({});
-    setAddTenantStep(1);
     setIsCreatingTenant(false);
   };
 
-  const validateAddTenantStep = (step: number): boolean => {
-    const errors: { companyId?: string; name?: string; description?: string } = {};
-
-    if (step === 1) {
-      const parsedCompanyId = Number(addTenantForm.companyId);
-      if (!Number.isFinite(parsedCompanyId) || parsedCompanyId <= 0) {
-        errors.companyId = 'Company id must be a positive number';
-      }
-    }
-
-    if (step === 2) {
-      if (!addTenantForm.name.trim()) {
-        errors.name = 'Tenant name is required';
-      }
-    }
-
-    setAddTenantErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleAddTenantNext = () => {
-    if (!validateAddTenantStep(addTenantStep)) {
-      return;
-    }
-
-    setAddTenantStep((prev) => Math.min(prev + 1, addTenantWizardSteps.length));
-  };
-
-  const handleAddTenantBack = () => {
-    setAddTenantErrors({});
-    setAddTenantStep((prev) => Math.max(prev - 1, 1));
-  };
 
   const handleCreateTenant = async () => {
-    if (!validateAddTenantStep(1) || !validateAddTenantStep(2)) {
+    const errors: { companyId?: string; name?: string; description?: string } = {};
+    const parsedCompanyId = Number(addTenantForm.companyId);
+    if (!Number.isFinite(parsedCompanyId) || parsedCompanyId <= 0) {
+      errors.companyId = 'Company id must be a positive number';
+    }
+    if (!addTenantForm.name.trim()) {
+      errors.name = 'Tenant name is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAddTenantErrors(errors);
       return;
     }
 

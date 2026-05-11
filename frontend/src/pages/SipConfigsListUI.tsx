@@ -237,10 +237,12 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
       licenseCount: String(config.licenseCount || ''),
     });
     setEditingSipConfigId(config.id);
+    setIsAddSipConfigOpen(true);
   };
 
   const cancelEditSipConfig = () => {
     setEditingSipConfigId(null);
+    setIsAddSipConfigOpen(false);
   };
 
   const filteredSipConfigs = useMemo(() => {
@@ -371,73 +373,23 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                       <td className={`px-5 py-4 text-sm font-mono ${isDark ? 'text-slate-100' : 'text-gray-500 opacity-50'}`}>#{item.id}</td>
                       <td className={`px-5 py-4 text-sm font-semibold ${isDark ? 'text-cyan-200' : 'text-cyan-700'}`}>{item.tenant?.name || 'N/A'}</td>
                       <td className="px-5 py-4 text-sm">
-                        {editingSipConfigId === item.id ? (
-                          <input
-                            value={sipConfigForm.sipProvider}
-                            onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipProvider: e.target.value })}
-                            className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none ${isDark ? 'border-white/10 bg-black/20 text-white' : 'border-gray-200 bg-white'}`}
-                          />
-                        ) : (
-                          <span className={isDark ? 'text-slate-100' : 'text-gray-900'}>{item.sipProvider}</span>
-                        )}
+                        <span className={isDark ? 'text-slate-100' : 'text-gray-900'}>{item.sipProvider}</span>
                       </td>
                       <td className="px-5 py-4 text-sm text-center">
-                        {editingSipConfigId === item.id ? (
-                          <input
-                            type="number"
-                            value={sipConfigForm.sipCount}
-                            onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipCount: e.target.value })}
-                            className={`w-20 mx-auto rounded-lg border px-2 py-1.5 text-sm outline-none text-center ${isDark ? 'border-white/10 bg-black/20 text-white' : 'border-gray-200 bg-white'}`}
-                          />
-                        ) : (
-                          <span className={`inline-flex rounded-md px-2 py-0.5 font-mono text-xs ${isDark ? 'bg-cyan-500/10 text-cyan-300' : 'bg-cyan-50 text-cyan-700'}`}>{item.sipCount ?? '0'}</span>
-                        )}
+                        <span className={`inline-flex rounded-md px-2 py-0.5 font-mono text-xs ${isDark ? 'bg-cyan-500/10 text-cyan-300' : 'bg-cyan-50 text-cyan-700'}`}>{item.sipCount ?? '0'}</span>
                       </td>
                       <td className="px-5 py-4 text-sm text-center">
-                        {editingSipConfigId === item.id ? (
-                          <input
-                            type="number"
-                            value={sipConfigForm.sipChannelCount}
-                            onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipChannelCount: e.target.value })}
-                            className={`w-20 mx-auto rounded-lg border px-2 py-1.5 text-sm outline-none text-center ${isDark ? 'border-white/10 bg-black/20 text-white' : 'border-gray-200 bg-white'}`}
-                          />
-                        ) : (
-                          <span className={`inline-flex rounded-md px-2 py-0.5 font-mono text-xs ${isDark ? 'bg-violet-500/10 text-violet-300' : 'bg-violet-50 text-violet-700'}`}>{item.sipChannelCount ?? '0'}</span>
-                        )}
+                        <span className={`inline-flex rounded-md px-2 py-0.5 font-mono text-xs ${isDark ? 'bg-violet-500/10 text-violet-300' : 'bg-violet-50 text-violet-700'}`}>{item.sipChannelCount ?? '0'}</span>
                       </td>
                       <td className="px-5 py-4 text-sm text-center">
-                        {editingSipConfigId === item.id ? (
-                          <input
-                            type="number"
-                            value={sipConfigForm.licenseCount}
-                            onChange={(e) => setSipConfigForm({ ...sipConfigForm, licenseCount: e.target.value })}
-                            className={`w-20 mx-auto rounded-lg border px-2 py-1.5 text-sm outline-none text-center ${isDark ? 'border-white/10 bg-black/20 text-white' : 'border-gray-200 bg-white'}`}
-                          />
-                        ) : (
-                          <span className={`inline-flex rounded-md px-2 py-0.5 font-mono text-xs ${isDark ? 'bg-emerald-500/10 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>{item.licenseCount ?? '0'}</span>
-                        )}
+                        <span className={`inline-flex rounded-md px-2 py-0.5 font-mono text-xs ${isDark ? 'bg-emerald-500/10 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>{item.licenseCount ?? '0'}</span>
                       </td>
                       <td className="px-5 py-4 text-sm max-w-[200px] truncate">
-                        {editingSipConfigId === item.id ? (
-                          <input
-                            value={sipConfigForm.sipDescription}
-                            onChange={(e) => setSipConfigForm({ ...sipConfigForm, sipDescription: e.target.value })}
-                            className={`w-full rounded-lg border px-3 py-1.5 text-sm outline-none ${isDark ? 'border-white/10 bg-black/20 text-white' : 'border-gray-200 bg-white'}`}
-                          />
-                        ) : (
-                          <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>{item.sipDescription || '—'}</span>
-                        )}
+                        <span className={isDark ? 'text-slate-400' : 'text-gray-500'}>{item.sipDescription || '—'}</span>
                       </td>
                       <td className="px-5 py-4 text-sm">
                         <div className="flex items-center justify-center gap-2">
-                          {editingSipConfigId === item.id ? (
-                            <>
-                              <button onClick={() => void saveSipConfig()} disabled={isSavingSipConfig} className={`h-8 rounded-lg px-3 text-xs font-bold transition-all ${isDark ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'}`}>Save</button>
-                              <button onClick={cancelEditSipConfig} className={`h-8 rounded-lg px-3 text-xs font-bold transition-all ${isDark ? 'text-slate-400 hover:text-white' : 'text-gray-500 hover:text-gray-900 border border-gray-200'}`}>Cancel</button>
-                            </>
-                          ) : (
-                            <button onClick={() => startEditSipConfig(item)} className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'}`} title="Edit"><Edit2 size={13} /></button>
-                          )}
+                          <button onClick={() => startEditSipConfig(item)} className={`h-8 w-8 rounded-full border flex items-center justify-center transition-all ${isDark ? 'border-blue-400/30 bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300'}`} title="Edit"><Edit2 size={13} /></button>
                         </div>
                       </td>
                     </tr>
@@ -500,8 +452,8 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
           <div className={`w-full max-w-xl rounded-3xl border p-6 shadow-2xl transition-all duration-500 ${isDark ? 'border-white/10 bg-[#0B1220]' : 'border-gray-200 bg-white'}`}>
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Add SIP Config</h2>
-                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{tenantName ? `Create a configuration for ${tenantName}.` : 'Add a new configuration'}</p>
+                <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{editingSipConfigId ? 'Edit SIP Configuration' : 'Add SIP Configuration'}</h2>
+                <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>{editingSipConfigId ? `Update details for ${sipConfigForm.sipProvider}` : tenantName ? `Create a configuration for ${tenantName}.` : 'Add a new configuration'}</p>
               </div>
               <button onClick={closeSipConfigModal} className={`h-10 w-10 rounded-full flex items-center justify-center border transition-all ${isDark ? 'border-white/10 text-slate-400 hover:text-white hover:bg-white/5' : 'border-gray-200 text-gray-500 hover:bg-gray-100'}`}><X size={18} /></button>
             </div>
@@ -584,7 +536,7 @@ export default function SipConfigsListUI({ token, onUnauthorized }: SipConfigsLi
                 disabled={isSavingSipConfig} 
                 className={`rounded-xl px-8 py-3 text-sm font-bold transition-all ${isDark ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20'}`}
               >
-                {isSavingSipConfig ? 'Saving...' : 'Save SIP Config'}
+                {isSavingSipConfig ? 'Saving...' : editingSipConfigId ? 'Update Configuration' : 'Save Configuration'}
               </button>
             </div>
           </div>
