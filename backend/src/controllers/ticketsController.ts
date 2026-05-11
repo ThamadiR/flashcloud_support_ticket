@@ -215,9 +215,9 @@ export async function getEmailsByTicket(req: Request, res: Response) {
   try {
     const { ticketId } = req.params;
 
-    // 1. Fetch ticket subject
+    // 1. Fetch ticket subject and code
     const [ticketRows]: any = await pool.query(
-      "SELECT subject, author FROM tbl_ticket_email_det WHERE id = ?",
+      "SELECT subject, ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
       [ticketId]
     );
 
@@ -226,19 +226,23 @@ export async function getEmailsByTicket(req: Request, res: Response) {
     }
 
     const ticketSubject = ticketRows[0].subject || "";
+    const ticketCode = ticketRows[0].ticket_code || "";
     const cleanSubject = ticketSubject
       .replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "")
       .trim();
 
-    // 2. Fetch ticket codes from mst table
+    // 2. Fetch ticket codes from mst table by subject (to find related threads)
     const [mstRows]: any = await pool.query(
       "SELECT ticket_code FROM tbl_ticket_email_mst WHERE subject LIKE ? OR subject = ?",
       [`%${cleanSubject}%`, ticketSubject]
     );
 
     const ticketCodes: string[] = mstRows.map((m: any) => m.ticket_code);
+    if (ticketCode && !ticketCodes.includes(ticketCode)) {
+      ticketCodes.push(ticketCode);
+    }
 
-    // 3. Fetch all sender emails for those ticket codes (no LIMIT)
+    // 3. Fetch all sender emails for those ticket codes from det
     let requesterEmails: string[] = [];
     if (ticketCodes.length > 0) {
       const [senderRows]: any = await pool.query(
@@ -252,52 +256,28 @@ export async function getEmailsByTicket(req: Request, res: Response) {
 
     // 4. Build parallel queries
     const queries: Promise<any>[] = [
-      // tbl_ticket_email_mst: match by ticket_id OR subject
+      // tbl_ticket_email_mst: match by ID or subject (Header info)
       pool.query(
-        `SELECT id, ticket_id, sender, recipient, cc, subject, body, attachments, date_received, status, message_id
-         FROM tbl_ticket_email_mst
-         WHERE ticket_id = ?
-            OR subject LIKE ?
-            OR subject = ?`,
-        [ticketId, `%${cleanSubject}%`, ticketSubject]
-      ),
-
-      // tbl_ticket_email_det: match by ID or subject
-      pool.query(
-        `SELECT id, id as ticket_id, author as sender, '' as recipient, '' as cc,
-                subject, '' as body, '[]' as attachments, created_at as date_received, status, '' as message_id
-         FROM tbl_ticket_email_det
+        `SELECT id, ticket_code as ticket_id, (SELECT author FROM tbl_ticket_email_det WHERE ticket_code = t.ticket_code LIMIT 1) as sender, 
+                '' as recipient, '' as cc, subject, '' as body, '[]' as attachments, created_at as date_received, status, '' as message_id
+         FROM tbl_ticket_email_mst t
          WHERE id = ? OR subject LIKE ? OR subject = ?`,
         [Number(ticketId), `%${cleanSubject}%`, ticketSubject]
       ),
+
+      // tbl_ticket_email_det: fetch ALL emails for found ticket codes
+      pool.query(
+        `SELECT id, ticket_code as ticket_id, sender_email as sender, recipient_email as recipient,
+                cc_email as cc, subject, body, '[]' as attachments, date_received, status, message_id
+         FROM tbl_ticket_email_det
+         WHERE ticket_code IN (?) OR ticket_code = ?`,
+        [ticketCodes, ticketCode || ticketId]
+      ),
     ];
 
-    // tbl_ticket_email_det: fetch ALL emails for found ticket codes
-    if (ticketCodes.length > 0) {
-      queries.push(
-        pool.query(
-          `SELECT id, ticket_code as ticket_id, sender_email as sender, recipient_email as recipient,
-                  cc_email as cc, subject, body, '[]' as attachments, date_received, status, message_id
-           FROM tbl_ticket_email_det
-           WHERE ticket_code IN (?) OR ticket_code = ?`,
-          [ticketCodes, Number(ticketId)]
-        )
-      );
-    }
-
-    // Also fetch by sender emails if we have them
-    if (requesterEmails.length > 0) {
-      queries.push(
-        pool.query(
-          `SELECT id, ticket_id, sender, recipient, cc, subject, body, attachments, date_received, status, message_id
-           FROM tbl_ticket_email_mst
-           WHERE sender IN (?) AND (subject LIKE ? OR subject = ?)`,
-          [requesterEmails, `%${cleanSubject}%`, ticketSubject]
-        )
-      );
-    }
-
+    // 5. Merge all results
     const results = await Promise.all(queries);
+    console.log(`Backend: Queries completed for ticket ${ticketId}. Processing results...`);
     console.log(`Backend: Queries completed for ticket ${ticketId}. Processing results...`);
 
     // 5. Merge all results
