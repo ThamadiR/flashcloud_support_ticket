@@ -277,12 +277,11 @@ const Tickets: React.FC = () => {
         {/* Tickets Grid */}
         <div className="grid grid-cols-1 gap-4">
           {items.map((ticket) => (
-            <Link
+            <div
               key={ticket.id}
-              to={`/ticket/${ticket.id}`}
-              className={`group block relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 ${isDark
-                ? 'bg-white/5 border-white/10 hover:border-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/10'
-                : 'bg-white border-gray-200 hover:border-cyan-400 hover:shadow-xl'
+              className={`group relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 ${isDark
+                ? 'bg-white/5 border-white/10'
+                : 'bg-white border-gray-200'
                 }`}
             >
               <div className="p-5 flex items-center gap-5">
@@ -326,12 +325,15 @@ const Tickets: React.FC = () => {
                   >
                     {ticket.state || ticket.status || 'open'}
                   </div>
-                  <div className={`p-2 rounded-xl transition-all duration-300 ${isDark ? 'bg-white/5 text-slate-400 group-hover:bg-cyan-500/20 group-hover:text-cyan-400' : 'bg-gray-50 text-gray-400 group-hover:bg-cyan-50 group-hover:text-cyan-500'}`}>
+                  <Link
+                    to={`/ticket/${ticket.id}`}
+                    className={`p-2 rounded-xl transition-all duration-300 ${isDark ? 'bg-white/5 text-slate-400 hover:bg-cyan-500/20 hover:text-cyan-400' : 'bg-gray-50 text-gray-400 hover:bg-cyan-50 hover:text-cyan-500'}`}
+                  >
                     <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                  </div>
+                  </Link>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 
