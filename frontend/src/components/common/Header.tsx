@@ -61,7 +61,7 @@ const Header: React.FC = () => {
   const initials = `${user?.firstName?.charAt(0) || user?.fname?.charAt(0) || ""}${user?.lastName?.charAt(0) || user?.lname?.charAt(0) || ""
     }`.toUpperCase();
 
-  const isAgent = (user?.role || "").toLowerCase() === "ticket agent";
+  const isAgent = (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT";
 
   const navigate = useNavigate();
 

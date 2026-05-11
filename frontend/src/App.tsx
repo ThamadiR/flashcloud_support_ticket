@@ -68,7 +68,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={
                 token ? (
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
                 ) : (
                   <Navigate to="/login" />
                 )
@@ -78,7 +78,7 @@ export default function App() {
                 !token ? (
                   <Login onLogin={handleLogin} />
                 ) : (
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
                 )
               } />
 
@@ -87,35 +87,35 @@ export default function App() {
               {/* Authenticated Routes with Header and Footer */}
               <Route element={<AuthenticatedLayout token={token} />}>
                 <Route path="/dashboard" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Dashboard />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <Dashboard />
                 } />
 
                 <Route path="/companies" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <CompanyListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <CompanyListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/customizations" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <CustomizationListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/sip-configs" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <SipConfigsListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/servers" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <ServersListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <ServersListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/tenants" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <TenantsListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <TenantsListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/contacts" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <Contacts token={token!} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <Contacts token={token!} />
                 } />
 
                 <Route path="/users" element={
-                  (user?.role || "").toLowerCase() === "ticket agent" ? <Navigate to="/tickets" /> : <UserListUI token={token!} onUnauthorized={handleLogout} />
+                  (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <UserListUI token={token!} onUnauthorized={handleLogout} />
                 } />
 
                 <Route path="/tickets" element={<Tickets />} />

@@ -14,7 +14,7 @@ import { pool } from "../config/db";
 export async function list(req: Request, res: Response) {
   try {
     const user = (req as any).user;
-    const role = (user?.role || "").toLowerCase();
+    const role = (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_');
     const userId = user?.id;
 
     const page = Number(req.query.page ?? 1);
@@ -25,7 +25,7 @@ export async function list(req: Request, res: Response) {
     let userIdFilter = req.query.userId ? Number(req.query.userId) : null;
 
     // Enforcement: Ticket agents can ONLY see their own tickets
-    if (role === "ticket agent") {
+    if (role === "TICKET_AGENT") {
       userIdFilter = userId;
     }
 

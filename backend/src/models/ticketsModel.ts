@@ -149,6 +149,8 @@ export async function updateTicketById(
 
   if (updates.state !== undefined) {
     fields.push("`state` = ?");
+    fields.push("`status` = ?");
+    values.push(updates.state);
     values.push(updates.state);
   }
   if (updates.priority !== undefined) {

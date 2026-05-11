@@ -67,6 +67,39 @@ interface TicketData {
   { key: "rishui", label: "rishui.hettiarachchi@dialog.lk" },
 ];*/
 
+function getPriorityStyles(priority: string): string {
+  const p = (priority || '').toLowerCase();
+  switch (p) {
+    case 'urgent':
+    case 'critical':
+      return 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_12px_rgba(244,63,94,0.1)]';
+    case 'high':
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-[0_0_12px_rgba(249,115,22,0.1)]';
+    case 'medium':
+      return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_12px_rgba(234,179,8,0.1)]';
+    case 'low':
+      return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+    default:
+      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+  }
+}
+
+function getStatusStyles(status: string): string {
+  const s = (status || '').toLowerCase();
+  switch (s) {
+    case 'open':
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    case 'in progress':
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+    case 'resolved':
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+    case 'closed':
+      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+    default:
+      return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+  }
+}
+
 const TicketDetail: React.FC = () => {
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
@@ -295,7 +328,7 @@ const TicketDetail: React.FC = () => {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        
+
         // Strictly prohibit Ticket Agents from viewing tickets not assigned to them
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const userRole = (storedUser?.role || "").toLowerCase();
@@ -699,13 +732,11 @@ const TicketDetail: React.FC = () => {
                     Ticket #{id || '...'}
                   </span>
                   <div className="flex gap-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${(status || '').toLowerCase() === 'open' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                      {status || '...'}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${(priority || '').toLowerCase() === 'high' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getPriorityStyles(priority)}`}>
                       {priority || '...'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusStyles(status)}`}>
+                      {status || '...'}
                     </span>
                   </div>
                 </div>

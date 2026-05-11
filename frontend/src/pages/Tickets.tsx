@@ -47,11 +47,49 @@ const avatarColors = [
   "#F97316", // orange
 ];
 
-function getColorForInitial(initial: string): string {
-  if (!initial) return "#9CA3AF";
-  const charCode = initial.toUpperCase().charCodeAt(0);
-  const index = charCode % avatarColors.length;
-  return avatarColors[index];
+function getPriorityColor(priority: string): string {
+  const p = (priority || '').toLowerCase();
+  switch (p) {
+    case 'urgent':
+    case 'critical': return "#EF4444"; // red
+    case 'high': return "#F97316"; // orange
+    case 'medium': return "#F59E0B"; // amber
+    case 'low': return "#3B82F6"; // blue
+    default: return "#9CA3AF"; // gray
+  }
+}
+
+function getPriorityStyles(priority: string): string {
+  const p = (priority || '').toLowerCase();
+  switch (p) {
+    case 'urgent':
+    case 'critical':
+      return 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_12px_rgba(244,63,94,0.1)]';
+    case 'high':
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-[0_0_12px_rgba(249,115,22,0.1)]';
+    case 'medium':
+      return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20 shadow-[0_0_12px_rgba(234,179,8,0.1)]';
+    case 'low':
+      return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+    default:
+      return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+  }
+}
+
+function getStatusStyles(status: string): string {
+  const s = (status || '').toLowerCase();
+  switch (s) {
+    case 'open':
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20';
+    case 'in progress':
+      return 'bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500/20';
+    case 'resolved':
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20';
+    case 'closed':
+      return 'bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20';
+    default:
+      return 'bg-gray-500/10 text-gray-400 border-gray-500/20 hover:bg-gray-500/20';
+  }
 }
 
 const Tickets: React.FC = () => {
@@ -69,10 +107,13 @@ const Tickets: React.FC = () => {
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = storedUser?.id || storedUser?.userId || null;
-  const [userRole, setUserRole] = useState((storedUser?.role || "").toLowerCase());
-  const isAgent = userRole === "ticket agent";
-  const isSupervisorOrAdmin = ["admin", "ticket supervisor"].includes(userRole);
-  
+  const [userRole, setUserRole] = useState(() => {
+    const role = (storedUser?.role || "").toUpperCase().replace(/[-\s]+/g, '_');
+    return role;
+  });
+  const isAgent = userRole === "TICKET_AGENT";
+  const isSupervisorOrAdmin = ["ADMIN", "TICKET_SUPERVISOR"].includes(userRole);
+
   const [viewMyTickets, setViewMyTickets] = useState(isAgent);
 
   useEffect(() => {
@@ -91,9 +132,9 @@ const Tickets: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           const user = data.user || data;
-          const role = (user.role || "").toLowerCase();
+          const role = (user.role || "").toUpperCase().replace(/[-\s]+/g, '_');
           setUserRole(role);
-          if (role === "ticket agent") setViewMyTickets(true);
+          if (role === "TICKET_AGENT") setViewMyTickets(true);
         }
       } catch (err) {
         console.error("Error fetching user role:", err);
@@ -116,7 +157,7 @@ const Tickets: React.FC = () => {
       const searchQuery = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "";
       const statusQuery = statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "";
       const userIdQuery = currentUserId ? `&userId=${currentUserId}` : "";
-      
+
       const token = localStorage.getItem("token");
       const res = await fetch(
         `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${searchQuery}${statusQuery}${userIdQuery}`,
@@ -136,8 +177,7 @@ const Tickets: React.FC = () => {
           const initial = ticket.author && ticket.author.trim().length > 0
             ? ticket.author.trim().charAt(0).toUpperCase()
             : "?";
-          const bgColor = getColorForInitial(initial);
-          return { ...ticket, initial, bgColor };
+          return { ...ticket, initial };
         });
 
         setItems(processed);
@@ -186,11 +226,10 @@ const Tickets: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search subject, author, company..."
-                className={`w-64 md:w-80 rounded-2xl border transition-all outline-none py-2 pl-10 pr-4 text-sm ${
-                  isDark 
-                    ? 'border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-blue-500/40' 
+                className={`w-64 md:w-80 rounded-2xl border transition-all outline-none py-2 pl-10 pr-4 text-sm ${isDark
+                    ? 'border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-blue-500/40'
                     : 'border-gray-200 bg-white text-gray-900 placeholder:text-slate-400 focus:border-blue-400/40 shadow-sm'
-                }`}
+                  }`}
               />
             </div>
 
@@ -208,18 +247,18 @@ const Tickets: React.FC = () => {
                 <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500 transition-colors shadow-inner"></div>
               </label>
               <span className={`text-xs font-black uppercase tracking-widest select-none transition-colors ${viewMyTickets ? 'text-blue-400' : isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`}>
-                {isAgent ? 'My Assigned Tickets' : 'My Tickets'}
+                {isAgent ? 'My Tickets' : 'Assigned Tickets'}
               </span>
             </div>
 
-          {loading && (
-            <div className="flex items-center gap-2 text-xs font-medium animate-pulse text-cyan-400">
-              <div className="w-2 h-2 rounded-full bg-cyan-400" />
-              Syncing tickets...
-            </div>
-          )}
+            {loading && (
+              <div className="flex items-center gap-2 text-xs font-medium animate-pulse text-cyan-400">
+                <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                Syncing tickets...
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
         {error && (
           <div className={`p-4 rounded-xl border flex items-center gap-3 ${isDark ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-red-50 border-red-200 text-red-600'}`}>
@@ -249,8 +288,8 @@ const Tickets: React.FC = () => {
               <div className="p-5 flex items-center gap-5">
                 {/* Avatar */}
                 <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-inner shrink-0 relative overflow-hidden"
-                  style={{ backgroundColor: (ticket as any).bgColor }}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-inner shrink-0 relative overflow-hidden transition-colors duration-500"
+                  style={{ backgroundColor: getPriorityColor(ticket.priority) }}
                 >
                   <div className="absolute inset-0 bg-black/10" />
                   <span className="relative z-10">{ticket.initial}</span>
@@ -278,21 +317,14 @@ const Tickets: React.FC = () => {
                 </div>
 
                 {/* Priority & State */}
-                <div className="hidden md:flex flex-col items-end gap-2 shrink-0">
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${(ticket.priority?.toLowerCase() ?? '') === 'urgent' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                      (ticket.priority?.toLowerCase() ?? '') === 'high' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                        (ticket.priority?.toLowerCase() ?? '') === 'medium' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                          'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                    }`}>
+                <div className="hidden md:flex flex-row items-center gap-3 shrink-0">
+                  <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${getPriorityStyles(ticket.priority)}`}>
                     {ticket.priority ?? '—'}
                   </div>
                   <div
-                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm ${isDark
-                        ? 'bg-slate-800 text-white border border-white/5 group-hover:bg-slate-700'
-                        : 'bg-gray-100 text-gray-600 border border-gray-200 group-hover:bg-gray-200 group-hover:text-gray-900'
-                      }`}
+                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm border ${getStatusStyles(ticket.state || ticket.status)}`}
                   >
-                    {ticket.state || 'open'}
+                    {ticket.state || ticket.status || 'open'}
                     <ChevronRight className="w-3.5 h-3.5" />
                   </div>
                 </div>

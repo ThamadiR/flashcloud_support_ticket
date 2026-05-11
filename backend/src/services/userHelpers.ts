@@ -1,6 +1,7 @@
 export const USER_ROLES = {
   ADMIN: 'ADMIN',
-  NON_ADMIN: 'NON_ADMIN',
+  TICKET_SUPERVISOR: 'TICKET_SUPERVISOR',
+  TICKET_AGENT: 'TICKET_AGENT',
 } as const;
 
 export const USER_ROLE_VALUES = new Set<string>(Object.values(USER_ROLES));
