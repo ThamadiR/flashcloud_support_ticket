@@ -18,11 +18,14 @@ export async function list(req: Request, res: Response) {
     const search = (req.query.search as string) ?? "";
     const status = (req.query.status as string) ?? "";
 
+    const userIdFilter = req.query.userId ? Number(req.query.userId) : null;
+
     const data = await getTickets(
       Number.isFinite(page) && page > 0 ? page : 1,
       Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 6,
       search,
-      status
+      status,
+      userIdFilter
     );
 
     res.json(data);

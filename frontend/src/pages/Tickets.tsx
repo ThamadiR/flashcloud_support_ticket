@@ -67,6 +67,13 @@ const Tickets: React.FC = () => {
   const { isDark } = useTheme();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = storedUser?.id || storedUser?.userId || null;
+  const userRole = (storedUser?.role || "").toLowerCase();
+  const isAgentOnly = userRole === "ticket agent";
+
+  const [viewMyTickets, setViewMyTickets] = useState(isAgentOnly);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const status = params.get('status');
@@ -77,6 +84,7 @@ const Tickets: React.FC = () => {
     currentPage: number,
     searchTerm: string,
     statusFilter: string | null,
+    currentUserId: number | null,
     cancelledRef: { cancelled: boolean }
   ) => {
     setLoading(true);
@@ -85,8 +93,10 @@ const Tickets: React.FC = () => {
     try {
       const searchQuery = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : "";
       const statusQuery = statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "";
+      const userIdQuery = currentUserId ? `&userId=${currentUserId}` : "";
+      
       const res = await fetch(
-        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${searchQuery}${statusQuery}`
+        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${searchQuery}${statusQuery}${userIdQuery}`
       );
 
 
@@ -118,9 +128,9 @@ const Tickets: React.FC = () => {
 
   useEffect(() => {
     const cancelledRef = { cancelled: false };
-    fetchTickets(currentPage, searchTerm, statusFilter, cancelledRef);
+    fetchTickets(currentPage, searchTerm, statusFilter, viewMyTickets ? userId : null, cancelledRef);
     return () => { cancelledRef.cancelled = true; };
-  }, [currentPage, searchTerm, rowsPerPage, statusFilter]);
+  }, [currentPage, searchTerm, rowsPerPage, statusFilter, viewMyTickets, userId]);
 
 
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
@@ -157,19 +167,23 @@ const Tickets: React.FC = () => {
             </div>
 
             {/* View My Tickets Toggle */}
-          <div className="flex items-center gap-3 p-2 px-4 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-300 group">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                id="viewMyTickets"
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 transition-colors"></div>
-            </label>
-            <span className={`text-sm font-medium select-none ${isDark ? 'text-gray-300 group-hover:text-white' : 'text-gray-700 group-hover:text-black'}`}>
-              My Tickets
-            </span>
-          </div>
+          {!isAgentOnly && (
+            <div className={`flex items-center gap-3 p-2 px-4 rounded-full border transition-all duration-300 group ${viewMyTickets ? 'bg-blue-500/20 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="viewMyTickets"
+                  className="sr-only peer"
+                  checked={viewMyTickets}
+                  onChange={(e) => setViewMyTickets(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500 transition-colors shadow-inner"></div>
+              </label>
+              <span className={`text-xs font-black uppercase tracking-widest select-none transition-colors ${viewMyTickets ? 'text-blue-400' : isDark ? 'text-gray-400 group-hover:text-white' : 'text-gray-600 group-hover:text-black'}`}>
+                My Tickets
+              </span>
+            </div>
+          )}
 
           {loading && (
             <div className="flex items-center gap-2 text-xs font-medium animate-pulse text-cyan-400">

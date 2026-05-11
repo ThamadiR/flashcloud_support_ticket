@@ -30,7 +30,8 @@ export async function getTickets(
   page = 1,
   pageSize = 6,
   search = "",
-  status = ""
+  status = "",
+  userId: number | null = null
 ): Promise<PaginatedTickets> {
   const limit = pageSize;
   const offset = (page - 1) * pageSize;
@@ -48,6 +49,11 @@ export async function getTickets(
   if (status) {
     whereClauses.push(`state = ?`);
     params.push(status);
+  }
+
+  if (userId !== null) {
+    whereClauses.push(`userId = ?`);
+    params.push(userId);
   }
 
   const whereClause = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
