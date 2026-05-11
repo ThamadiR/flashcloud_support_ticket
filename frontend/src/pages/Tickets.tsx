@@ -117,8 +117,14 @@ const Tickets: React.FC = () => {
       const statusQuery = statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : "";
       const userIdQuery = currentUserId ? `&userId=${currentUserId}` : "";
       
+      const token = localStorage.getItem("token");
       const res = await fetch(
-        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${searchQuery}${statusQuery}${userIdQuery}`
+        `${API_BASE}/api/tickets/ticket?page=${currentPage}&pageSize=${rowsPerPage}${searchQuery}${statusQuery}${userIdQuery}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
 

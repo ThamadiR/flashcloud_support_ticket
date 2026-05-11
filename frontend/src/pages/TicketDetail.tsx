@@ -188,8 +188,14 @@ const TicketDetail: React.FC = () => {
       try {
         setLoading(true);
 
+        const token = localStorage.getItem("token");
         const res = await fetch(
-          `${API_BASE_URL}/api/tickets/${id}/emails`
+          `${API_BASE_URL}/api/tickets/${id}/emails`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
 
         // Check if backend responded
@@ -513,10 +519,14 @@ const TicketDetail: React.FC = () => {
 
     setIsSendingEmail(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${API_BASE_URL}/api/tickets/emails/reply`,
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
           body: formData,
         }
       );
@@ -596,10 +606,14 @@ const TicketDetail: React.FC = () => {
 
     setIsSendingEmail(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${API_BASE_URL}/api/tickets/emails/forward`,
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
           body: formData,
         }
       );

@@ -50,12 +50,19 @@ function Dashboard() {
     try {
       setLoading(true);
 
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: { Authorization: `Bearer ${token}` }
+      };
+
       const summaryRes = await axios.get(
-        `${API_BASE_URL}/api/dashboard/summary`
+        `${API_BASE_URL}/api/dashboard/summary`,
+        config
       );
 
       const groupRes = await axios.get(
-        `${API_BASE_URL}/api/dashboard/group-summary`
+        `${API_BASE_URL}/api/dashboard/group-summary`,
+        config
       );
 
       setSummary(summaryRes.data);
