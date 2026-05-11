@@ -230,11 +230,11 @@ export const fetchAndSaveLatestEmails = () => {
 
               try {
                 await pool.query(
-                  `INSERT INTO tbl_ticket_email_mst
+                  `INSERT INTO tbl_ticket_email_det
                   (
-                    sender,
-                    recipient,
-                    cc,
+                    sender_email,
+                    recipient_email,
+                    cc_email,
                     subject,
                     body,
                     attachments,
@@ -258,49 +258,59 @@ export const fetchAndSaveLatestEmails = () => {
                     messageId,
                     inReplyTo,
                     threadId,
-                    ticketId,
+                    ticketId || "", // We'll link this to ticket_code later if needed
                   ],
                 );
 
-                console.log(`Saved email: ${emailData.subject}`);
+                console.log(`Saved email to detail: ${emailData.subject}`);
               } catch (dbErr: any) {
-                console.error("DB Error:", dbErr);
+                console.error("DB Error saving email detail:", dbErr);
               }
 
-              // -------- Ticket Creation --------
-              if (!ticketId) {
-                const [ticketResult]: any = await pool.query(
-                  `INSERT INTO tbl_ticket_email_det
-                  (
-                    subject,
-                    status,
-                    author,
-                    priority,
-                    group_type,
-                    state,
-                    company,
-                    created_at
-                  )
-                  VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
-                  [
-                    emailData.subject,
-                    "open",
-                    emailData.fromName || "Unknown Sender",
-                    "medium",
-                    "Tech Support",
-                    "Open",
-                    companyName,
-                  ],
-                );
+              try {
+                // -------- Ticket Creation --------
+                if (!ticketId) {
+                  // Determine assignee if possible (e.g., from existing company contacts)
+                  const [ticketResult]: any = await pool.query(
+                    `INSERT INTO tbl_ticket_email_mst
+                    (
+                      subject,
+                      status,
+                      priority,
+                      group_type,
+                      company,
+                      created_at,
+                      ticket_code
+                    )
+                    VALUES (?, ?, ?, ?, ?, NOW(), ?)`,
+                    [
+                      emailData.subject,
+                      "Open",
+                      "medium",
+                      "Tech Support",
+                      companyName,
+                      `TKT_${Date.now()}` // Generate a ticket code
+                    ],
+                  );
 
-                ticketId = ticketResult.insertId;
+                  ticketId = ticketResult.insertId;
 
-                await pool.query(
-                  `UPDATE tbl_ticket_email_det 
-                  SET ticket_code = ?
-                  WHERE thread_id = ? AND ticket_code IS NULL`,
-                  [ticketId, threadId]
-                );
+                  // Fetch the ticket_code we just created to link the emails
+                  const [newTicket]: any = await pool.query(
+                    "SELECT ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
+                    [ticketId]
+                  );
+                  const ticketCode = newTicket[0]?.ticket_code;
+
+                  await pool.query(
+                    `UPDATE tbl_ticket_email_det 
+                    SET ticket_code = ?
+                    WHERE thread_id = ? AND (ticket_code = '' OR ticket_code IS NULL)`,
+                    [ticketCode, threadId]
+                  );
+                }
+              } catch (err: any) {
+                console.error("Error creating/syncing ticket:", err);
               }
             });
           });
