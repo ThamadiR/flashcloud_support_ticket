@@ -227,8 +227,8 @@ const Tickets: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search subject, author, company..."
                 className={`w-64 md:w-80 rounded-2xl border transition-all outline-none py-2 pl-10 pr-4 text-sm ${isDark
-                    ? 'border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-blue-500/40'
-                    : 'border-gray-200 bg-white text-gray-900 placeholder:text-slate-400 focus:border-blue-400/40 shadow-sm'
+                  ? 'border-white/10 bg-white/5 text-white placeholder:text-slate-500 focus:border-blue-500/40'
+                  : 'border-gray-200 bg-white text-gray-900 placeholder:text-slate-400 focus:border-blue-400/40 shadow-sm'
                   }`}
               />
             </div>
@@ -316,16 +316,18 @@ const Tickets: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Priority & State */}
-                <div className="hidden md:flex flex-row items-center gap-3 shrink-0">
+                {/* Priority, State & Action Arrow */}
+                <div className="hidden md:flex flex-row items-center gap-6 shrink-0">
                   <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${getPriorityStyles(ticket.priority)}`}>
                     {ticket.priority ?? '—'}
                   </div>
                   <div
-                    className={`flex items-center gap-1 text-[0.75rem] font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm border ${getStatusStyles(ticket.state || ticket.status)}`}
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 border ${getStatusStyles(ticket.state || ticket.status)}`}
                   >
                     {ticket.state || ticket.status || 'open'}
-                    <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
+                  <div className={`p-2 rounded-xl transition-all duration-300 ${isDark ? 'bg-white/5 text-slate-400 group-hover:bg-cyan-500/20 group-hover:text-cyan-400' : 'bg-gray-50 text-gray-400 group-hover:bg-cyan-50 group-hover:text-cyan-500'}`}>
+                    <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                   </div>
                 </div>
               </div>
