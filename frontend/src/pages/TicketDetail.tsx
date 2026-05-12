@@ -35,11 +35,14 @@ interface Attachment {
 
 interface Email {
   from: string;
+  sender?: string;
   to: string;
   cc: string;
   subject: string;
   date: string;
+  date_received?: string;
   body: string;
+  status?: string;
   attachments?: Attachment[];
 }
 
@@ -261,13 +264,18 @@ const TicketDetail: React.FC = () => {
         const formattedEmails: Email[] = Array.isArray(data)
           ? data.map((email: any) => ({
             from: email.sender || "Unknown",
+            sender: email.sender || "Unknown",
             to: email.recipient || "",
             cc: email.cc || "",
             subject: email.subject || "(No Subject)",
             date: email.date_received
               ? new Date(email.date_received).toLocaleString()
               : new Date().toLocaleString(),
+            date_received: email.date_received
+              ? new Date(email.date_received).toLocaleString()
+              : new Date().toLocaleString(),
             body: email.body || "<p></p>",
+            status: email.status || "",
             attachments: email.attachments
               ? (() => {
                 try {
