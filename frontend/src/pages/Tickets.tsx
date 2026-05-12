@@ -175,9 +175,8 @@ const Tickets: React.FC = () => {
 
       if (!cancelledRef.cancelled) {
         const processed = (data.items || []).map((ticket) => {
-          const initial = ticket.author && ticket.author.trim().length > 0
-            ? ticket.author.trim().charAt(0).toUpperCase()
-            : "?";
+          // Use initial from backend if available, otherwise fallback to subject letter or '?'
+          const initial = ticket.initial || (ticket.subject ? ticket.subject.trim().charAt(0).toUpperCase() : "?");
           return { ...ticket, initial };
         });
 

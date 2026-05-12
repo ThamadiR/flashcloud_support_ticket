@@ -66,6 +66,7 @@ export default function App() {
           <BrowserRouter>
             <Toaster position="top-right" reverseOrder={false} />
             <Routes>
+              
               <Route path="/" element={
                 token ? (
                   (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
@@ -81,8 +82,6 @@ export default function App() {
                   (user?.role || "").toUpperCase().replace(/[-\s]+/g, '_') === "TICKET_AGENT" ? <Navigate to="/tickets" /> : <Navigate to="/dashboard" />
                 )
               } />
-
-
 
               {/* Authenticated Routes with Header and Footer */}
               <Route element={<AuthenticatedLayout token={token} />}>

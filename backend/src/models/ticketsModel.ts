@@ -83,7 +83,7 @@ export async function getTickets(
       ticket_code,
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS daysAgo,
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS overdueBy, -- Fallback since due_at missing in mst
-      UPPER(LEFT(TRIM(COALESCE((SELECT author FROM tbl_ticket_email_det WHERE ticket_code = t.ticket_code LIMIT 1), 'U')), 1)) AS initial
+      UPPER(LEFT(TRIM(COALESCE(subject, 'T')), 1)) AS initial
     FROM tbl_ticket_email_mst t
     ${whereClause}
     ORDER BY created_at DESC
