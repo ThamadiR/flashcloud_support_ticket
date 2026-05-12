@@ -180,15 +180,17 @@ export async function updateTicketById(
 
   // Synchronize status in the detail (email) table as well if it's being changed
   if (updates.state !== undefined) {
+    const newState = updates.state; // Local variable for TS type narrowing
     // Get the ticket_code first to update the detail table
-    const [ticket] = await pool.query<RowDataPacket[]>(
+    const [ticketRows]: any = await pool.query(
       "SELECT ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
       [id]
     );
-    if (ticket.length > 0) {
+    if (ticketRows && ticketRows.length > 0) {
+      const ticketCode = ticketRows[0].ticket_code;
       await pool.query(
         "UPDATE tbl_ticket_email_det SET status = ? WHERE ticket_code = ?",
-        [updates.state, ticket[0].ticket_code]
+        [newState, ticketCode]
       );
     }
   }
@@ -197,7 +199,17 @@ export async function updateTicketById(
 }
 
 export async function deleteTicketById(id: number) {
-  await pool.query(`DELETE FROM tbl_ticket_email_mst WHERE ticket_code = ?`, [id]);
-  await pool.query(`DELETE FROM tbl_ticket_email_det WHERE id = ?`, [id]);
+  // 1. Get ticket_code first
+  const [rows]: any = await pool.query(
+    "SELECT ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
+    [id]
+  );
+  if (!rows || rows.length === 0) return false;
+  const ticketCode = rows[0].ticket_code;
+
+  // 2. Delete from both tables
+  await pool.query(`DELETE FROM tbl_ticket_email_mst WHERE id = ?`, [id]);
+  await pool.query(`DELETE FROM tbl_ticket_email_det WHERE ticket_code = ?`, [ticketCode]);
+  await pool.query(`DELETE FROM tbl_ticket_attachment WHERE ticket_code = ?`, [ticketCode]);
   return true;
 }

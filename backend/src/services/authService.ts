@@ -50,7 +50,7 @@ export class AuthService {
       Email: String(email),
       password: hashedPassword,
       contactNo: String(contactNo).trim(),
-      role: USER_ROLES.NON_ADMIN,
+      role: USER_ROLES.TICKET_AGENT,
       img: null,
     });
 

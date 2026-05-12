@@ -35,11 +35,11 @@ export const normalizeImageUrl = (value: unknown): string | null | undefined => 
 
 export const normalizeUserRole = (value: unknown): string => {
   if (typeof value !== 'string') {
-    return USER_ROLES.NON_ADMIN;
+    return USER_ROLES.TICKET_AGENT;
   }
 
   const normalized = value.trim().toUpperCase().replace(/[-\s]+/g, '_');
-  return USER_ROLE_VALUES.has(normalized) ? normalized : USER_ROLES.NON_ADMIN;
+  return USER_ROLE_VALUES.has(normalized) ? normalized : USER_ROLES.TICKET_AGENT;
 };
 
 export const resolveStoredRole = (user: { role?: unknown }) => normalizeUserRole(user.role);
