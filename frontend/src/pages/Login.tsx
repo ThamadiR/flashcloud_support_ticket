@@ -74,12 +74,12 @@ export default function Login({ onLogin }: { onLogin: (token: string, user: any)
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow dark:border dark:bg-gray-800 dark:border-gray-700">
-        <div className="space-y-6">
+    <section className="bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-100 via-slate-50 to-slate-200 dark:from-slate-900 dark:via-slate-950 dark:to-black min-h-screen flex items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-md bg-white dark:bg-[#0B0E14] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-500">
+        <div className="p-8 space-y-8 md:p-10">
           <div className="text-center">
             <img className="mx-auto" src={FlashLogo} alt="Flowbite" />
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white mt-4">
+            <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white mt-6">
               Sign in to your account
             </h1>
           </div>
@@ -89,51 +89,54 @@ export default function Login({ onLogin }: { onLogin: (token: string, user: any)
           )}
 
           <form className="space-y-4" onSubmit={handleLogin}>
-            <div>
-              <Label htmlFor="email" />
-              <TextInput
-                id="email"
+            <div className="space-y-2">
+              <label className="block text-[0.7rem] font-bold uppercase tracking-widest text-gray-400 ml-1">Email Address</label>
+              <input
                 type="email"
                 placeholder="name@company.com"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-5 py-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm font-bold outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/5"
               />
             </div>
-            <div>
-              <Label htmlFor="password" />
-              <TextInput
-                id="password"
+            <div className="space-y-2">
+              <label className="block text-[0.7rem] font-bold uppercase tracking-widest text-gray-400 ml-1">Password</label>
+              <input
                 type="password"
                 placeholder="••••••••"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-5 py-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 text-sm font-bold outline-none transition-all focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/5"
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Checkbox id="remember" />
-                <Label htmlFor="remember">Remember me</Label>
+                <Checkbox id="remember" className="rounded-md border-gray-300 text-cyan-600 focus:ring-cyan-500" />
+                <Label htmlFor="remember" className="text-sm font-medium text-gray-600 cursor-pointer">Remember me</Label>
               </div>
               <a
                 href="#"
-                className="text-sm text-primary-600 hover:underline dark:text-primary-500"
+                className="text-sm font-bold text-cyan-600 hover:text-cyan-700 transition-colors"
               >
                 Forgot password?
               </a>
             </div>
 
-            <Button type="submit" className="w-full">
+            <button
+              type="submit"
+              className="w-full py-4 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-sm uppercase tracking-widest transition-all shadow-lg shadow-cyan-600/20 active:scale-[0.98]"
+            >
               Sign in
-            </Button>
+            </button>
 
-            <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-center text-gray-400 font-medium pt-2">
               Don’t have an account yet?{" "}
               <Link
                 to="/signup"
-                className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                className="font-bold text-cyan-600 hover:text-cyan-700 transition-colors"
               >
                 Sign up
               </Link>
