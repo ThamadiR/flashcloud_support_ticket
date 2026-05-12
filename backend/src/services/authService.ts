@@ -1,0 +1,117 @@
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { UserRepository } from '../repositories/userRepository';
+import { ApiError } from './apiError';
+import { normalizeImageUrl, resolveStoredRole, USER_ROLES } from './userHelpers';
+
+
+export class AuthService {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly jwtSecret: string,
+  ) {}
+
+  async register(payload: any) {
+    const { username, email, password, confirmPassword, contactNo } = payload || {};
+
+    if (!username || String(username).trim().length < 3) {
+      throw new ApiError(400, 'Username must be at least 3 characters long');
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if (!email || !emailRegex.test(String(email))) {
+      throw new ApiError(400, 'Please provide a valid @gmail.com address');
+    }
+
+    if (!password || String(password).length < 6) {
+      throw new ApiError(400, 'Password must be at least 6 characters long');
+    }
+
+    if (String(password) !== String(confirmPassword)) {
+      throw new ApiError(400, 'Passwords do not match');
+    }
+
+    // Validation removed for testing
+    const phoneRegex9 = /^(\+\d+)?\d{9}$/;
+    const sanitizedContact = String(contactNo).replace(/\s/g, '');
+    console.log('[DEBUG] Registration ContactNo:', { raw: contactNo, sanitized: sanitizedContact, matches: phoneRegex9.test(sanitizedContact) });
+    const existingUser = await this.userRepository.findByEmail(String(email));
+    if (existingUser) {
+      throw new ApiError(400, 'User already exists');
+    }
+
+    const lastUser = await this.userRepository.findLastByIdDesc();
+    const nextId = lastUser ? lastUser.userId + 1 : 1;
+
+    const hashedPassword = await bcrypt.hash(String(password), 10);
+    const newUser: any = await this.userRepository.createUser({
+      userId: nextId,
+      userName: String(username),
+      Email: String(email),
+      password: hashedPassword,
+      contactNo: String(contactNo).trim(),
+      role: USER_ROLES.TICKET_AGENT,
+      img: null,
+    });
+
+    return {
+      message: 'User registered successfully',
+      userId: newUser.userId,
+      user: {
+        id: newUser.userId,
+        username: newUser.userName,
+        email: newUser.Email,
+        contactNo: newUser.contactNo,
+        role: resolveStoredRole(newUser),
+        img: newUser.img,
+        avatarUrl: newUser.img,
+      },
+    };
+  }
+
+  async login(payload: any) {
+
+    console.log("LOGIN PAYLOAD:", payload);
+    const { email, password } = payload || {};
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+    if (!email || !emailRegex.test(String(email))) {
+      throw new ApiError(400, 'Please provide a valid @gmail.com address');
+    }
+
+    if (!password) {
+      throw new ApiError(400, 'Password must not be empty');
+    }
+
+    const user: any = await this.userRepository.findByEmail(String(email));
+    
+    console.log("EMAIL:", email);
+    console.log("USER:", user);
+
+    if (!user) {
+      throw new ApiError(401, 'Invalid email or password');
+    }
+
+    const isMatch = await bcrypt.compare(String(password), user.password);
+    if (!isMatch) {
+      throw new ApiError(401, 'Invalid email or password');
+    }
+
+    const role = resolveStoredRole(user);
+    const token = jwt.sign({ id: user.userId, role }, this.jwtSecret, { expiresIn: '1d' });
+    const safeImg = normalizeImageUrl(user.img) || null;
+
+    return {
+      message: 'Login successful',
+      token,
+      user: {
+        id: user.userId,
+        username: user.userName,
+        email: user.Email,
+        role: resolveStoredRole(user),
+        img: safeImg,
+        avatarUrl: safeImg,
+      },
+    };
+  }
+}

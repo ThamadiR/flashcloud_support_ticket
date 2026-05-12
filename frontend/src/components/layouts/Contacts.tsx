@@ -1,0 +1,746 @@
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import { FaPlus, FaTimes, FaUserCircle, FaTrash } from "react-icons/fa";
+import { Search, Edit2, Trash2, X, Plus, User, Phone, Mail, Building2, ChevronRight, ChevronLeft, ArrowUpDown, Check } from 'lucide-react';
+import { useDrawer } from "../../context/DrawerContext";
+import { useTheme } from "../../context/ThemeContext";
+import { API_BASE_URL as API_BASE } from "../../config/api";
+import toast from 'react-hot-toast';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+
+type Contact = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  company: string;
+  profileImage: string | null;
+  createdAt: string;
+};
+
+function Contacts({ token }: { token: string }) {
+  const { isDark } = useTheme();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("");
+
+
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const { isDrawerOpen } = useDrawer();
+  const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
+
+  // Sorting state
+  const [sortBy, setSortBy] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Sort menu states
+  const [isNameSortMenuOpen, setIsNameSortMenuOpen] = useState(false);
+  const [isPhoneSortMenuOpen, setIsPhoneSortMenuOpen] = useState(false);
+  const [isEmailSortMenuOpen, setIsEmailSortMenuOpen] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Refs for click-away
+  const nameSortMenuRef = useRef<HTMLDivElement>(null);
+  const phoneSortMenuRef = useRef<HTMLDivElement>(null);
+  const emailSortMenuRef = useRef<HTMLDivElement>(null);
+
+  const closeAllSortMenus = () => {
+    setIsNameSortMenuOpen(false);
+    setIsPhoneSortMenuOpen(false);
+    setIsEmailSortMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (nameSortMenuRef.current && !nameSortMenuRef.current.contains(event.target as Node) &&
+          phoneSortMenuRef.current && !phoneSortMenuRef.current.contains(event.target as Node) &&
+          emailSortMenuRef.current && !emailSortMenuRef.current.contains(event.target as Node)) {
+        closeAllSortMenus();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const applyColumnSort = (column: string, order: 'asc' | 'desc') => {
+    setSortBy(column);
+    setSortOrder(order);
+    closeAllSortMenus();
+  };
+
+  const [formData, setFormData] = useState<{
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    company: string;
+    profileImage: File | null;
+  }>({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    company: "",
+    profileImage: null,
+  });
+
+  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Filtered and Sorted contacts
+  const filteredContacts = useMemo(() => {
+    let result = contacts.filter(c => {
+      const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+      const matchesSearch = fullName.includes(searchTerm.toLowerCase()) ||
+        c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.company && c.company.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesCompany = selectedCompany === "" || c.company === selectedCompany;
+      
+      return matchesSearch && matchesCompany;
+    });
+
+    if (sortBy) {
+      result.sort((a, b) => {
+        let valA: string | number = '';
+        let valB: string | number = '';
+
+        if (sortBy === 'name') {
+          valA = `${a.firstName} ${a.lastName}`.toLowerCase();
+          valB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        } else if (sortBy === 'phone') {
+          valA = a.phone || '';
+          valB = b.phone || '';
+        } else if (sortBy === 'email') {
+          valA = a.email.toLowerCase();
+          valB = b.email.toLowerCase();
+        }
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [contacts, searchTerm, selectedCompany, sortBy, sortOrder]);
+
+  const pagedContacts = useMemo(() => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    return filteredContacts.slice(startIndex, startIndex + rowsPerPage);
+  }, [filteredContacts, currentPage, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredContacts.length / rowsPerPage);
+
+  // Unique companies for filter dropdown
+  const uniqueFilterCompanies = Array.from(new Set(companies.map(c => c.name))).sort();
+
+
+  const imgSrc = (p: string | null) => {
+    if (!p) return null;
+    return p.startsWith("http") ? p : `${API_BASE}${p}`;
+  };
+
+  const fetchContacts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/contacts`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const items: Contact[] = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []);
+      setContacts(items);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to fetch contacts");
+      toast.error("Failed to load contacts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/companies`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setCompanies(data.companies || []);
+    } catch (e: any) {
+      console.error("Failed to fetch companies:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchContacts();
+    fetchCompanies();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setFormData(prev => ({ ...prev, profileImage: file }));
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewImage(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, profileImage: null }));
+    setPreviewImage(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const resetForm = () => {
+    setFormData({ firstName: "", lastName: "", phone: "", email: "", company: "", profileImage: null });
+    setPreviewImage(null);
+    setEditingContact(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const body = new FormData();
+      body.append("firstName", formData.firstName);
+      body.append("lastName", formData.lastName);
+      body.append("email", formData.email);
+      if (formData.phone) body.append("phone", formData.phone);
+      if (formData.company) body.append("company", formData.company);
+      if (formData.profileImage) body.append("profileImage", formData.profileImage);
+
+      const url = editingContact ? `${API_BASE}/api/contacts/${editingContact.id}` : `${API_BASE}/api/contacts`;
+      const method = editingContact ? "PUT" : "POST";
+
+      const res = await fetch(url, { method, body });
+      if (!res.ok) {
+        let errorMsg = `HTTP ${res.status}`;
+        try {
+          const errorData = await res.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch (e) {
+          const text = await res.text();
+          if (text) errorMsg = text;
+        }
+        throw new Error(errorMsg);
+      }
+
+      toast.success(editingContact ? "Contact updated" : "Contact added");
+      await fetchContacts();
+      resetForm();
+      setIsModalOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save contact");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (contact: Contact) => {
+    setEditingContact(contact);
+    
+    setFormData({
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      phone: contact.phone || "",
+      email: contact.email,
+      company: contact.company || "",
+      profileImage: null,
+    });
+    setPreviewImage(imgSrc(contact.profileImage));
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this contact?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/contacts/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`Failed to delete contact`);
+      toast.success("Contact deleted");
+      await fetchContacts();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete contact");
+    }
+  };
+
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0B1120] text-slate-300' : 'bg-gray-50 text-gray-700'}`}>
+      <main className={`p-4 ${mainMarginClass} h-auto pt-20 transition-all duration-300`}>
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              Contact Management
+            </h1>
+            <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              Manage your address book and contact details
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isDark ? 'text-slate-500 group-focus-within:text-cyan-400' : 'text-gray-400 group-focus-within:text-cyan-600'}`} />
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={`pl-10 pr-4 py-2 rounded-xl text-sm border transition-all outline-none w-full md:w-64 ${
+                  isDark 
+                    ? 'bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50' 
+                    : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'
+                }`}
+              />
+            </div>
+
+            <div className="relative group">
+              <Building2 className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors ${isDark ? 'text-slate-500 group-focus-within:text-cyan-400' : 'text-gray-400 group-focus-within:text-cyan-600'}`} />
+              <select
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+                className={`pl-10 pr-10 py-2 rounded-xl text-sm border transition-all outline-none appearance-none cursor-pointer w-full md:w-48 ${
+                  isDark 
+                    ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50' 
+                    : 'bg-white border-gray-200 text-gray-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'
+                }`}
+              >
+                <option value="">All Companies</option>
+                {uniqueFilterCompanies.map(comp => (
+                  <option key={comp} value={comp} className={isDark ? 'bg-[#111827] text-white' : 'bg-white text-gray-900'}>
+                    {comp}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronRight className="w-4 h-4 rotate-90 opacity-50" />
+              </div>
+            </div>
+            
+            <button
+
+              onClick={() => { resetForm(); setIsModalOpen(true); }}
+              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                isDark 
+                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 shadow-lg shadow-cyan-500/10' 
+                  : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              Add Contact
+            </button>
+          </div>
+        </div>
+
+        {/* Contacts Table Card */}
+        <div className={`relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all ${
+          isDark ? 'bg-white/5 border-white/10 shadow-2xl' : 'bg-white border-gray-200 shadow-xl'
+        }`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className={`${isDark ? 'bg-white/5' : 'bg-gray-50'} border-b ${isDark ? 'border-white/10' : 'border-gray-200'}`}>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">Profile</th>
+                  
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="relative inline-flex items-center gap-2" ref={nameSortMenuRef}>
+                      <span>Full Name</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllSortMenus();
+                          setIsNameSortMenuOpen(!isNameSortMenuOpen);
+                        }}
+                        className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                      >
+                        <ArrowUpDown size={12} className={sortBy === 'name' ? 'text-cyan-400' : 'opacity-50'} />
+                      </button>
+                      {isNameSortMenuOpen && (
+                        <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                          <button onClick={() => applyColumnSort('name', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'name' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                          <button onClick={() => applyColumnSort('name', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'name' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="relative inline-flex items-center gap-2" ref={phoneSortMenuRef}>
+                      <span>Phone</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllSortMenus();
+                          setIsPhoneSortMenuOpen(!isPhoneSortMenuOpen);
+                        }}
+                        className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                      >
+                        <ArrowUpDown size={12} className={sortBy === 'phone' ? 'text-cyan-400' : 'opacity-50'} />
+                      </button>
+                      {isPhoneSortMenuOpen && (
+                        <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                          <button onClick={() => applyColumnSort('phone', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'phone' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                          <button onClick={() => applyColumnSort('phone', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'phone' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <div className="relative inline-flex items-center gap-2" ref={emailSortMenuRef}>
+                      <span>Email</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeAllSortMenus();
+                          setIsEmailSortMenuOpen(!isEmailSortMenuOpen);
+                        }}
+                        className={`rounded-md p-1 transition-colors ${isDark ? 'hover:bg-white/10 text-cyan-400' : 'hover:bg-cyan-100 text-cyan-600'}`}
+                      >
+                        <ArrowUpDown size={12} className={sortBy === 'email' ? 'text-cyan-400' : 'opacity-50'} />
+                      </button>
+                      {isEmailSortMenuOpen && (
+                        <div className={`absolute left-0 top-full z-50 mt-2 w-32 rounded-xl border p-1.5 shadow-xl animate-in fade-in slide-in-from-top-1 duration-200 ${isDark ? 'bg-[#111827] border-white/10 shadow-black/40' : 'bg-white border-gray-100 shadow-gray-200/50'}`}>
+                          <button onClick={() => applyColumnSort('email', 'asc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'email' && sortOrder === 'asc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>ASC</button>
+                          <button onClick={() => applyColumnSort('email', 'desc')} className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold transition-all ${sortBy === 'email' && sortOrder === 'desc' ? 'bg-cyan-500/10 text-cyan-400' : 'hover:bg-white/5 text-slate-400'}`}>DSC</button>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDark ? 'divide-white/5' : 'divide-gray-100'}`}>
+                {loading && contacts.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-sm font-medium animate-pulse">Loading contacts...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : pagedContacts.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2 text-slate-500">
+                        <Search className="w-8 h-8 opacity-20" />
+                        <span className="text-sm font-medium">No contacts found</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  pagedContacts.map((contact) => (
+                    <tr key={contact.id} className={`group transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'}`}>
+                      <td className="px-6 py-4">
+                        <div className="relative">
+                          {contact.profileImage ? (
+                            <img
+                              src={imgSrc(contact.profileImage) || ""}
+                              alt=""
+                              className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10 group-hover:ring-cyan-500/50 transition-all"
+                            />
+                          ) : (
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ring-2 ring-white/10 group-hover:ring-cyan-500/50 transition-all ${isDark ? 'bg-white/5 text-slate-500' : 'bg-gray-100 text-gray-400'}`}>
+                              <User className="w-5 h-5" />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`font-black tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          {contact.firstName} {contact.lastName}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="w-3.5 h-3.5 opacity-50" />
+                            {contact.phone || "—"}
+                          </div>
+                          {contact.company && (
+                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                              <Building2 className="w-3 h-3" />
+                              {contact.company}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 opacity-50" />
+                          {contact.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(contact)}
+                            className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-cyan-500/20 text-cyan-400' : 'hover:bg-cyan-50 text-cyan-600'}`}
+                            title="Edit Contact"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(contact.id)}
+                            className={`p-2 rounded-lg transition-all ${isDark ? 'hover:bg-red-500/20 text-red-400' : 'hover:bg-red-50 text-red-600'}`}
+                            title="Delete Contact"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          {filteredContacts.length > 0 && (
+            <div className={`px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-t ${isDark ? 'border-white/10 bg-black/20' : 'border-gray-100 bg-gray-50/50'}`}>
+              <div className="flex items-center gap-3">
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>Show</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className={`bg-transparent text-xs font-bold border-none focus:ring-0 p-0 pr-6 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+                >
+                  {[5, 10, 20, 50].map(size => (
+                    <option key={size} value={size} className={isDark ? 'bg-[#111827]' : 'bg-white'}>{size} per page</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage(pg => Math.max(1, pg - 1))}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-xl transition-all ${currentPage === 1 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    disabled
+                    className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${isDark ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'}`}
+                  >
+                    {currentPage}
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(pg => Math.min(totalPages, pg + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className={`p-2 rounded-xl transition-all ${currentPage === totalPages || totalPages === 0 ? 'opacity-20 cursor-not-allowed' : isDark ? 'hover:bg-white/10 text-slate-400 hover:text-cyan-400' : 'hover:bg-cyan-50 text-gray-400 hover:text-cyan-600'}`}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Add/Edit Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-[#0B1120]/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+            
+            <div className={`relative w-full max-w-lg overflow-hidden rounded-3xl border shadow-2xl animate-in fade-in zoom-in duration-200 ${
+              isDark ? 'bg-[#151B2B] border-white/10' : 'bg-white border-gray-200'
+            }`}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {editingContact ? 'Edit Contact' : 'New Contact'}
+                  </h3>
+                  <button 
+                    onClick={() => setIsModalOpen(false)}
+                    className={`p-2 rounded-xl transition-colors ${isDark ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-gray-100 text-gray-500'}`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Image Upload Area */}
+                  <div className="flex flex-col items-center gap-3 py-2">
+                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                      {previewImage && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage();
+                          }}
+                          className="absolute -top-2 -right-2 z-10 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-all transform hover:scale-110 active:scale-95"
+                          title="Remove image"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {previewImage ? (
+                        <img src={previewImage} alt="Preview" className="w-24 h-24 rounded-2xl object-cover ring-2 ring-cyan-500/50 shadow-xl" />
+                      ) : (
+                        <div className={`w-24 h-24 rounded-2xl flex items-center justify-center border-2 border-dashed transition-all ${isDark ? 'bg-white/5 border-white/10 hover:border-cyan-500/50 text-slate-500' : 'bg-gray-50 border-gray-200 hover:border-cyan-500 text-gray-400'}`}>
+                          <Plus className="w-8 h-8" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                        <p className="text-[10px] text-white font-bold uppercase tracking-wider">Change</p>
+                      </div>
+                    </div>
+                    <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" className="hidden" />
+                    <p className="text-xs text-slate-500 font-medium">Upload profile photo</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">First Name</label>
+                      <input
+                        required
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
+                        }`}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Last Name</label>
+                      <input
+                        required
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Email Address</label>
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                        isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
+                      }`}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Phone Number</label>
+                      <PhoneInput
+                        placeholder="Enter phone number"
+                        value={formData.phone}
+                        onChange={(val) => setFormData(prev => ({ ...prev, phone: val || "" }))}
+                        defaultCountry="US"
+                        className={`phone-input-container w-full px-4 py-1 rounded-xl text-sm border outline-none transition-all ${
+                          isDark 
+                            ? 'bg-white/5 border-white/10 text-white focus-within:border-cyan-500/50' 
+                            : 'bg-gray-50 border-gray-200 focus-within:border-cyan-500'
+                        }`}
+                      />
+                      <style>{`
+                        .phone-input-container .PhoneInputInput {
+                          background: transparent;
+                          border: none;
+                          outline: none;
+                          color: inherit;
+                          font-size: inherit;
+                          padding: 0.5rem 0;
+                        }
+                        .phone-input-container .PhoneInputCountrySelect {
+                          background: ${isDark ? '#151B2B' : '#fff'};
+                          color: ${isDark ? '#fff' : '#000'};
+                        }
+                      `}</style>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Company</label>
+                      <select
+                        name="company"
+                        value={formData.company}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm border outline-none transition-all ${
+                          isDark ? 'bg-white/5 border-white/10 text-white focus:border-cyan-500/50' : 'bg-gray-50 border-gray-200 focus:border-cyan-500'
+                        }`}
+                      >
+                        <option value="" className={isDark ? 'bg-[#151B2B] text-white' : 'bg-white text-gray-900'}>Select Company</option>
+                        {companies.map(c => (
+                          <option key={c.id} value={c.name} className={isDark ? 'bg-[#151B2B] text-white' : 'bg-white text-gray-900'}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        isDark ? 'text-slate-400 hover:text-white hover:bg-white/5' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${
+                        isDark 
+                          ? 'bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30' 
+                          : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20'
+                      }`}
+                    >
+                      {loading ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : <Check className="w-4 h-4" />}
+                      {editingContact ? 'Update Contact' : 'Save Contact'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export default Contacts;

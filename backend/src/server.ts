@@ -1,0 +1,60 @@
+import dotenv from 'dotenv';
+dotenv.config();
+// Force reload to apply new validation rules and ensure port 5000 is clean
+
+import app from './app';
+import { pool } from './config/db';
+import type { Server } from 'http';
+import { fetchAndSaveLatestEmails } from './services/emailReceiver';
+
+import { registerRoutes } from './routes/routes';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || '',
+  api_key:    process.env.CLOUDINARY_API_KEY    || '',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '',
+});
+
+const jwtSecret = process.env.JWT_SECRET || 'super_secret_key_123';
+
+const PORT     = Number(process.env.PORT     || 5000);
+const NODE_ENV =        process.env.NODE_ENV || 'development';
+
+let server: Server;
+
+(async function bootstrap() {
+  try {
+    // ── Register Routes ──────────────────────────────────────────────────────
+    registerRoutes(app, pool, cloudinary, jwtSecret);
+
+    // ── Database check ──────────────────────────────────────────────────────
+    await pool.query('SELECT 1');
+    console.log('MySQL connection OK');
+
+    // ── Start server ────────────────────────────────────────────────────────
+    server = app.listen(PORT, () => {
+      console.log(`${NODE_ENV} server listening on http://localhost:${PORT}`);
+    });
+
+    // ── Initial email sync ──────────────────────────────────────────────────
+    fetchAndSaveLatestEmails()
+      .then(() => console.log('Initial email sync completed'))
+      .catch((err) => console.error('Initial email sync failed:', err));
+
+    // ── Recurring email sync (every 60 seconds) ─────────────────────────────
+    setInterval(async () => {
+      try {
+        await fetchAndSaveLatestEmails();
+        console.log('Email sync completed');
+      } catch (err) {
+        console.error('Email sync failed:', err);
+      }
+    }, 60_000);
+
+    // End of bootstrap
+
+  } catch (err) {
+    console.error('Unable to connect to MySQL on startup:', err);
+  }
+})();

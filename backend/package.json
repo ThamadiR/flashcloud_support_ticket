@@ -1,0 +1,50 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch src --exec npx tsx src/server.ts",
+    "start": "npx tsx src/server.ts",
+    "seed:users": "ts-node-dev --transpile-only seed-random-users.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "imap": "^0.8.19",
+    "imap-simple": "^5.1.0",
+    "imapflow": "^1.1.1",
+    "jsonwebtoken": "^9.0.3",
+    "mailparser": "^3.9.0",
+    "multer": "^2.1.1",
+    "mysql2": "^3.15.1",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.9"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/imap": "^0.8.43",
+    "@types/imap-simple": "^4.2.10",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mailparser": "^3.4.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.5.0",
+    "@types/nodemailer": "^7.0.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.2"
+  }
+}

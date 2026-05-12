@@ -1,0 +1,169 @@
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+/*const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com", // or your mail server
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+export async function sendEmail(
+  to: string,
+  subject: string,
+  text: string,
+  html?: string
+) {
+  const mailOptions = {
+    from: `"Support Team" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  };
+
+  await transporter.sendMail(mailOptions);
+}*/
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER || "",
+    pass: process.env.EMAIL_PASS || "",
+  },
+});
+
+function parseFromUser(fromUser: string) {
+  if (!fromUser) return { name: "", email: "" };
+  // Matches "Name" <email@domain.com> or just email@domain.com
+  const match = fromUser.match(/^(?:"?([^"]*)"?\s*)?<?([^>]+)>?$/);
+  if (match) {
+    return { name: match[1] ? match[1].trim() : "", email: match[2] ? match[2].trim() : fromUser.trim() };
+  }
+  return { name: "", email: fromUser.trim() };
+}
+
+export async function sendEmail(to: string, subject: string, message: string) {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      text: message,
+      html: `<p>${message}</p>`,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", info.response);
+    return info;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error;
+  }
+}
+
+// Replying to an existing email
+export async function replyToEmail(
+  to: string,
+  originalSubject: string,
+  replyMessage: string,
+  inReplyToId?: string,
+  attachments: any[] = [],
+  fromUser?: string,
+  cc?: string
+) {
+  try {
+    const subject = originalSubject.startsWith("Re:")
+      ? originalSubject
+      : `Re: ${originalSubject}`;
+
+    const { name: fromName } = parseFromUser(fromUser || "");
+    const mailOptions: any = {
+      from: fromName
+        ? `"${fromName}" <${process.env.EMAIL_USER}>`
+        : process.env.EMAIL_USER,
+      to,
+      subject,
+      text: replyMessage,
+      html: `<p>${replyMessage}</p>`,
+      inReplyTo: inReplyToId,
+      references: inReplyToId ? [inReplyToId] : [],
+      attachments,
+      replyTo: fromUser || process.env.EMAIL_USER,
+    };
+
+    if (cc) {
+      mailOptions.cc = cc;
+    }
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Reply email sent:", info.response);
+    return info;
+  } catch (error) {
+    console.error("Error replying to email:", error);
+    throw error;
+  }
+}
+
+// Forward an existing email
+export async function forwardEmail(
+  to: string,
+  originalSubject: string,
+  originalBody: string,
+  forwardMessage?: string,
+  attachments: any[] = [],
+  originalFrom?: string,
+  originalDate?: string,
+  originalTo?: string,
+  cc?: string,
+  fromUser?: string
+) {
+  try {
+    const safeOriginalSubject = originalSubject || "";
+    const subject = safeOriginalSubject.startsWith("Fwd:")
+      ? safeOriginalSubject
+      : `Fwd: ${safeOriginalSubject}`;
+
+    const combinedMessage = `
+      <p>${forwardMessage || "Forwarded message:"}</p>
+      <hr/>
+      <p>----------- Forwarded message -----------</p>
+      <p><strong>From:</strong> ${originalFrom}</p>
+      <p><strong>Date:</strong> ${originalDate}</p>
+      <p><strong>Subject:</strong> ${originalSubject}</p>
+      <p><strong>To:</strong> ${originalTo}</p>
+      <blockquote>${originalBody}</blockquote>
+    `;
+
+    const { name: fromName } = parseFromUser(fromUser || "");
+    const mailOptions: any = {
+      from: fromName
+        ? `"${fromName}" <${process.env.EMAIL_USER}>`
+        : process.env.EMAIL_USER,
+      subject,
+      html: combinedMessage,
+      attachments,
+      replyTo: fromUser || process.env.EMAIL_USER,
+    };
+
+    if (to && to.trim() !== "") {
+      mailOptions.to = to;
+    }
+
+    if (cc) {
+      mailOptions.cc = cc;
+    }
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Forwarded email sent:", info.response);
+    return info;
+  } catch (error) {
+    console.error("Error forwarding email:", error);
+    throw error;
+  }
+}
