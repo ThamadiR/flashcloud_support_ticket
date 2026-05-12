@@ -98,6 +98,10 @@ function getStatusStyles(status: string): string {
       return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
     case 'closed':
       return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+    case 'replied':
+      return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+    case 'forwarded':
+      return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
     default:
       return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
   }
@@ -776,8 +780,10 @@ const TicketDetail: React.FC = () => {
               <button
                 type="button"
                 onClick={toggleReply}
-                className={`${isReplying ? "bg-blue-800" : "bg-blue-700"
-                  } text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800`}
+                className={`${isReplying
+                  ? "bg-gray-200 dark:bg-gray-700"
+                  : "bg-white dark:bg-gray-800"
+                  } text-gray-900 border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center`}
               >
                 <FaReply className="w-4 h-4 me-2" />
                 Reply
@@ -1171,12 +1177,17 @@ const TicketDetail: React.FC = () => {
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {email.date_received || email.date || 'No Date'}
+                            {(email.status === 'replied' || email.status === 'forwarded') && email.recipient && (
+                              <span className="ml-2 font-medium text-blue-500 dark:text-blue-400">
+                                To: {email.recipient}
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
                       {email.status && (
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusStyles(email.status)}`}>
-                          {email.status}
+                          {email.status === 'replied' ? 'Re:' : email.status === 'forwarded' ? 'Fwd:' : email.status}
                         </span>
                       )}
                     </div>

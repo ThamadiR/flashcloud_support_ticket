@@ -94,7 +94,7 @@ export async function replyEmail(req: Request, res: Response) {
     );
     if (ticketRows.length > 0) {
       const ticketCode = ticketRows[0].ticket_code;
-      await pool.query(
+      const [detResult]: any = await pool.query(
         `INSERT INTO tbl_ticket_email_det (ticket_code, sender_email, recipient_email, subject, body, date_received, status, created_at)
          VALUES (?, ?, ?, ?, ?, NOW(), 'replied', NOW())`,
         [
@@ -105,6 +105,20 @@ export async function replyEmail(req: Request, res: Response) {
           replyMessage,
         ]
       );
+
+      const detailId = detResult.insertId;
+
+      // Save attachments to tbl_ticket_attachment
+      if (attachments && attachments.length > 0) {
+        for (const att of attachments) {
+          await pool.query(
+            `INSERT INTO tbl_ticket_attachment 
+             (ticket_code, file_name, file_path)
+             VALUES (?, ?, ?)`,
+            [ticketCode, att.filename, att.path]
+          );
+        }
+      }
     }
 
     res.status(200).json({ message: "Reply sent successfully", info });
@@ -159,7 +173,7 @@ export async function forwardEmailController(req: Request, res: Response) {
     );
     if (ticketRows.length > 0) {
       const ticketCode = ticketRows[0].ticket_code;
-      await pool.query(
+      const [detResult]: any = await pool.query(
         `INSERT INTO tbl_ticket_email_det (ticket_code, sender_email, recipient_email, subject, body, date_received, status, created_at)
          VALUES (?, ?, ?, ?, ?, NOW(), 'forwarded', NOW())`,
         [
@@ -167,9 +181,23 @@ export async function forwardEmailController(req: Request, res: Response) {
           fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
           to || "",
           safeSubject,
-          forwardMessage,
+          `<div>${forwardMessage}</div><br/><hr/><br/><div><strong>Forwarded Message:</strong><br/>${originalBody}</div>`,
         ]
       );
+
+      const detailId = detResult.insertId;
+
+      // Save attachments to tbl_ticket_attachment
+      if (attachments && attachments.length > 0) {
+        for (const att of attachments) {
+          await pool.query(
+            `INSERT INTO tbl_ticket_attachment 
+             (ticket_code, file_name, file_path)
+             VALUES (?, ?, ?)`,
+            [ticketCode, att.filename, att.path]
+          );
+        }
+      }
     }
 
     res.status(200).json({ message: "Email forwarded successfully", info });
@@ -231,7 +259,7 @@ export async function getEmailsByTicket(req: Request, res: Response) {
       .replace(/^(Re|Fw|Fwd|\[JIRA\]):\s*/i, "")
       .trim();
 
-    // 2. Fetch ticket codes from mst table by subject (to find related threads)
+    // 2. Fetch related ticket codes (to find entire thread)
     const [mstRows]: any = await pool.query(
       "SELECT ticket_code FROM tbl_ticket_email_mst WHERE subject LIKE ? OR subject = ?",
       [`%${cleanSubject}%`, ticketSubject]
@@ -242,37 +270,44 @@ export async function getEmailsByTicket(req: Request, res: Response) {
       ticketCodes.push(ticketCode);
     }
 
-    // 3. Fetch all sender emails for those ticket codes from det
-    let requesterEmails: string[] = [];
-    if (ticketCodes.length > 0) {
-      const [senderRows]: any = await pool.query(
-        "SELECT DISTINCT sender_email FROM tbl_ticket_email_det WHERE ticket_code IN (?)",
-        [ticketCodes]
-      );
-      requesterEmails = senderRows
-        .map((r: any) => r.sender_email)
-        .filter(Boolean);
-    }
-
-    // 4. Fetch ALL emails for found ticket codes from det table
+    // 3. Fetch ALL emails for found ticket codes
     const [emails]: any = await pool.query(
       `SELECT id, ticket_code as ticket_id, sender_email as sender, recipient_email as recipient,
-              cc_email as cc, subject, body, '[]' as attachments, date_received, status, message_id
+              cc_email as cc, subject, body, date_received, status, message_id
        FROM tbl_ticket_email_det
        WHERE ticket_code IN (?) OR ticket_code = ?
        ORDER BY date_received ASC`,
       [ticketCodes.length > 0 ? ticketCodes : [ticketCode || ticketId], ticketCode || ticketId]
     );
 
-    console.log(`Email fetch stats for Ticket ${ticketId}: Total emails=${emails.length}`);
-    res.status(200).json(emails);
-      } catch (err: any) {
-        console.error("Error fetching ticket emails:", err);
-        res
-          .status(500)
-          .json({ error: err.message || "Failed to fetch ticket emails" });
-      }
-    }
+    // 4. Fetch ALL attachments for these ticket codes
+    const [attachmentRows]: any = await pool.query(
+      `SELECT file_name, file_path
+       FROM tbl_ticket_attachment
+       WHERE ticket_code IN (?) OR ticket_code = ?`,
+      [ticketCodes.length > 0 ? ticketCodes : [ticketCode || ticketId], ticketCode || ticketId]
+    );
+
+    // 5. Map attachments to emails (Attach all to first email since per-message link is missing in schema)
+    const emailsWithAttachments = emails.map((email: any, index: number) => {
+      const emailAttachments = index === 0 ? attachmentRows.map((att: any) => ({
+        filename: att.file_name,
+        path: att.file_path,
+        url: att.file_path
+      })) : [];
+
+      return {
+        ...email,
+        attachments: JSON.stringify(emailAttachments)
+      };
+    });
+
+    res.status(200).json(emailsWithAttachments);
+  } catch (err: any) {
+    console.error("Error fetching ticket emails:", err);
+    res.status(500).json({ error: err.message || "Failed to fetch ticket emails" });
+  }
+}
 
     export async function show(req: Request, res: Response) {
       try {

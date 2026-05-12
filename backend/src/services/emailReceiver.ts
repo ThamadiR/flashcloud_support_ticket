@@ -229,7 +229,7 @@ export const fetchAndSaveLatestEmails = () => {
               }
 
               try {
-                await pool.query(
+                const [result]: any = await pool.query(
                   `INSERT INTO tbl_ticket_email_det
                   (
                     sender_email,
@@ -237,7 +237,6 @@ export const fetchAndSaveLatestEmails = () => {
                     cc_email,
                     subject,
                     body,
-                    attachments,
                     date_received,
                     status,
                     message_id,
@@ -245,24 +244,42 @@ export const fetchAndSaveLatestEmails = () => {
                     thread_id,
                     ticket_code
                   )
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                   [
                     emailData.from,
                     emailData.to,
                     emailData.cc,
                     emailData.subject,
                     emailData.body,
-                    emailData.attachments,
                     emailData.date,
                     "unread",
                     messageId,
                     inReplyTo,
                     threadId,
-                    ticketId || "", // We'll link this to ticket_code later if needed
+                    ticketId || "",
                   ],
                 );
 
-                console.log(`Saved email to detail: ${emailData.subject}`);
+                const detailId = result.insertId;
+                console.log(`Saved email to detail ID: ${detailId}`);
+
+                // Save attachments to tbl_ticket_attachment
+                if (emailData.attachments) {
+                  const attachmentsList = JSON.parse(emailData.attachments);
+                  for (const att of attachmentsList) {
+                    await pool.query(
+                      `INSERT INTO tbl_ticket_attachment 
+                      (ticket_code, file_name, file_path)
+                      VALUES (?, ?, ?)`,
+                      [
+                        ticketId || "",
+                        att.filename,
+                        att.path
+                      ]
+                    );
+                  }
+                  console.log(`Saved ${attachmentsList.length} attachments for ticket: ${ticketId}`);
+                }
               } catch (dbErr: any) {
                 console.error("DB Error saving email detail:", dbErr);
               }
@@ -294,14 +311,16 @@ export const fetchAndSaveLatestEmails = () => {
                   );
 
                   ticketId = ticketResult.insertId;
+                }
 
-                  // Fetch the ticket_code we just created to link the emails
-                  const [newTicket]: any = await pool.query(
-                    "SELECT ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
-                    [ticketId]
-                  );
-                  const ticketCode = newTicket[0]?.ticket_code;
+                // Always fetch the ticket_code to link the emails (whether newly created or existing)
+                const [ticketInfo]: any = await pool.query(
+                  "SELECT ticket_code FROM tbl_ticket_email_mst WHERE id = ?",
+                  [ticketId]
+                );
+                const ticketCode = ticketInfo[0]?.ticket_code;
 
+                if (ticketCode && threadId) {
                   await pool.query(
                     `UPDATE tbl_ticket_email_det 
                     SET ticket_code = ?
