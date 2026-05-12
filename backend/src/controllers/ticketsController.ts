@@ -181,7 +181,15 @@ export async function forwardEmailController(req: Request, res: Response) {
           fromUser || process.env.EMAIL_USER || "support@flashcloud.com",
           to || "",
           safeSubject,
-          `<div>${forwardMessage}</div><br/><hr/><br/><div><strong>Forwarded Message:</strong><br/>${originalBody}</div>`,
+          `<div>${forwardMessage}</div><br/><hr/><br/>
+           <div>
+             <strong>---------- Forwarded Message ----------</strong><br/>
+             <strong>From:</strong> ${originalFrom}<br/>
+             <strong>Date:</strong> ${originalDate}<br/>
+             <strong>Subject:</strong> ${safeSubject}<br/>
+             <strong>To:</strong> ${originalTo}<br/><br/>
+             ${originalBody}
+           </div>`,
         ]
       );
 

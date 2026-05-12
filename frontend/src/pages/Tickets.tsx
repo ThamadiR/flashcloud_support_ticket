@@ -21,6 +21,7 @@ type Ticket = {
   initial: string;
   assignee?: string;
   userId?: number | null;
+  ticket_code?: string;
 };
 
 type PaginatedTickets = {
@@ -296,7 +297,7 @@ const Tickets: React.FC = () => {
 
                 <div className="flex-1 min-w-0">
                   <h3 className={`text-sm font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {ticket.subject} <span className={isDark ? 'text-slate-500' : 'text-gray-400'}>#{ticket.id}</span>
+                    <span className={isDark ? 'text-slate-500' : 'text-gray-400'}>{ticket.ticket_code || `#${ticket.id}`}</span> {ticket.subject}
                   </h3>
 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-60">

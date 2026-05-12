@@ -16,6 +16,7 @@ export type Ticket = {
   email?: string;
   assignee?: string;
   userId?: number | null;
+  ticket_code?: string;
 };
 
 export type PaginatedTickets = {
@@ -79,6 +80,7 @@ export async function getTickets(
       status as state,
       assignee,
       userId,
+      ticket_code,
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS daysAgo,
       GREATEST(TIMESTAMPDIFF(DAY, created_at, NOW()), 0) AS overdueBy, -- Fallback since due_at missing in mst
       UPPER(LEFT(TRIM(COALESCE((SELECT author FROM tbl_ticket_email_det WHERE ticket_code = t.ticket_code LIMIT 1), 'U')), 1)) AS initial

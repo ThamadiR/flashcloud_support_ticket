@@ -1177,9 +1177,9 @@ const TicketDetail: React.FC = () => {
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {email.date_received || email.date || 'No Date'}
-                            {(email.status === 'replied' || email.status === 'forwarded') && email.recipient && (
+                            {(email.status === 'replied' || email.status === 'forwarded') && email.to && (
                               <span className="ml-2 font-medium text-blue-500 dark:text-blue-400">
-                                To: {email.recipient}
+                                To: {email.to}
                               </span>
                             )}
                           </p>
