@@ -377,7 +377,7 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
 
   const openAddServerModal = () => {
     setAddServerForm({
-      companyId: companyId || '',
+      companyId: companyIdParam || '',
       ipAddress: '',
       label: '',
     });
@@ -593,8 +593,15 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 }}
                                 theme={{
                                   root: { input: { base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${isDark ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'}` } },
-                                  popup: { root: { base: `absolute top-12 left-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, footer: { base: "hidden" } },
-                                  header: { root: { base: "flex justify-between items-center mb-2 px-2", title: "text-sm font-semibold text-gray-700 dark:text-gray-200" }, selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } },
+                                  popup: { 
+                                    root: { base: `absolute top-12 left-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, 
+                                    header: { 
+                                      base: "flex justify-between items-center mb-2 px-2", 
+                                      title: "text-sm font-semibold text-gray-700 dark:text-gray-200",
+                                      selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } 
+                                    },
+                                    footer: { base: "hidden" } 
+                                  },
                                   views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[0.75rem] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
                                 }}
                               />
@@ -621,8 +628,15 @@ export default function ServersListUI({ token, onUnauthorized }: ServersListUIPr
                                 }}
                                 theme={{
                                   root: { input: { base: `block w-full rounded-lg border text-xs outline-none py-2.5 px-4 transition-all ${isDark ? 'bg-black/20 border-white/10 text-white placeholder:text-gray-600 focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/10' : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-400/20'}` } },
-                                  popup: { root: { base: `absolute top-12 right-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, footer: { base: "hidden" } },
-                                  header: { root: { base: "flex justify-between items-center mb-2 px-2", title: "text-sm font-semibold text-gray-700 dark:text-gray-200" }, selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } },
+                                  popup: { 
+                                    root: { base: `absolute top-12 right-0 z-50 block pt-2 ${isDark ? 'bg-[#0B0E14]' : 'bg-white shadow-[0_10px_40px_rgba(0,0,0,0.1)] rounded-xl border border-gray-100'}` }, 
+                                    header: { 
+                                      base: "flex justify-between items-center mb-2 px-2", 
+                                      title: "text-sm font-semibold text-gray-700 dark:text-gray-200",
+                                      selectors: { button: { base: "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg transition-colors p-1" } } 
+                                    },
+                                    footer: { base: "hidden" } 
+                                  },
                                   views: { days: { header: { base: "grid grid-cols-7 mb-1", title: "text-[0.75rem] font-medium text-gray-400 text-center" }, items: { base: "grid grid-cols-7", item: { base: "block flex-1 cursor-pointer rounded-lg border-0 text-center text-xs font-semibold leading-9 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-white/5", selected: "bg-cyan-500 text-white hover:bg-cyan-600", disabled: "text-gray-300 dark:text-gray-600 cursor-not-allowed" } } } }
                                 }}
                               />

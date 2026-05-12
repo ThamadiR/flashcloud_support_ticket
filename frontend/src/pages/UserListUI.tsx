@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent, useRef, useMemo } from "react";
+import React, { useState, useEffect, type FormEvent, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
 import { FaUsers, FaUserPlus, FaTimes, FaSearch, FaEdit, FaTrash, FaBuilding, FaPlus } from "react-icons/fa";

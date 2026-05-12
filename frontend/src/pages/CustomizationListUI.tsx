@@ -22,6 +22,7 @@ type CustomizationRecord = {
     id: number;
     name: string;
     description: string;
+    sectionId: number | null;
     createdAt: string;
   };
 };
