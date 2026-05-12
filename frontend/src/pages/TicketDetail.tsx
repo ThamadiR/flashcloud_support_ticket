@@ -550,7 +550,7 @@ const TicketDetail: React.FC = () => {
       <br><br>
       On ${originalEmail?.date || "a previous date"}, ${originalEmail?.from || "someone"
       } wrote:
-        <blockquote style="border-left:2px solid #ccc; margin:0; padding-left:10px;">
+        <blockquote style="border-left:2px solid #ccc; margin:0; padding-left:15px;">
           ${originalEmail?.body || ""}
         </blockquote>
       `;
@@ -1165,9 +1165,9 @@ const TicketDetail: React.FC = () => {
                 emails.map((email, index) => (
                   <div
                     key={index}
-                  // className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
+                    className="mb-12 last:mb-0"
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between pt-6 mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
                           {email.sender?.charAt(0).toUpperCase() || 'U'}
