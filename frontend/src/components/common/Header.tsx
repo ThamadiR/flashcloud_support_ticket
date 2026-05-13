@@ -121,7 +121,6 @@ const Header: React.FC = () => {
 
             <button
               type="button"
-              data-dropdown-toggle="notification-dropdown"
               className="p-2 mr-1 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
             >
               <span className="sr-only">View notifications</span>
@@ -137,75 +136,7 @@ const Header: React.FC = () => {
               </svg>
             </button>
 
-            <div
-              className="hidden overflow-hidden z-50 my-4 max-w-sm text-base list-none bg-white rounded divide-y divide-gray-100 shadow-lg dark:divide-gray-600 dark:bg-gray-700 rounded-xl"
-              id="notification-dropdown"
-            >
-              <div className="block py-2 px-4 text-base font-medium text-center text-gray-700 bg-gray-50 dark:bg-gray-600 dark:text-gray-300">
-                Notifications
-              </div>
-              <div>
-                <a
-                  href="#"
-                  className="flex py-3 px-4 border-b hover:bg-gray-100 dark:hover:bg-gray-600 dark:border-gray-600"
-                >
-                  <div className="flex-shrink-0">
-                    <img
-                      className="w-11 h-11 rounded-full"
-                      src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/avatars/bonnie-green.png"
-                      alt="Support Agent Avatar"
-                    />
-                    <div className="flex absolute justify-center items-center ml-6 -mt-5 w-5 h-5 rounded-full border border-white bg-yellow-500 dark:border-gray-700">
-                      <svg
-                        aria-hidden="true"
-                        className="w-3 h-3 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M8.257 3.099c.366-.446.958-.446 1.324 0l6 7.315c.397.485.06 1.186-.662 1.186H3.595c-.722 0-1.059-.701-.662-1.186l6-7.315zM11 13a1 1 0 11-2 0 1 1 0 012 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  {/* <div className="pl-3 w-full">
-                    <div className="text-gray-500 font-normal text-sm mb-1.5 dark:text-gray-400">
-                      New ticket submitted by
-                      <span className="font-semibold text-gray-900 dark:text-white">
-                        {" "}
-                        Akila Kavinda
-                      </span>
-                      : "Issue with logging in."
-                    </div>
-                    <div className="text-xs font-medium text-primary-600 dark:text-primary-500">
-                      Just now
-                    </div>
-                  </div> */}
-                </a>
-              </div>
 
-              <a
-                href="#"
-                className="block py-2 text-md font-medium text-center text-gray-900 bg-gray-50 hover:bg-gray-100 dark:bg-gray-600 dark:text-white dark:hover:underline"
-              >
-                <div className="inline-flex items-center">
-                  <svg
-                    aria-hidden="true"
-                    className="mr-2 w-4 h-4 text-gray-500 dark:text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                    <path
-                      fill-rule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clip-rule="evenodd"
-                    ></path>
-                  </svg>
-                  View all
-                </div>
-              </a>
-            </div>
 
             <button
               type="button"
