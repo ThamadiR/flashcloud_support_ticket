@@ -3,6 +3,7 @@ import { Spinner } from "flowbite-react";
 import { API_BASE_URL } from "../config/api";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDrawer } from "../context/DrawerContext";
+import { useTheme } from "../context/ThemeContext";
 import toast from "react-hot-toast";
 
 import {
@@ -108,6 +109,7 @@ function getStatusStyles(status: string): string {
 }
 
 const TicketDetail: React.FC = () => {
+  const { isDark } = useTheme();
   const { isDrawerOpen } = useDrawer();
   const mainMarginClass = isDrawerOpen ? "md:ml-64" : "md:ml-20";
   const { id } = useParams<{ id: string }>();
@@ -733,7 +735,7 @@ const TicketDetail: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <main className={`p-4 ${mainMarginClass} h-auto pt-16 transition-all duration-300`}>
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content Area */}
@@ -747,7 +749,7 @@ const TicketDetail: React.FC = () => {
               </button>
               <div className="flex flex-col">
                 <div className="flex items-center gap-3 mb-1">
-                  <span className="text-gray-400 font-medium text-xs uppercase tracking-wider">
+                  <span className="text-gray-400 font-medium text-xs uppercase tracking-wider dark:text-slate-200">
                     Ticket #{id || '...'}
                   </span>
                   <div className="flex flex-wrap gap-2">
@@ -1176,7 +1178,7 @@ const TicketDetail: React.FC = () => {
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
                             {email.sender || 'Unknown Sender'}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-gray-500 dark:text-slate-200">
                             {email.date_received || email.date || 'No Date'}
                             {(email.status === 'replied' || email.status === 'forwarded') && email.to && (
                               <span className="ml-2 font-medium text-blue-500 dark:text-blue-400">
@@ -1194,11 +1196,43 @@ const TicketDetail: React.FC = () => {
                     </div>
 
                     <div
-                      className="email-body bg-white dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-white/5 text-gray-800 dark:text-gray-200 leading-relaxed shadow-inner"
-                      dangerouslySetInnerHTML={{
-                        __html: (email.body || "") as string,
-                      }}
-                    />
+                      className={`email-body p-8 rounded-2xl border transition-all duration-300 ${isDark 
+                        ? 'bg-slate-900/50 border-white/10 shadow-2xl shadow-black/20' 
+                        : 'bg-white border-gray-100 shadow-xl shadow-gray-200/50'}`}
+                    >
+                      {/* Email content displayed in a responsive style */}
+                      <style dangerouslySetInnerHTML={{ __html: `
+                        .email-content-wrapper {
+                          background: ${isDark ? 'transparent' : 'white'} !important;
+                          color: ${isDark ? 'white' : '#1f2937'} !important;
+                          border-radius: 12px;
+                          padding: ${isDark ? '0' : '24px'};
+                          ${!isDark ? 'box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);' : ''}
+                        }
+                        .email-content-wrapper a {
+                          color: ${isDark ? '#60a5fa' : '#2563eb'} !important;
+                          text-decoration: underline;
+                        }
+                        ${isDark ? `
+                          .email-content-wrapper * {
+                            background-color: transparent !important;
+                          }
+                          /* Fix visibility of hardcoded dark text in dark mode */
+                          .email-content-wrapper [style*="color: #000"],
+                          .email-content-wrapper [style*="color:#000"],
+                          .email-content-wrapper [style*="color: black"],
+                          .email-content-wrapper [style*="color:rgb(0,0,0)"],
+                          .email-content-wrapper [style*="color: rgb(0, 0, 0)"] {
+                            color: white !important;
+                          }
+                        ` : ''}
+                      `}} />
+                      <div className="email-content-wrapper">
+                        <div dangerouslySetInnerHTML={{
+                          __html: (email.body || "") as string,
+                        }} />
+                      </div>
+                    </div>
 
                     {/*Attachments*/}
                     {/* {email.attachments && email.attachments.length > 0 && (
@@ -1237,8 +1271,8 @@ const TicketDetail: React.FC = () => {
                   )} */}
                     {/* Attachments Section */}
                     {email.attachments && email.attachments.length > 0 && (
-                      <div className="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
-                        <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center">
+                      <div className="mt-4 p-3 bg-gray-100 dark:bg-slate-800/50 rounded-lg border border-gray-300 dark:border-white/10">
+                        <h4 className="text-md font-semibold text-gray-800 dark:text-white mb-2 flex items-center">
                           <FaPaperclip className="mr-2" /> Attachments (
                           {email.attachments.length})
                         </h4>
@@ -1250,7 +1284,7 @@ const TicketDetail: React.FC = () => {
                             return (
                               <li
                                 key={i}
-                                className="flex flex-col items-center justify-center p-2 bg-white dark:bg-gray-800 rounded shadow text-sm"
+                                className="flex flex-col items-center justify-center p-2 bg-white dark:bg-slate-800 rounded shadow text-sm border dark:border-white/5"
                               >
                                 {isImage ? (
                                   // Image preview
@@ -1264,13 +1298,13 @@ const TicketDetail: React.FC = () => {
                                   <div className="flex flex-col items-center mb-2">
                                     <FaFileAlt
                                       size={32}
-                                      className="text-gray-500 dark:text-gray-300 mb-1"
+                                      className="text-gray-500 dark:text-gray-400 mb-1"
                                     />
                                   </div>
                                 )}
 
                                 {/* File name + size */}
-                                <p className="font-medium text-center break-all">
+                                <p className="font-medium text-center break-all text-gray-800 dark:text-gray-200">
                                   {att.filename}
                                 </p>
                                 {att.size && (
@@ -1317,7 +1351,7 @@ const TicketDetail: React.FC = () => {
             <div className="mb-3">
               <label
                 htmlFor="status"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Status
               </label>
@@ -1341,7 +1375,7 @@ const TicketDetail: React.FC = () => {
             <div className="mb-3">
               <label
                 htmlFor="priority"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Priority
               </label>
@@ -1367,7 +1401,7 @@ const TicketDetail: React.FC = () => {
             <div className="mb-3">
               <label
                 htmlFor="group"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Group
               </label>
@@ -1392,7 +1426,7 @@ const TicketDetail: React.FC = () => {
             <div className="mb-6">
               <label
                 htmlFor="assignee"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700 dark:text-white"
               >
                 Assignee
               </label>
